@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import {
   LayoutDashboard, BookOpen, GraduationCap, FileText, Library, SpellCheck, BookMarked, Video, Film, Shuffle, Building2, BarChart3, User, Bell, Search, LogOut
 } from "lucide-react";
@@ -32,7 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="hidden lg:flex h-[56px] bg-[#0f1b3d] text-white items-center px-6 justify-between sticky top-0 z-30">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#0f1b3d] font-black text-sm">D</div>
+            <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
             <span className="font-bold tracking-tight">DREAM KOREA</span>
           </Link>
           <div className="relative hidden xl:block">
@@ -55,7 +56,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* mobile top */}
       <div className="lg:hidden h-[56px] bg-[#0f1b3d] text-white flex items-center justify-between px-4 sticky top-0 z-30">
-        <Link href="/dashboard" className="font-bold">DREAM KOREA</Link>
+        <Link href="/dashboard" className="flex items-center gap-2 font-bold">
+          <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
+          DREAM KOREA
+        </Link>
         <div className="flex items-center gap-2">
           <Link href="/notifications" className="p-2"><Bell className="h-5 w-5" /></Link>
           <Link href="/profile" className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">BK</Link>

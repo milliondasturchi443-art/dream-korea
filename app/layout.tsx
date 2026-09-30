@@ -17,10 +17,20 @@ export const metadata: Metadata = {
   title: "DREAM KOREA — Korean Language Learning Center",
   description: "Koreys tilini o‘rganing, orzuingizga yaqinlashing! Zamonaviy platforma orqali TOPIK, EPS-TOPIK va universitetga tayyorgarlik.",
   formatDetection: { telephone: true, email: true, address: true },
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon.png",
+  },
   openGraph: {
     title: "DREAM KOREA — Korean Language Learning Center",
     description: "Koreys tilini noldan professional darajagacha o‘rganing.",
     type: "website",
+    images: [{ url: "/logo.png" }],
   },
 };
 

@@ -3,6 +3,10 @@ import * as bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Пароли: админ из env (ADMIN_PASSWORD), остальные — дефолт для демо
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@dreamkorea.uz";
+  const adminPassword = process.env.ADMIN_PASSWORD || "DreamKorea2026!Admin";
+  const adminHash = await bcrypt.hash(adminPassword, 10);
   const pw = await bcrypt.hash("password123", 10);
 
   const student = await prisma.user.upsert({
@@ -16,10 +20,11 @@ async function main() {
     create: { email: "teacher@dreamkorea.uz", name: "Kim Ji-Hoon", password: pw, role: "TEACHER" },
   });
   await prisma.user.upsert({
-    where: { email: "admin@dreamkorea.uz" },
-    update: {},
-    create: { email: "admin@dreamkorea.uz", name: "Admin", password: pw, role: "ADMIN" },
+    where: { email: adminEmail },
+    update: { password: adminHash, name: "Admin", role: "ADMIN" },
+    create: { email: adminEmail, name: "Admin", password: adminHash, role: "ADMIN" },
   });
+  console.log(`Admin: ${adminEmail} / ${adminPassword.includes("DreamKorea") ? "*** (из env или дефолт)" : "***"}`);
 
   // MongoDB: id генерируется автоматически (ObjectId), не указываем вручную
   let c1 = await prisma.course.findFirst({ where: { title: "Koreys tili 1-daraja" } });
