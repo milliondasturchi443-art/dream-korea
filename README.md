@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DREAM KOREA — Korean Language Learning Center
 
-## Getting Started
+Premium EdTech platforma: koreys tili, TOPIK / EPS-TOPIK, universitetlarga qabul, video darslar, lug‘at, grammatika va AI yordamchi.
 
-First, run the development server:
+## Stack
+- Next.js 16 (App Router) + TypeScript
+- Tailwind CSS 4 + shadcn/ui + lucide-react
+- Framer Motion, Recharts, Zustand, Zod, React Hook Form, Sonner
+- Prisma 5 + PostgreSQL, bcryptjs
+
+## Ishga tushirish
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env   # DATABASE_URL ni to‘ldiring
+npx prisma migrate dev --name init
+npx prisma generate
+npm run seed           # yoki: npx tsx prisma/seed.ts (tsx o‘rnating: npm i -D tsx)
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Production build:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm run start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Demo akkauntlar (development)
 
-## Learn More
+| Rol     | Email                    | Parol       | Kirishdan keyin |
+|---------|--------------------------|-------------|----------------|
+| Student | student@dreamkorea.uz    | password123 | /dashboard     |
+| Teacher | teacher@dreamkorea.uz    | password123 | /teacher       |
+| Admin   | admin@dreamkorea.uz      | password123 | /admin         |
 
-To learn more about Next.js, take a look at the following resources:
+Auth — mock (localStorage), keyin NextAuth/JWT ga almashtirishga tayyor. `lib/auth.ts` dagi `roleHome()` ga qarang.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Sahifalar
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `/` — Landing (hero, features, kurslar, TOPIK, stats, FAQ)
+- `/dashboard` — Student dashboard (streak, progress, tezkor amallar)
+- `/courses`, `/courses/[id]`, `/lessons/[id]` — Kurslar va dars player
+- `/topik`, `/topik/exam`, `/topik/result` — Test tizimi (timer, progress, natija + Recharts)
+- `/vocabulary`, `/grammar`, `/books`, `/videos`, `/media`
+- `/universities`, `/admission`, `/profile`, `/payment`, `/notifications`, `/ai`
+- `/teacher`, `/admin`
 
-## Deploy on Vercel
+## Prisma
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npx prisma studio
+npx prisma migrate dev
+npx prisma db push
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Seed: `prisma/seed.ts` — users, courses, lessons, vocab, grammar, universities, test.
+
+## Env
+
+`.env.example` ga qarang: `DATABASE_URL`, `AUTH_SECRET`, `OPENAI_API_KEY`, `CLICK_API_KEY`, `PAYME_API_KEY`.
+
+
+## Деплой на Vercel
+
+1. Импортируй репозиторий на https://vercel.com/new
+2. В Vercel → Settings → Environment Variables добавь:
+   - `DATABASE_URL` = `mongodb+srv://dreamkorea795_db_user:<pass>@cluster0.c9fhrmg.mongodb.net/dreamkorea?retryWrites=true&w=majority&appName=Cluster0`
+   - `AUTH_SECRET` (= `NEXTAUTH_SECRET`) — `openssl rand -base64 32`
+   - `NEXTAUTH_URL` = `https://<твой-домен>.vercel.app`
+   - опционально: `OPENAI_API_KEY`, `CLICK_API_KEY`, `PAYME_API_KEY`
+3. Deploy. После первого деплоя засейдь базу локально:
+   ```bash
+   DATABASE_URL="mongodb+srv://..." npm run seed
+   ```
+   Или через `vercel env pull` и затем `npm run seed`.
+
+## Что нужно для бекенда
+
+- **База:** MongoDB Atlas уже подключена (`cluster0.c9fhrmg.mongodb.net/dreamkorea`). Коллекции создаются `prisma db push`.
+- **Auth:** сейчас mock (localStorage). Для продакшна поставь NextAuth/Auth.js или JWT (access+refresh), хеш уже `bcryptjs`. Env: `AUTH_SECRET`.
+- **API:** Route Handlers в `app/api/**` (пока нет — фронт на mock-data; добавлять по мере готовности).
+- **Платежи:** Click/Payme/Uzum — мок UI в `/payment`, нужен webhook + `Payment` статусы.
+- **AI:** `/ai` — мок, подключи `OPENAI_API_KEY` (OpenAI-compatible).

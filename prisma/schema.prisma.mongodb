@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String
+  phone     String?
+  password  String
+  role      Role     @default(STUDENT)
+  avatar    String?
+  topikLevel String? @default("TOPIK I")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments    Enrollment[]
+  lessonProgress LessonProgress[]
+  testAttempts   TestAttempt[]
+  admissions     Admission[]
+  payments       Payment[]
+  notifications  Notification[]
+  achievements   Achievement[]
+  certificates   Certificate[]
+}
+
+model Course {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  subtitle    String?
+  level       String
+  description String?
+  teacherId   String?  @db.ObjectId
+  teacherName String?
+  price       Int      @default(0)
+  lessons     Lesson[]
+  enrollments Enrollment[]
+  createdAt   DateTime @default(now())
+}
+
+model Lesson {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id])
+  order     Int
+  title     String
+  duration  String?
+  videoUrl  String?
+  content   String?
+  progress  LessonProgress[]
+  createdAt DateTime @default(now())
+}
+
+model Enrollment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id])
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String  @db.ObjectId
+  user      User    @relation(fields: [userId], references: [id])
+  lessonId  String  @db.ObjectId
+  lesson    Lesson  @relation(fields: [lessonId], references: [id])
+  completed Boolean @default(false)
+
+  @@unique([userId, lessonId])
+}
+
+model Test {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  level     String
+  type      String
+  questions Question[]
+  attempts  TestAttempt[]
+  createdAt DateTime @default(now())
+}
+
+model Question {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  testId      String   @db.ObjectId
+  test        Test     @relation(fields: [testId], references: [id])
+  text        String
+  options     Json
+  correct     String
+  explanation String?
+  order       Int
+}
+
+model TestAttempt {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  testId    String   @db.ObjectId
+  test      Test     @relation(fields: [testId], references: [id])
+  score     Int
+  total     Int
+  answers   Json
+  createdAt DateTime @default(now())
+}
+
+model Vocabulary {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  ko        String
+  tr        String
+  uz        String
+  level     String
+  createdAt DateTime @default(now())
+}
+
+model Grammar {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  desc      String
+  level     String
+  content   String?
+}
+
+model Book {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  level     String
+  pages     Int
+  cover     String?
+}
+
+model Video {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  category  String
+  duration  String
+  teacher   String?
+  views     String?
+}
+
+model University {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  city        String
+  programs    String[]
+  topik       String
+  tuition     String
+  description String?
+}
+
+model Admission {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  name      String
+  phone     String
+  email     String
+  birth     String?
+  edu       String?
+  topik     String?
+  uni       String?
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String        @db.ObjectId
+  user      User          @relation(fields: [userId], references: [id])
+  amount    Int
+  method    String
+  status    PaymentStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Achievement {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  createdAt DateTime @default(now())
+}
+
+model Certificate {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String   @db.ObjectId
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now())
+}
