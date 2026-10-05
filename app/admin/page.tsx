@@ -48,9 +48,9 @@ export default function AdminPage() {
           <div className="text-xs text-slate-500 mt-1">12 ta faol</div>
         </Card>
         <Card className="p-5">
-          <div className="flex items-center justify-between text-slate-500"><span className="text-xs">Daromad</span><Wallet className="h-4 w-4"/></div>
-          <div className="text-2xl font-extrabold text-slate-900 mt-1">12.5M so‘m</div>
-          <div className="text-xs text-emerald-600 mt-1">+8% bu oy</div>
+          <div className="flex items-center justify-between text-slate-500"><span className="text-xs">Tugatgan darslar</span><Wallet className="h-4 w-4"/></div>
+          <div className="text-2xl font-extrabold text-slate-900 mt-1">87%</div>
+          <div className="text-xs text-emerald-600 mt-1">barcha kurslar bepul</div>
         </Card>
       </div>
 
@@ -60,9 +60,9 @@ export default function AdminPage() {
           ["O‘quvchilar","Ro‘yxat","/admin"],
           ["Ustozlar","Boshqarish","/teacher"],
           ["Guruhlar","Jadval","/admin"],
-          ["To‘lovlar","Tarix","/payment"],
           ["Vazifalar","Topshiriq","/admin"],
-          ["Kontent","Kurslar","/courses"],
+          ["Kontent","Kurslar / Testlar","/admin/content"],
+          ["Bloklangan ilovalar","Ruxsatlar","/admin/blocked-apps"],
           ["Universitetlar","Ro‘yxat","/universities"],
           ["AI yordamchi","Chat","/ai"],
           ["Broadcast","Xabar","/admin"],
@@ -89,7 +89,7 @@ export default function AdminPage() {
           </div>
         </Card>
         <Card className="p-5">
-          <div className="font-semibold text-slate-900">Daromad (M so‘m)</div>
+          <div className="font-semibold text-slate-900">Faollik (o‘quvchilar)</div>
           <div className="h-[240px] mt-3">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenue}>
@@ -122,7 +122,7 @@ export default function AdminPage() {
             <li className="flex gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500 mt-2 shrink-0"/> Yangi o‘quvchi ro‘yxatdan o‘tdi — <span className="text-slate-500">5 daqiqa oldin</span></li>
             <li className="flex gap-2"><span className="h-2 w-2 rounded-full bg-blue-500 mt-2 shrink-0"/> Yangi ustoz qo‘shildi — <span className="text-slate-500">1 soat oldin</span></li>
             <li className="flex gap-2"><span className="h-2 w-2 rounded-full bg-violet-500 mt-2 shrink-0"/> Guruh yaratildi — <span className="text-slate-500">kecha</span></li>
-            <li className="flex gap-2"><span className="h-2 w-2 rounded-full bg-amber-500 mt-2 shrink-0"/> To‘lov amalga oshirildi — <span className="text-slate-500">kecha</span></li>
+            <li className="flex gap-2"><span className="h-2 w-2 rounded-full bg-amber-500 mt-2 shrink-0"/> Kontent yangilandi — <span className="text-slate-500">kecha</span></li>
           </ul>
         </Card>
       </div>

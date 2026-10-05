@@ -13,7 +13,7 @@ type Props = Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChan
 };
 
 // UZ +998 maskali input. Boshqa davlatlar inputMode orqali kiritilsa ham formatUZ ishlaydi.
-export function PhoneInput({ value, onValueChange, className, placeholder = "+998 90 123 45 67", label, error, requiredMark, ...rest }: Props) {
+export function PhoneInput({ value, onValueChange, className, placeholder = "+998 94 328 05 13", label, error, requiredMark, ...rest }: Props) {
   const [touched, setTouched] = React.useState(false);
   const showError = (touched || !!error) && value ? !isValidUZ(value) : false;
 
@@ -50,7 +50,7 @@ export function PhoneInput({ value, onValueChange, className, placeholder = "+99
           {...rest}
         />
       </div>
-      {showError && <p className="mt-1 text-xs text-red-600">Telefon formati: +998 90 123 45 67</p>}
+      {showError && <p className="mt-1 text-xs text-red-600">Telefon formati: +998 94 328 05 13</p>}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );

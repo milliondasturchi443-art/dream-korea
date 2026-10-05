@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { courses, universities, demoAccounts } from "@/lib/mock-data";
+import { courses, universities } from "@/lib/mock-data";
 import { motion } from "framer-motion";
 import { GraduationCap, Cpu, Users, Trophy, Star, Play, CheckCircle2, BookOpen, Building2, ChevronDown } from "lucide-react";
 import { useState } from "react";
@@ -39,11 +39,7 @@ export default function LandingPage() {
             </div>
             <div><div className="font-semibold text-slate-900">1 200+ o‘quvchi</div><div className="text-slate-500 text-xs flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400"/> 4.9 (320 sharh)</div></div>
           </div>
-          {/* demo accounts hint */}
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed">
-            <div className="font-semibold text-amber-900 mb-1">Demo akkauntlar (development):</div>
-            {demoAccounts.map(a => <div key={a.email} className="font-mono text-amber-800">{a.role}: {a.email} / {a.password}</div>)}
-          </div>
+
         </motion.div>
 
         {/* Right mock dashboard */}
@@ -119,7 +115,7 @@ export default function LandingPage() {
                 <div className="font-semibold text-slate-900 leading-tight">{c.title}</div>
                 <div className="text-xs text-slate-500">{c.subtitle} · {c.teacher}</div>
                 <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                  <span>{c.lessons} dars</span><span className="font-semibold text-[#2563eb]">{c.price}</span>
+                  <span>{c.lessons} dars</span><span className="font-semibold text-emerald-600">Bepul</span>
                 </div>
                 <Progress value={c.progress} className="mt-2" />
                 <Link href={`/courses/${c.id}`}><Button className="w-full mt-3" size="sm">Batafsil</Button></Link>
@@ -220,7 +216,7 @@ export default function LandingPage() {
           {[
             ["Kurs qancha davom etadi?", "Har bir daraja 3 oy (36 dars). Haftasiga 3 marta, har dars 90 daqiqa."],
             ["TOPIK sertifikatini olsam bo‘ladimi?", "Ha, biz TOPIK I va II uchun to‘liq tayyorgarlik va mock testlar beramiz."],
-            ["To‘lov qanday amalga oshiriladi?", "Click, Payme, Uzum Bank va karta orqali to‘lashingiz mumkin."],
+            ["Kurslar bepulmi?", "Ha — barcha kurslar bepul. Kontentni administrator qo‘shadi, darslar bosqichma-bosqich ochiladi."],
             ["Darslar offline ham bormi?", "Ha, Toshkentdagi markazimizda offline guruhlar ham mavjud."],
           ].map(([q,a], idx) => (
             <Card key={q} className="overflow-hidden">

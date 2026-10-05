@@ -45,7 +45,7 @@ export default function CoursesPage() {
                 <div className="text-xs text-slate-500">{c.subtitle}</div>
                 <div className="text-xs text-slate-500 mt-1">Ustoz: <span className="font-medium text-slate-700">{c.teacher}</span></div>
                 <Progress value={c.progress} className="mt-3" />
-                <div className="mt-1.5 flex justify-between text-xs"><span className="text-slate-500">{c.progress}%</span><span className="font-semibold text-[#2563eb]">{c.price}</span></div>
+                <div className="mt-1.5 flex justify-between text-xs"><span className="text-slate-500">{c.progress}%</span><span className="font-bold text-emerald-600">Bepul</span></div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <Link href={`/courses/${c.id}`}><Button variant="outline" size="sm" className="w-full">Batafsil</Button></Link>
                   <Link href={`/lessons/4`}><Button size="sm" className="w-full">Davom etish</Button></Link>

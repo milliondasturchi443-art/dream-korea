@@ -1,4 +1,5 @@
-// Central mock data for DREAM KOREA
+// Central mock data for DREAM KOREA — ТОЛЬКО для пустого состояния.
+// Весь реальный контент должен добавляться админом. Курсы — бесплатные.
 export const mockUser = {
   id: "u1",
   name: "Bobur",
@@ -9,6 +10,7 @@ export const mockUser = {
   streak: 12,
 };
 
+// Курсы — бесплатные. price = Bepul. Админ добавляет курсы через /admin.
 export const courses = [
   {
     id: "1",
@@ -17,9 +19,10 @@ export const courses = [
     level: "A1",
     teacher: "Kim Ji-Hoon",
     lessons: 36,
-    completed: 26,
-    progress: 72,
-    price: "890 000 so‘m",
+    completed: 0,
+    progress: 0,
+    price: "Bepul",
+    priceNum: 0,
     image: "gradient",
     color: "from-[#1e3a8a] to-[#3b82f6]",
   },
@@ -30,9 +33,10 @@ export const courses = [
     level: "TOPIK I",
     teacher: "Lee Min-Jung",
     lessons: 35,
-    completed: 19,
-    progress: 54,
-    price: "1 200 000 so‘m",
+    completed: 0,
+    progress: 0,
+    price: "Bepul",
+    priceNum: 0,
     image: "gradient",
     color: "from-[#0f766e] to-[#06b6d4]",
   },
@@ -43,9 +47,10 @@ export const courses = [
     level: "EPS",
     teacher: "Park Sang-Ho",
     lessons: 35,
-    completed: 11,
-    progress: 31,
-    price: "950 000 so‘m",
+    completed: 0,
+    progress: 0,
+    price: "Bepul",
+    priceNum: 0,
     image: "gradient",
     color: "from-[#7c3aed] to-[#a855f7]",
   },
@@ -58,7 +63,8 @@ export const courses = [
     lessons: 40,
     completed: 0,
     progress: 0,
-    price: "1 100 000 so‘m",
+    price: "Bepul",
+    priceNum: 0,
     image: "gradient",
     color: "from-[#be123c] to-[#f43f5e]",
   },
@@ -71,7 +77,8 @@ export const courses = [
     lessons: 48,
     completed: 0,
     progress: 0,
-    price: "1 500 000 so‘m",
+    price: "Bepul",
+    priceNum: 0,
     image: "gradient",
     color: "from-[#0c4a6e] to-[#0284c7]",
   },
@@ -84,7 +91,8 @@ export const courses = [
     lessons: 28,
     completed: 0,
     progress: 0,
-    price: "750 000 so‘m",
+    price: "Bepul",
+    priceNum: 0,
     image: "gradient",
     color: "from-[#14532d] to-[#22c55e]",
   },
@@ -92,11 +100,11 @@ export const courses = [
 
 export const lessonsByCourse: Record<string, { id: string; title: string; duration: string; done?: boolean; locked?: boolean }[]> = {
   "1": [
-    { id: "1", title: "Hangul bilan tanishuv", duration: "18 daq", done: true },
-    { id: "2", title: "Unli harflar ㅏ ㅓ ㅗ ㅜ", duration: "22 daq", done: true },
-    { id: "3", title: "Undosh harflar ㄱ ㄴ ㄷ", duration: "20 daq", done: true },
-    { id: "4", title: "Salomlashish — 안녕하세요", duration: "15 daq", done: false },
-    { id: "5", title: "O‘zini tanishtirish", duration: "19 daq", done: false },
+    { id: "1", title: "Hangul bilan tanishuv", duration: "18 daq", done: false },
+    { id: "2", title: "Unli harflar ㅏ ㅓ ㅗ ㅜ", duration: "22 daq", done: false, locked: true },
+    { id: "3", title: "Undosh harflar ㄱ ㄴ ㄷ", duration: "20 daq", done: false, locked: true },
+    { id: "4", title: "Salomlashish — 안녕하세요", duration: "15 daq", done: false, locked: true },
+    { id: "5", title: "O‘zini tanishtirish", duration: "19 daq", done: false, locked: true },
     { id: "6", title: "Raqamlar va sana", duration: "17 daq", locked: true },
   ],
 };
@@ -186,8 +194,6 @@ export const videos = [
   { id: "4", title: "Talaffuz: 쌍자음 ㅃ ㅉ ㄸ", duration: "12:05", teacher: "Choi Soo-Jin", views: "9K", category: "Talaffuz" },
 ];
 
-export const demoAccounts = [
-  { role: "Talaba", email: "student@dreamkorea.uz", password: "password123" },
-  { role: "Ustoz", email: "teacher@dreamkorea.uz", password: "password123" },
-  { role: "Admin", email: "admin@dreamkorea.uz", password: "password123" },
-];
+// Демо отключено — все курсы бесплатные, контент добавляет админ.
+// Экспорт оставлен для совместимости, но скрыт в UI.
+export const demoAccounts: { role: string; email: string; password: string }[] = [];

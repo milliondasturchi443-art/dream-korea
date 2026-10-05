@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 const items = [
   { id: "1", title: "Yangi dars qo‘shildi", desc: "4-dars: Salomlashish — bugun 16:00", time: "2 soat oldin", unread: true },
   { id: "2", title: "Test natijasi", desc: "TOPIK I reading — 82% · yaxshi natija!", time: "kecha", unread: true },
-  { id: "3", title: "To‘lov tasdiqlandi", desc: "Koreys tili 1-daraja — Paid", time: "2 kun oldin", unread: false },
+  { id: "3", title: "Yangi material qo‘shildi", desc: "TOPIK I — pdf qo‘llanma (bepul)", time: "2 kun oldin", unread: false },
   { id: "4", title: "Ustoz xabari", desc: "Kim Ji-Hoon: Ertaga qo‘shimcha dars bor", time: "3 kun oldin", unread: true },
   { id: "5", title: "Tizim xabari", desc: "Platforma yangilandi — AI yordamchi qo‘shildi", time: "1 hafta oldin", unread: false },
 ];

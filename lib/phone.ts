@@ -1,5 +1,5 @@
-// UZ telefon: +998 XX XXX XX XX  (masalan +998 90 123 45 67)
-// Saqlash formati: E.164 (+998901234567). Ko'rsatish: chiroyli.
+// UZ telefon: +998 XX XXX XX XX  (masalan +998 94 328 05 13)
+// Saqlash formati: E.164 (+998943280513). Ko'rsatish: chiroyli.
 // Qo'llab: KR (+82) va RU (+7) ixtiyoriy
 
 export function digitsOnly(s: string) {

@@ -12,7 +12,7 @@ import { Award, BookOpen, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
-  const [phone, setPhone] = useState("+998 90 123 45 67");
+  const [phone, setPhone] = useState("+998 94 328 05 13");
   const [saving, setSaving] = useState(false);
 
   function save() {

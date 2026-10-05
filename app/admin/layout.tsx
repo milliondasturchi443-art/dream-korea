@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Users, GraduationCap, CreditCard, BarChart3, Settings, Building2, Bell, Search, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, GraduationCap, BarChart3, Settings, Building2, Bell, Search, Sparkles, ShieldAlert, BookOpenCheck } from "lucide-react";
 
 const nav = [
   ["Dashboard","/admin", LayoutDashboard],
@@ -7,9 +7,9 @@ const nav = [
   ["O‘quvchilar","/admin", Users],
   ["Ustozlar","/admin", GraduationCap],
   ["Guruhlar","/admin", Users],
-  ["To‘lovlar","/admin", CreditCard],
   ["Vazifalar","/admin", BarChart3],
-  ["Kontent","/admin", Building2],
+  ["Kontent","/admin/content", BookOpenCheck],
+  ["Bloklangan ilovalar","/admin/blocked-apps", ShieldAlert],
   ["Universitetlar","/universities", Building2],
   ["AI yordamchi","/ai", Sparkles],
   ["Broadcast","/admin", Bell],

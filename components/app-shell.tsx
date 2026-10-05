@@ -83,8 +83,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="flex-1 min-w-0 pb-[72px] lg:pb-0">{children}</main>
       </div>
 
-      {/* FAB звонка — только на телефоне, вне админки уже есть в public */}
-      <a href="tel:+998901234567" aria-label="Qo'ng'iroq" className="lg:hidden fixed bottom-[76px] right-3 z-30 h-12 w-12 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 grid place-items-center active:scale-95 transition">
+      {/* FAB звонка — 94 328 05 13 */}
+      <a href="tel:+998943280513" aria-label="Qo'ng'iroq 94 328 05 13" className="lg:hidden fixed bottom-[76px] right-3 z-30 h-12 w-12 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 grid place-items-center active:scale-95 transition">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 5.07 9.81 19.79 19.79 0 0 1 2 1.18 2 2 0 0 1 4 0h3a2 2 0 0 1 2 1.72c.12 1.33.43 2.63.92 3.88a2 2 0 0 1-.57 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.57c1.25.49 2.55.8 3.88.92A2 2 0 0 1 22 16.92z" /></svg>
       </a>
 

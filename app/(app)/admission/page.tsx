@@ -17,7 +17,7 @@ export default function AdmissionPage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name || !form.phone || !form.email) { toast.error("Ism, telefon va email majburiy"); return; }
-    if (!isValidUZ(form.phone)) { toast.error("Telefonni to‘g‘ri kiriting: +998 90 123 45 67"); return; }
+    if (!isValidUZ(form.phone)) { toast.error("Telefonni to‘g‘ri kiriting: +998 94 328 05 13"); return; }
     setDone(true);
     toast.success("Ariza yuborildi! Tez orada bog‘lanamiz.");
   }
@@ -50,7 +50,7 @@ export default function AdmissionPage() {
         <form onSubmit={submit} className="grid gap-3">
           <div><label className="text-xs font-medium">F.I.Sh. *</label><Input autoComplete="name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} placeholder="Bobur Karimov" className="mt-1 text-base sm:text-sm" /></div>
           <div className="grid sm:grid-cols-2 gap-3">
-            <PhoneInput label="Telefon" requiredMark value={form.phone} onValueChange={v=>setForm({...form, phone:v})} placeholder="+998 90 123 45 67" />
+            <PhoneInput label="Telefon" requiredMark value={form.phone} onValueChange={v=>setForm({...form, phone:v})} placeholder="+998 94 328 05 13" />
             <div><label className="text-xs font-medium">Email *</label><Input inputMode="email" autoComplete="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} placeholder="email@example.com" className="mt-1 text-base sm:text-sm" /></div>
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
