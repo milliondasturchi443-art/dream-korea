@@ -1,32 +1,43 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { courses, lessonsByCourse } from "@/lib/mock-data";
-import { isLessonUnlocked, getCompleted } from "@/lib/lesson-progress";
-import { CheckCircle2, Lock, Play, Clock, Star } from "lucide-react";
+import { getCompleted, isLessonUnlocked } from "@/lib/lesson-progress";
+import { CheckCircle2, Lock, Play, Clock, Star, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 const tabs = ["Darslar", "Testlar", "Materiallar", "O‘qituvchi"] as const;
+type Lesson = { id: string; order: number; title: string; duration: string };
 
-export default function CourseDetailPage({ params }: { params: { id: string } }) {
+export default function CourseDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id;
   const [tab, setTab] = useState<typeof tabs[number]>("Darslar");
   const [completed, setCompleted] = useState<number[]>([]);
-  const course = courses.find(c => c.id === params.id) ?? courses[0];
-  const lessons = lessonsByCourse[course.id] ?? [
-    { id: "1", title: "Hangul bilan tanishuv", duration: "18 daq", done: false },
-    { id: "2", title: "Unli harflar ㅏ ㅓ ㅗ ㅜ", duration: "22 daq", done: false, locked: true },
-    { id: "3", title: "Undosh harflar ㄱ ㄴ ㄷ", duration: "20 daq", done: false, locked: true },
-    { id: "4", title: "Salomlashish — 안녕하세요", duration: "15 daq", done: false, locked: true },
-    { id: "5", title: "O‘zini tanishtirish", duration: "19 daq", done: false, locked: true },
-    { id: "6", title: "Raqamlar va sana", duration: "17 daq", done: false, locked: true },
-  ];
+  const [course, setCourse] = useState<{ id: string; title: string; subtitle: string; level: string; teacher: string; color: string } | null>(null);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { setCompleted(getCompleted(course.id)); }, [course.id]);
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/courses/${encodeURIComponent(id)}`).then(r=>r.json()).then(d=>{
+      if (d.error) throw new Error(d.error);
+      const idx = 0;
+      setCourse({ id: d.id, title: d.title, subtitle: d.subtitle ?? "", level: d.level, teacher: d.teacher ?? "Administrator", color: "from-[#1e3a8a] to-[#3b82f6]" });
+      setLessons(Array.isArray(d.lessons) ? d.lessons : []);
+    }).catch(()=> toast.error("Kurs yuklanmadi")).finally(()=>setLoading(false));
+  }, [id]);
+
+  useEffect(() => { if (course) setCompleted(getCompleted(course.id)); }, [course?.id]);
+
+  if (loading) return <div className="mx-auto max-w-[1100px] p-8 text-center text-sm text-slate-500 flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div>;
+  if (!course) return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8">Kurs topilmadi</Card></div>;
+
   const progress = lessons.length ? Math.round((completed.length / lessons.length) * 100) : 0;
 
   return (
@@ -40,7 +51,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
           </div>
           <div className="p-5 grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-3">
-              <p className="text-sm text-slate-600 leading-relaxed">Barcha kurslar bepul. Kontentni administrator qo‘shadi. Darslar ketma-ket ochiladi — keyingi dars faqat oldingisini yakunlagach.</p>
+              <p className="text-sm text-slate-600 leading-relaxed">Barcha kurslar bepul (БД). Darslar ketma-ket — keyingisi faqat oldingisini tugatgach ochiladi.</p>
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full bg-slate-100 px-3 py-1.5 flex items-center gap-1.5"><Clock className="h-3.5 w-3.5"/> {lessons.length} dars</span>
                 <span className="rounded-full bg-slate-100 px-3 py-1.5">Ustoz: {course.teacher}</span>
@@ -53,7 +64,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
               </div>
             </div>
             <div className="space-y-2">
-              <Link href={`/lessons/${lessons[0]?.id ?? "1"}?course=${course.id}`}><Button className="w-full">Bepul boshlash</Button></Link>
+              <Link href={lessons[0] ? `/lessons/${lessons[0].id}?course=${course.id}` : "#"}><Button className="w-full" disabled={!lessons[0]}>Bepul boshlash</Button></Link>
               <p className="text-xs text-center text-slate-500">Barcha darslar bepul — ketma-ket o‘ting</p>
             </div>
           </div>
@@ -69,36 +80,37 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
       <AnimatePresence mode="wait">
         {tab === "Darslar" && (
           <motion.div key="darslar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-2">
-            {lessons.map((l, idx) => {
-              const unlocked = isLessonUnlocked(course.id, idx);
-              const done = completed.includes(idx);
-              return (
-                <motion.div key={l.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} layout>
-                  <Link
-                    href={unlocked ? `/lessons/${l.id}?course=${course.id}` : "#"}
-                    onClick={e => { if (!unlocked) { e.preventDefault(); toast.error("Oldingi darsni yakunlang, keyin ochiladi"); }}}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border bg-white transition-all ${!unlocked ? "opacity-60 cursor-not-allowed border-slate-200" : "hover:border-blue-200 hover:shadow-sm border-slate-200"}`}
-                  >
-                    <div className={`h-9 w-9 rounded-xl grid place-items-center shrink-0 transition-colors ${done ? "bg-emerald-100 text-emerald-600" : !unlocked ? "bg-slate-100 text-slate-400" : "bg-[#eff6ff] text-[#2563eb]"}`}>
-                      {done ? <CheckCircle2 className="h-5 w-5" /> : !unlocked ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-900">{idx+1}-dars · {l.title}</div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1"><Clock className="h-3 w-3"/>{l.duration} {done ? "· Yakunlandi" : !unlocked ? "· Yopiq — oldingisini tugating" : ""}</div>
-                    </div>
-                    <span className="text-xs font-medium hidden sm:block" style={{ color: !unlocked ? "#94a3b8" : "#2563eb" }}>{!unlocked ? "🔒 Yopiq" : done ? "Takrorlash →" : "Ochish →"}</span>
-                  </Link>
-                </motion.div>
-              );
-            })}
+            {lessons.length === 0 ? <Card className="p-8 text-center text-sm text-slate-500">Hali dars yo‘q — administrator qo‘shadi (/admin/content)</Card> :
+              lessons.map((l, idx) => {
+                const unlocked = isLessonUnlocked(course.id, idx);
+                const done = completed.includes(idx);
+                return (
+                  <motion.div key={l.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} layout>
+                    <Link
+                      href={unlocked ? `/lessons/${l.id}?course=${course.id}` : "#"}
+                      onClick={e => { if (!unlocked) { e.preventDefault(); toast.error("Oldingi darsni yakunlang, keyin ochiladi"); }}}
+                      className={`flex items-center gap-3 p-4 rounded-2xl border bg-white transition-all ${!unlocked ? "opacity-60 cursor-not-allowed border-slate-200" : "hover:border-blue-200 hover:shadow-sm border-slate-200"}`}
+                    >
+                      <div className={`h-9 w-9 rounded-xl grid place-items-center shrink-0 transition-colors ${done ? "bg-emerald-100 text-emerald-600" : !unlocked ? "bg-slate-100 text-slate-400" : "bg-[#eff6ff] text-[#2563eb]"}`}>
+                        {done ? <CheckCircle2 className="h-5 w-5" /> : !unlocked ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-slate-900">{idx+1}-dars · {l.title}</div>
+                        <div className="text-xs text-slate-500 flex items-center gap-1"><Clock className="h-3 w-3"/>{l.duration} {done ? "· Yakunlandi" : !unlocked ? "· Yopiq — oldingisini tugating" : ""}</div>
+                      </div>
+                      <span className="text-xs font-medium hidden sm:block" style={{ color: !unlocked ? "#94a3b8" : "#2563eb" }}>{!unlocked ? "🔒 Yopiq" : done ? "Takrorlash →" : "Ochish →"}</span>
+                    </Link>
+                  </motion.div>
+                );
+              })}
           </motion.div>
         )}
       </AnimatePresence>
       {tab !== "Darslar" && (
         <Card className="p-8 text-center text-sm text-slate-500">
-          {tab === "Testlar" && <span>Testlarni faqat administrator qo‘shadi. Hozircha kontent yo‘q — admindan kuting.</span>}
-          {tab === "Materiallar" && <span>PDF / audio materiallarni administrator qo‘shadi.</span>}
-          {tab === "O‘qituvchi" && <span>Ustoz: {course.teacher} — TOPIK 6, 8 yillik tajriba.</span>}
+          {tab === "Testlar" && <span>Testlar — /topik bo‘limida (TOPIK).</span>}
+          {tab === "Materiallar" && <span>PDF / audio — admin qo‘shadi (/admin/content → Materiallar).</span>}
+          {tab === "O‘qituvchi" && <span>Ustoz: {course.teacher}</span>}
         </Card>
       )}
     </div>

@@ -5,6 +5,7 @@ import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 import { doLogout } from "@/lib/logout";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, BookOpen, GraduationCap, FileText, Library, SpellCheck, BookMarked, Video, Film, Shuffle, Building2, BarChart3, User, Bell, Search, LogOut
 } from "lucide-react";
@@ -86,7 +87,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <LogOut className="h-[18px] w-[18px] shrink-0" /> Chiqish
           </button>
         </aside>
-        <main className="flex-1 min-w-0 pb-[72px] lg:pb-0">{children}</main>
+        <AnimatePresence mode="wait">
+          <motion.main key={pathname} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.22, ease: "easeOut" }} className="flex-1 min-w-0 pb-[72px] lg:pb-0">{children}</motion.main>
+        </AnimatePresence>
       </div>
 
       {/* FAB звонка — 94 328 05 13 */}

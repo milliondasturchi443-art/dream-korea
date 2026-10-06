@@ -1,11 +1,13 @@
 "use client";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { courses } from "@/lib/mock-data";
 import Link from "next/link";
 import { Book, FileText, Library, Video, Film, Shuffle, Building2, BookMarked, GraduationCap, Headphones, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { getCompleted } from "@/lib/lesson-progress";
 
 const quickActions = [
   { label: "Koreyscha kitob", icon: Book, href: "/books" },
@@ -22,19 +24,25 @@ const quickActions = [
   { label: "Universitetlar", icon: Building2, href: "/universities" },
 ];
 
+type ApiCourse = { id: string; title: string; subtitle: string; level: string; lessons: number; color: string };
 export default function DashboardPage() {
+  const [courses, setCourses] = useState<ApiCourse[]>([]);
+  const [userName, setUserName] = useState("Talaba");
+  useEffect(() => {
+    try { const u = JSON.parse(localStorage.getItem("dk_user") || "{}"); if (u.name) setUserName(u.name); } catch {}
+    fetch("/api/courses").then(r=>r.json()).then(d=>{ if (Array.isArray(d.courses)) setCourses(d.courses.slice(0,3)); }).catch(()=>{});
+  }, []);
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
-      {/* greeting */}
-      <div className="flex items-start justify-between gap-4">
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-slate-900">Assalomu alaykum, Bobur! 👋</h1>
+          <h1 className="text-[22px] font-bold text-slate-900">Assalomu alaykum, {userName}! 👋</h1>
           <p className="text-sm text-slate-500">Koreys tilida yangi yutuqlarga!</p>
         </div>
         <div className="hidden sm:flex items-center gap-2">
-          <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">🔥 12 kun streak</Badge>
+          <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">🔥 streak</Badge>
         </div>
-      </div>
+      </motion.div>
 
       {/* main progress card */}
       <Card className="p-5">
@@ -122,26 +130,34 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* my courses preview */}
-      <div>
+      {/* my courses preview — БД + progress */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08 }}>
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-slate-900">Mening kurslarim</h2>
           <Link href="/courses" className="text-sm text-[#2563eb] font-medium">Barchasi →</Link>
         </div>
-        <div className="mt-3 grid md:grid-cols-3 gap-4">
-          {courses.slice(0,3).map(c => (
-            <Card key={c.id} className="p-4">
-              <div className="text-sm font-semibold text-slate-900">{c.title}</div>
-              <div className="text-xs text-slate-500">{c.teacher} · {c.completed}/{c.lessons} dars</div>
-              <Progress value={c.progress} className="mt-3" />
-              <div className="mt-2 flex items-center justify-between text-xs">
-                <span className="text-slate-500">{c.progress}%</span>
-                <Link href={`/courses/${c.id}`} className="text-[#2563eb] font-medium">Kirish →</Link>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
+        {courses.length === 0 ? (
+          <Card className="mt-3 p-6 text-center text-sm text-slate-500">Hali kurs yo‘q — administrator qo‘shadi</Card>
+        ) : (
+          <div className="mt-3 grid md:grid-cols-3 gap-4">
+            {courses.map(c => {
+              const done = getCompleted(c.id).length;
+              const prog = c.lessons ? Math.round(done / c.lessons * 100) : 0;
+              return (
+                <Card key={c.id} className="p-4">
+                  <div className="text-sm font-semibold text-slate-900 line-clamp-2">{c.title}</div>
+                  <div className="text-xs text-slate-500">{c.level} · {done}/{c.lessons} dars</div>
+                  <Progress value={prog} className="mt-3" />
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <span className="text-slate-500">{prog}%</span>
+                    <Link href={`/courses/${c.id}`} className="text-[#2563eb] font-medium">Kirish →</Link>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 }
