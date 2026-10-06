@@ -17,16 +17,22 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  function onSubmit(e: React.FormEvent) {
+  const [loading, setLoading] = useState(false);
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name || !email || !password) { toast.error("Barcha maydonlarni to‘ldiring"); return; }
     if (phone && !isValidUZ(phone)) { toast.error("Telefon raqamini to‘g‘ri kiriting: +998 94 328 05 13"); return; }
-    const payload: Record<string,string> = { email, name, role: "STUDENT" };
-    if (phone) payload.phone = phone;
-    localStorage.setItem("dk_role", "STUDENT");
-    localStorage.setItem("dk_user", JSON.stringify(payload));
-    toast.success("Muvaffaqiyatli ro‘yxatdan o‘tdingiz!");
-    router.push("/dashboard");
+    setLoading(true);
+    try {
+      const r = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, email, password, phone }) });
+      const d = await r.json().catch(()=>({}));
+      if (!r.ok) { toast.error(d.error ?? "Ro‘yxatdan o‘tishda xato"); return; }
+      localStorage.setItem("dk_role", d.role);
+      localStorage.setItem("dk_token", d.token ?? "");
+      localStorage.setItem("dk_user", JSON.stringify({ email: d.email ?? email, name: d.name ?? name, role: d.role, id: d.id, phone }));
+      toast.success("Muvaffaqiyatli ro‘yxatdan o‘tdingiz!");
+      router.push("/dashboard");
+    } catch { toast.error("Server bilan bog‘lanib bo‘lmadi"); } finally { setLoading(false); }
   }
 
   return (
@@ -40,7 +46,7 @@ export default function RegisterPage() {
           <PhoneInput label="Telefon" value={phone} onValueChange={setPhone} placeholder="+998 94 328 05 13" />
           <div><label className="text-xs font-medium">Email</label><Input inputMode="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@example.com" className="mt-1 text-base sm:text-sm" /></div>
           <div><label className="text-xs font-medium">Parol</label><Input type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" className="mt-1 text-base sm:text-sm" /></div>
-          <Button type="submit" className="w-full mt-2 h-11">Ro‘yxatdan o‘tish</Button>
+          <Button type="submit" className="w-full mt-2 h-11" disabled={loading}>{loading ? "Yuborilmoqda…" : "Ro‘yxatdan o‘tish"}</Button>
         </form>
         <p className="mt-4 text-center text-xs text-slate-500">Akkauntingiz bormi? <Link href="/login" className="text-[#2563eb] font-medium">Kirish</Link></p>
       </Card>

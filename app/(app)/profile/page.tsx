@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidUZ, telHref } from "@/lib/phone";
 import { SITE_PHONE_DISPLAY } from "@/lib/site";
-import { Award, BookOpen, Trophy } from "lucide-react";
+import { doLogout } from "@/lib/logout";
+import { Award, BookOpen, Trophy, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [phone, setPhone] = useState("+998 94 328 05 13");
   const [saving, setSaving] = useState(false);
 
@@ -20,6 +23,7 @@ export default function ProfilePage() {
     setSaving(true);
     setTimeout(() => { setSaving(false); toast.success("Saqlab olindi"); }, 600);
   }
+  function logout() { doLogout(); toast.success("Chiqdingiz"); router.push("/login"); }
 
   return (
     <div className="mx-auto max-w-[900px] p-4 lg:p-6 space-y-5">
@@ -65,6 +69,11 @@ export default function ProfilePage() {
           <Card className="p-4 sm:p-5">
             <div className="font-semibold text-slate-900">Sertifikatlar</div>
             <p className="text-sm text-slate-500 mt-1">Hozircha sertifikat yo‘q. Kursni yakunlagach sertifikat olasiz.</p>
+          </Card>
+          <Card className="p-4 sm:p-5 border-red-200 bg-red-50/50">
+            <div className="font-semibold text-slate-900 flex items-center gap-2"><LogOut className="h-4 w-4 text-red-600"/> Akkaunt</div>
+            <p className="text-xs text-slate-600 mt-1">Akauntdan chiqish — qayta kirish uchun login kerak.</p>
+            <Button variant="outline" className="w-full mt-3 border-red-200 text-red-700 hover:bg-red-50" onClick={logout}><LogOut className="h-4 w-4 mr-1"/> Chiqish</Button>
           </Card>
         </div>
       </div>

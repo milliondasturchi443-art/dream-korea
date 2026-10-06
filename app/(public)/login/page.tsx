@@ -6,27 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
-import { DEMO_USERS, roleHome, normalizeEmail, type Role } from "@/lib/auth";
+import { roleHome, normalizeEmail, type Role } from "@/lib/auth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const norm = normalizeEmail(email);
-    const u = DEMO_USERS[norm] ?? DEMO_USERS[email.trim().toLowerCase()];
-    if (!u || u.password !== password) {
-      toast.error("Email yoki parol noto‘g‘ri");
-      return;
-    }
-    localStorage.setItem("dk_role", u.role);
-    localStorage.setItem("dk_user", JSON.stringify({ email: norm, name: u.name, role: u.role }));
-    toast.success(`Xush kelibsiz, ${u.name}!`);
-    router.push(roleHome(u.role as Role));
+    const em = email.trim();
+    const pw = password;
+    if (!em || !pw) { toast.error("Email va parolni kiriting"); return; }
+    setLoading(true);
+    try {
+      const r = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: em, password: pw }) });
+      const d = await r.json().catch(()=>({}));
+      if (!r.ok) { toast.error(d.error ?? "Kirishda xato"); return; }
+      const norm = normalizeEmail(d.email ?? em);
+      localStorage.setItem("dk_role", d.role);
+      localStorage.setItem("dk_token", d.token ?? "");
+      localStorage.setItem("dk_user", JSON.stringify({ email: norm, name: d.name ?? "Foydalanuvchi", role: d.role, id: d.id }));
+      toast.success(`Xush kelibsiz, ${d.name ?? ""}!`);
+      router.push(roleHome(d.role as Role));
+    } catch {
+      toast.error("Server bilan bog‘lanib bo‘lmadi");
+    } finally { setLoading(false); }
   }
 
   return (
@@ -45,7 +53,7 @@ export default function LoginPage() {
               <label className="text-xs font-medium text-slate-700">Parol</label>
               <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="mt-1" autoComplete="current-password" />
             </div>
-            <Button type="submit" className="w-full mt-2">Kirish</Button>
+            <Button type="submit" className="w-full mt-2" disabled={loading}>{loading ? "Kirilmoqda…" : "Kirish"}</Button>
           </form>
           <div className="mt-4 flex justify-between text-xs">
             <Link href="/register" className="text-[#2563eb] hover:underline">Ro‘yxatdan o‘tish</Link>

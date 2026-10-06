@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
+import { doLogout } from "@/lib/logout";
 import Image from "next/image";
 import {
   LayoutDashboard, BookOpen, GraduationCap, FileText, Library, SpellCheck, BookMarked, Video, Film, Shuffle, Building2, BarChart3, User, Bell, Search, LogOut
@@ -27,6 +28,8 @@ export const studentNav = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  function onLogout() { doLogout(); router.push("/login"); }
   return (
     <div className="min-h-screen bg-[#f1f5f9]">
       {/* top navy bar - desktop */}
@@ -50,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">BK</div>
             <span className="text-sm font-medium hidden xl:block">Bobur</span>
           </Link>
-          <Link href="/login" className="p-2 rounded-full hover:bg-white/10"><LogOut className="h-4 w-4" /></Link>
+          <button onClick={onLogout} aria-label="Chiqish" className="p-2 rounded-full hover:bg-white/10"><LogOut className="h-4 w-4" /></button>
         </div>
       </div>
 
@@ -67,8 +70,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="flex">
-        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto bg-white border-r border-slate-200 p-3">
-          <nav className="space-y-1">
+        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto bg-white border-r border-slate-200 p-3 flex flex-col">
+          <nav className="space-y-1 flex-1">
             {studentNav.map(item => {
               const active = pathname === item.href;
               return (
@@ -79,6 +82,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          <button onClick={onLogout} className="mt-3 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 w-full">
+            <LogOut className="h-[18px] w-[18px] shrink-0" /> Chiqish
+          </button>
         </aside>
         <main className="flex-1 min-w-0 pb-[72px] lg:pb-0">{children}</main>
       </div>
@@ -104,6 +110,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
+        <button onClick={onLogout} className="flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-medium min-h-[44px] min-w-[44px] text-slate-500">
+          <LogOut className="h-5 w-5" /> Chiqish
+        </button>
       </nav>
     </div>
   );

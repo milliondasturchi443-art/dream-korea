@@ -1,5 +1,8 @@
+"use client";
 import Link from "next/link";
-import { LayoutDashboard, Users, GraduationCap, BarChart3, Settings, Building2, Bell, Search, Sparkles, ShieldAlert, BookOpenCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { doLogout } from "@/lib/logout";
+import { LayoutDashboard, Users, GraduationCap, BarChart3, Settings, Building2, Bell, Search, Sparkles, ShieldAlert, BookOpenCheck, LogOut } from "lucide-react";
 
 const nav = [
   ["Dashboard","/admin", LayoutDashboard],
@@ -18,6 +21,8 @@ const nav = [
 ] as const;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  function onLogout() { doLogout(); router.push("/login"); }
   return (
     <div className="min-h-screen bg-[#f1f5f9]">
       <div className="h-[56px] bg-[#0f1b3d] text-white flex items-center px-4 lg:px-6 justify-between sticky top-0 z-30 gap-4">
@@ -31,17 +36,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex items-center gap-2">
           <Link href="/notifications" className="p-2 rounded-full hover:bg-white/10"><Bell className="h-5 w-5" /></Link>
           <div className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">AD</div>
+          <button onClick={onLogout} aria-label="Chiqish" className="p-2 rounded-full hover:bg-white/10"><LogOut className="h-4 w-4" /></button>
         </div>
       </div>
       <div className="flex">
-        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto bg-white border-r border-slate-200 p-3">
-          <nav className="space-y-1">
+        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto bg-white border-r border-slate-200 p-3 flex flex-col">
+          <nav className="space-y-1 flex-1">
             {nav.map(([label, href, Icon]) => (
               <Link key={label} href={href} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
                 <Icon className="h-4 w-4" /> {label}
               </Link>
             ))}
           </nav>
+          <button onClick={onLogout} className="mt-3 flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 w-full"><LogOut className="h-4 w-4"/> Chiqish</button>
         </aside>
         <main className="flex-1 min-w-0">{children}</main>
       </div>
