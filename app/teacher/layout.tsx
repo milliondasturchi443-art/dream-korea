@@ -11,7 +11,7 @@ const nav = [
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#f1f5f9]">
+    <div className="min-h-screen">
       <div className="h-[56px] glass-dark text-white flex items-center px-6 justify-between sticky top-0 z-30">
         <Link href="/teacher" className="font-bold">DREAM KOREA — Teacher</Link>
         <Link href="/dashboard" className="text-sm text-white/80 hover:text-white">Student view →</Link>

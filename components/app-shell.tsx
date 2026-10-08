@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
   function onLogout() { doLogout(); router.push("/login"); }
   return (
-    <div className="min-h-screen bg-[#f1f5f9]">
+    <div className="min-h-screen">
       {/* top navy bar - desktop */}
       <div className="hidden lg:flex h-[56px] glass-dark text-white items-center px-6 justify-between sticky top-0 z-30">
         <div className="flex items-center gap-8">

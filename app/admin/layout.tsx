@@ -49,7 +49,7 @@ function AdminKeyGate({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1b3d] isolate relative overflow-hidden flex flex-col items-center justify-center px-6 text-white">
+    <div className="admin-gate min-h-screen isolate relative overflow-hidden flex flex-col items-center justify-center px-6 text-white">
       <div className="orb -z-10 w-[340px] h-[340px] bg-blue-500/40 -top-24 -left-24" />
       <div className="orb -z-10 w-[300px] h-[300px] bg-indigo-400/30 -bottom-20 -right-16" />
       <div className="glass-dark rounded-[32px] p-6 w-full max-w-[380px] flex flex-col items-center">
@@ -130,7 +130,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (state === "loading") {
     return (
-      <div className="min-h-screen bg-[#f1f5f9] grid place-items-center text-slate-500">
+      <div className="min-h-screen grid place-items-center text-slate-500">
         <div className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Tekshirilmoqda…</div>
       </div>
     );
@@ -144,7 +144,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const initials = name.split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase() || "AD";
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9]">
+    <div className="min-h-screen">
       <div className="h-[56px] glass-dark text-white flex items-center px-4 lg:px-6 justify-between sticky top-0 z-30 gap-4">
         <Link href="/admin" className="flex items-center gap-2 font-bold tracking-tight">
           <Image src="/adminapklogo.png" alt="" width={30} height={30} className="rounded-lg bg-white p-0.5" />
