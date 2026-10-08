@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { verify, readAuthToken } from "@/lib/token";
+import { phoneKey } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,15 @@ export async function PATCH(req: Request) {
       ? await prisma.user.findUnique({ where: { id: me.id } })
       : await prisma.user.findUnique({ where: { email: me.email } });
     if (!user) return Response.json({ error: "Foydalanuvchi topilmadi" }, { status: 404 });
+    if (typeof data.phone === "string") {
+      const key = phoneKey(data.phone);
+      if (key) {
+        const others = await prisma.user.findMany({ where: { phone: { not: null }, id: { not: user.id } }, select: { phone: true } });
+        if (others.some(x => x.phone && phoneKey(x.phone) === key)) {
+          return Response.json({ error: "Bu telefon raqam boshqa foydalanuvchida mavjud" }, { status: 409 });
+        }
+      }
+    }
     const u = await prisma.user.update({ where: { id: user.id }, data });
     return Response.json({ ok: true, name: u.name, phone: u.phone, topikLevel: u.topikLevel });
   } catch (e) {

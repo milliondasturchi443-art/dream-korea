@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { normalizeEmail, ADMIN_EMAIL } from "@/lib/auth";
+import { emailVerifyEnabled } from "@/lib/email";
 import { sign } from "@/lib/token";
 import { cookies } from "next/headers";
 import * as bcrypt from "bcryptjs";
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
     if (!user) return Response.json({ error: "Email yoki parol noto‘g‘ri" }, { status: 401 });
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return Response.json({ error: "Email yoki parol noto‘g‘ri" }, { status: 401 });
-    if (user.emailVerified === false) {
+    if (emailVerifyEnabled() && user.emailVerified === false) {
       return Response.json({ error: "Email tasdiqlanmagan — pochtangizdagi havolani bosing", code: "EMAIL_NOT_VERIFIED" }, { status: 403 });
     }
     const role = user.role as string;

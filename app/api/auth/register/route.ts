@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
 import { normalizeEmail } from "@/lib/auth";
 import { sign } from "@/lib/token";
-import { sendVerificationEmail, verificationUrl } from "@/lib/email";
+import { sendVerificationEmail, verificationUrl, emailVerifyEnabled } from "@/lib/email";
+import { cookies } from "next/headers";
+import { phoneKey } from "@/lib/phone";
 import * as bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
@@ -17,12 +19,27 @@ export async function POST(req: Request) {
   if (password.length < 6) return Response.json({ error: "Parol kamida 6 ta belgi" }, { status: 400 });
   const email = normalizeEmail(emailRaw);
   if (!email.includes("@")) return Response.json({ error: "Email noto‘g‘ri" }, { status: 400 });
+  const verifyOn = emailVerifyEnabled();
   try {
+    // Band raqam bilan ro'yxatdan o'tish mumkin emas
+    if (phone) {
+      const key = phoneKey(phone);
+      const withPhone = await prisma.user.findMany({ where: { phone: { not: null } }, select: { phone: true } });
+      if (withPhone.some(u => u.phone && phoneKey(u.phone) === key)) {
+        return Response.json({ error: "Bu telefon raqam allaqachon ro‘yxatda" }, { status: 409 });
+      }
+    }
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return Response.json({ error: "Bu email allaqachon ro‘yxatda" }, { status: 409 });
     const hash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, role: "STUDENT", emailVerified: false } });
-    // Email tasdiqlash havolasi yuboriladi — session faqat tasdiqlagandan keyin
+    const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, role: "STUDENT", emailVerified: verifyOn ? false : true } });
+    if (!verifyOn) {
+      // Tasdiqlash vaqtincha o'chirilgan — darhol session
+      const token = sign({ email: user.email, name: user.name, role: user.role, id: user.id });
+      const cs = await cookies();
+      cs.set("dk_token", token, { httpOnly: true, path: "/", maxAge: 30 * 24 * 3600, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+      return Response.json({ token, email: user.email, name: user.name, role: user.role, id: user.id });
+    }
     const verifyToken = sign({ email: user.email, purpose: "verify" }, 24 * 3600 * 1000);
     const sent = await sendVerificationEmail(user.email, verificationUrl(verifyToken));
     return Response.json({ requiresVerification: true, email: user.email, emailSent: sent.ok, emailError: sent.ok ? undefined : sent.error });

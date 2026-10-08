@@ -46,6 +46,14 @@ export function telHref(input: string): string {
   return `tel:${toE164(input)}`;
 }
 
+// Unikal tekshirish uchun raqam kaliti (+998/bo'shliqlarni olib tashlaydi)
+export function phoneKey(s: string): string {
+  const d = digitsOnly(s);
+  if (d.length === 12 && d.startsWith("998")) return d.slice(3);
+  if (d.length === 10 && d.startsWith("0")) return d.slice(1);
+  return d;
+}
+
 export function displayPhone(input: string): string {
   const d = digitsOnly(input);
   if (d.startsWith("998") || d.length === 9 || d.length === 12) return formatUZ(input);

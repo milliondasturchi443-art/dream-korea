@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { normalizeEmail } from "@/lib/auth";
 import { sign } from "@/lib/token";
-import { sendVerificationEmail, verificationUrl } from "@/lib/email";
+import { sendVerificationEmail, verificationUrl, emailVerifyEnabled } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +11,7 @@ export async function POST(req: Request) {
   try { body = await req.json(); } catch {}
   const email = normalizeEmail(String(body.email ?? "").trim());
   if (!email.includes("@")) return Response.json({ error: "Email noto‘g‘ri" }, { status: 400 });
+  if (!emailVerifyEnabled()) return Response.json({ ok: true });
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });

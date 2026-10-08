@@ -10,6 +10,11 @@ export function verificationUrl(token: string): string {
 
 type SendResult = { ok: boolean; error?: string; via?: string };
 
+// Email tasdiqlash faqat EMAIL_VERIFY_ENABLED="true" bo'lganda majburiy
+export function emailVerifyEnabled(): boolean {
+  return process.env.EMAIL_VERIFY_ENABLED === "true";
+}
+
 export async function sendVerificationEmail(to: string, url: string): Promise<SendResult> {
   const subject = "DREAM KOREA — hisobingizni tasdiqlang";
   const text = `DREAM KOREA — hisobingizni tasdiqlang: ${url} (24 soat amal qiladi)`;
