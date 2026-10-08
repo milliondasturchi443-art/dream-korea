@@ -1,4 +1,6 @@
-// Email yuborish — Resend API (resend.com)
+// Email yuborish — Gmail SMTP (asosiy, domen cheklovisiz) + Resend (zaxira)
+import nodemailer from "nodemailer";
+
 const API = "https://api.resend.com/emails";
 
 export function verificationUrl(token: string): string {
@@ -6,11 +8,11 @@ export function verificationUrl(token: string): string {
   return `${base}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
 }
 
-export async function sendVerificationEmail(to: string, url: string): Promise<{ ok: boolean; error?: string }> {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { ok: false, error: "RESEND_API_KEY sozlanmagan" };
-  const from = process.env.RESEND_FROM || "DREAM KOREA <onboarding@resend.dev>";
+type SendResult = { ok: boolean; error?: string; via?: string };
 
+export async function sendVerificationEmail(to: string, url: string): Promise<SendResult> {
+  const subject = "DREAM KOREA — hisobingizni tasdiqlang";
+  const text = `DREAM KOREA — hisobingizni tasdiqlang: ${url} (24 soat amal qiladi)`;
   const html = `<!doctype html>
 <html><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
   <table role="width" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:24px 0;">
@@ -34,31 +36,46 @@ export async function sendVerificationEmail(to: string, url: string): Promise<{ 
           <p style="margin:0;font-size:12px;word-break:break-all;"><a href="${url}" style="color:#2563eb;">${url}</a></p>
         </td></tr>
         <tr><td style="background:#f8fafc;padding:16px 28px;font-size:12px;color:#94a3b8;">
-          © 2026 DREAM KOREA · Toshkent ko‘chasi yoki Namangan · +998 94 328 05 13
+          © 2026 DREAM KOREA · Namangan · +998 94 328 05 13
         </td></tr>
       </table>
     </td></tr>
   </table>
 </body></html>`;
 
-  try {
-    const r = await fetch(API, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: "DREAM KOREA — hisobingizni tasdiqlang",
-        html,
-        text: `DREAM KOREA — hisobingizni tasdiqlang: ${url} (24 soat amal qiladi)`,
-      }),
-    });
-    if (!r.ok) {
+  // 1) Gmail SMTP — Resend cheklovisiz istalgan manzilga bepul
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
+  if (gmailUser && gmailPass) {
+    try {
+      const t = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: gmailUser, pass: gmailPass },
+      });
+      await t.sendMail({ from: `"DREAM KOREA" <${gmailUser}>`, to, subject, html, text });
+      return { ok: true, via: "gmail" };
+    } catch (e) {
+      console.error("gmail smtp error", e instanceof Error ? e.message : e);
+      // Resend'ga o'tamiz
+    }
+  }
+
+  // 2) Resend — domen tasdiqlanmaguncha faqat Resend akkaunt emailiga
+  const key = process.env.RESEND_API_KEY;
+  if (key) {
+    const from = process.env.RESEND_FROM || "DREAM KOREA <onboarding@resend.dev>";
+    try {
+      const r = await fetch(API, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to: [to], subject, html, text }),
+      });
+      if (r.ok) return { ok: true, via: "resend" };
       const d = await r.json().catch(() => ({} as Record<string, string>));
       return { ok: false, error: (d as { message?: string }).message ?? `Pochta xatosi (${r.status})` };
+    } catch {
+      return { ok: false, error: "Pochta xizmatiga ulanib bo‘lmadi" };
     }
-    return { ok: true };
-  } catch {
-    return { ok: false, error: "Pochta xizmatiga ulanib bo‘lmadi" };
   }
+  return { ok: false, error: gmailUser ? "Gmail App Password hali kiritilmagan" : "Email xizmati sozlanmagan" };
 }
