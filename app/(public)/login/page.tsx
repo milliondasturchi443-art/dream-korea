@@ -30,7 +30,15 @@ export default function LoginPage() {
     try {
       const r = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: em, password: pw }) });
       const d = await r.json().catch(()=>({}));
-      if (!r.ok) { toast.error(d.error ?? "Kirishda xato"); return; }
+      if (!r.ok) {
+        if (d.code === "EMAIL_NOT_VERIFIED") {
+          toast.error(d.error ?? "Email tasdiqlanmagan");
+          router.push(`/verify-email?email=${encodeURIComponent(em)}`);
+          return;
+        }
+        toast.error(d.error ?? "Kirishda xato");
+        return;
+      }
       const norm = normalizeEmail(d.email ?? em);
       localStorage.setItem("dk_role", d.role);
       if (d.role === "ADMIN") {

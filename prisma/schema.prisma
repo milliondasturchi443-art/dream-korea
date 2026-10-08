@@ -26,6 +26,7 @@ model User {
   name      String
   phone     String?
   password  String
+  emailVerified Boolean?
   role      Role     @default(STUDENT)
   avatar    String?
   topikLevel String? @default("TOPIK I")

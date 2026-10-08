@@ -46,6 +46,9 @@ export async function POST(req: Request) {
     if (!user) return Response.json({ error: "Email yoki parol noto‘g‘ri" }, { status: 401 });
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return Response.json({ error: "Email yoki parol noto‘g‘ri" }, { status: 401 });
+    if (user.emailVerified === false) {
+      return Response.json({ error: "Email tasdiqlanmagan — pochtangizdagi havolani bosing", code: "EMAIL_NOT_VERIFIED" }, { status: 403 });
+    }
     const role = user.role as string;
     const token = sign({ email: user.email, name: user.name, role, id: user.id });
     await setSessionCookie(token, role);

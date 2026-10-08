@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { normalizeEmail } from "@/lib/auth";
 import { sign } from "@/lib/token";
-import { cookies } from "next/headers";
+import { sendVerificationEmail, verificationUrl } from "@/lib/email";
 import * as bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
@@ -21,11 +21,11 @@ export async function POST(req: Request) {
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return Response.json({ error: "Bu email allaqachon ro‘yxatda" }, { status: 409 });
     const hash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, role: "STUDENT" } });
-    const token = sign({ email: user.email, name: user.name, role: user.role, id: user.id });
-    const cs = await cookies();
-    cs.set("dk_token", token, { httpOnly: true, path: "/", maxAge: 30 * 24 * 3600, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
-    return Response.json({ token, email: user.email, name: user.name, role: user.role, id: user.id });
+    const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, role: "STUDENT", emailVerified: false } });
+    // Email tasdiqlash havolasi yuboriladi — session faqat tasdiqlagandan keyin
+    const verifyToken = sign({ email: user.email, purpose: "verify" }, 24 * 3600 * 1000);
+    const sent = await sendVerificationEmail(user.email, verificationUrl(verifyToken));
+    return Response.json({ requiresVerification: true, email: user.email, emailSent: sent.ok, emailError: sent.ok ? undefined : sent.error });
   } catch (e) {
     console.error("register error", e);
     return Response.json({ error: "Server xatosi — qayta urinib ko‘ring" }, { status: 500 });

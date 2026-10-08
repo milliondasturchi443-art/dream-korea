@@ -30,11 +30,19 @@ export default function RegisterPage() {
       const r = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, email, password, phone }) });
       const d = await r.json().catch(()=>({}));
       if (!r.ok) { toast.error(d.error ?? "Ro‘yxatdan o‘tishda xato"); return; }
+      const next = new URLSearchParams(window.location.search).get("next");
+      if (d.requiresVerification) {
+        toast.success("Ro‘yxatdan o‘tdingiz! Pochtaga tasdiqlash havolasini yubordik.");
+        if (d.emailSent === false) toast.warning(d.emailError ?? "Xat yuborilmadi — keyinroq qayta yuborishingiz mumkin");
+        const q = new URLSearchParams({ email: String(d.email ?? email) });
+        if (next && next.startsWith("/") && !next.startsWith("//")) q.set("next", next);
+        router.push(`/verify-email?${q.toString()}`);
+        return;
+      }
       localStorage.setItem("dk_role", d.role);
       localStorage.setItem("dk_token", d.token ?? "");
       localStorage.setItem("dk_user", JSON.stringify({ email: d.email ?? email, name: d.name ?? name, role: d.role, id: d.id, phone }));
       toast.success("Muvaffaqiyatli ro‘yxatdan o‘tdingiz!");
-      const next = new URLSearchParams(window.location.search).get("next");
       if (next && next.startsWith("/") && !next.startsWith("//")) router.push(next);
       else router.push("/dashboard");
     } catch { toast.error("Server bilan bog‘lanib bo‘lmadi"); } finally { setLoading(false); }
