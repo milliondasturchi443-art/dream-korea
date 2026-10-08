@@ -43,7 +43,30 @@ export async function sendVerificationEmail(to: string, url: string): Promise<Se
   </table>
 </body></html>`;
 
-  // 1) Gmail SMTP — Resend cheklovisiz istalgan manzilga bepul
+  // 1) Brevo API — bepul, istalgan manzilga (sender gmail tekshirilgan bo'lishi kerak)
+  const brevoKey = process.env.BREVO_API_KEY;
+  if (brevoKey) {
+    try {
+      const r = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: { accept: "application/json", "content-type": "application/json", "api-key": brevoKey },
+        body: JSON.stringify({
+          sender: { name: "DREAM KOREA", email: process.env.BREVO_FROM || "noreply@gmail.com" },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+          textContent: text,
+        }),
+      });
+      if (r.ok) return { ok: true, via: "brevo" };
+      const d = await r.json().catch(() => ({} as Record<string, string>));
+      console.error("brevo error", (d as { message?: string }).message ?? r.status);
+    } catch (e) {
+      console.error("brevo error", e instanceof Error ? e.message : e);
+    }
+  }
+
+  // 2) Gmail SMTP — agar App Password bo'lsa
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
   if (gmailUser && gmailPass) {
@@ -60,7 +83,7 @@ export async function sendVerificationEmail(to: string, url: string): Promise<Se
     }
   }
 
-  // 2) Resend — domen tasdiqlanmaguncha faqat Resend akkaunt emailiga
+  // 3) Resend — domen tasdiqlanmaguncha faqat Resend akkaunt emailiga
   const key = process.env.RESEND_API_KEY;
   if (key) {
     const from = process.env.RESEND_FROM || "DREAM KOREA <onboarding@resend.dev>";
@@ -77,5 +100,5 @@ export async function sendVerificationEmail(to: string, url: string): Promise<Se
       return { ok: false, error: "Pochta xizmatiga ulanib bo‘lmadi" };
     }
   }
-  return { ok: false, error: gmailUser ? "Gmail App Password hali kiritilmagan" : "Email xizmati sozlanmagan" };
+  return { ok: false, error: "Email xizmati sozlanmagan (Brevo/Gmail/Resend)" };
 }
