@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { Send, Sparkles, BookOpen } from "lucide-react";
 
-type Msg = { role: "user" | "assistant"; text: string; source?: "openai" | "reference" | "none" };
+type Msg = { role: "user" | "assistant"; text: string; source?: "openrouter" | "openai" | "reference" | "none" };
 
 const prompts = [
   "은/는 va 이/가 farqini tushuntir",
@@ -16,7 +16,7 @@ const prompts = [
 
 export default function AiPage() {
   const [messages, setMessages] = useState<Msg[]>([
-    { role: "assistant", text: "Assalomu alaykum! Savolingizni yozing — yordamchi grammatika, lug‘at va TOPIK bo‘yicha javob beradi. 🇰🇷", source: "reference" },
+    { role: "assistant", text: "Assalomu alaykum! Men Axrorbek AI — koreys tili yordamchisiman. Grammatika, lug‘at, tarjima yoki TOPIK bo‘yicha istalgan savol bering. 🇰🇷", source: "openrouter" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,8 +47,8 @@ export default function AiPage() {
   return (
     <div className="mx-auto max-w-[800px] p-4 lg:p-6 flex flex-col h-[calc(100vh-56px-48px)] lg:h-[calc(100vh-56px-24px)]">
       <div>
-        <h1 className="text-[22px] font-bold text-slate-900 flex items-center gap-2"><Sparkles className="h-5 w-5 text-[#2563eb]"/> Yordamchi</h1>
-        <p className="text-sm text-slate-500">OPENAI_API_KEY sozlangan bo‘lsa — AI; aks holda grammatika ma’lumotnomasidan halol javob.</p>
+        <h1 className="text-[22px] font-bold text-slate-900 flex items-center gap-2"><Sparkles className="h-5 w-5 text-[#2563eb]"/> Axrorbek AI</h1>
+        <p className="text-sm text-slate-500">Koreys tili bo‘yicha AI yordamchi: grammatika, lug‘at, tarjima, TOPIK — savolni yozing.</p>
       </div>
 
       <div className="mt-3 flex gap-1.5 flex-wrap">
@@ -63,8 +63,8 @@ export default function AiPage() {
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-[#2563eb] text-white" : "bg-slate-100 text-slate-800"}`}>
                 {m.role === "assistant" && m.source && (
-                  <span className={`inline-flex items-center gap-1 text-[10px] font-semibold mb-1.5 px-1.5 py-0.5 rounded-full ${m.source === "openai" ? "bg-blue-100 text-blue-700" : m.source === "reference" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                    {m.source === "openai" ? <><Sparkles className="h-3 w-3" /> AI</> : m.source === "reference" ? <><BookOpen className="h-3 w-3" /> Ma’lumotnoma</> : "Ogohlantirish"}
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-semibold mb-1.5 px-1.5 py-0.5 rounded-full ${m.source === "openrouter" ? "bg-[#eff6ff] text-[#2563eb]" : m.source === "openai" ? "bg-blue-100 text-blue-700" : m.source === "reference" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                    {m.source === "openrouter" ? <><Sparkles className="h-3 w-3" /> Axrorbek AI</> : m.source === "openai" ? <><Sparkles className="h-3 w-3" /> AI</> : m.source === "reference" ? <><BookOpen className="h-3 w-3" /> Ma’lumotnoma</> : "Ogohlantirish"}
                   </span>
                 )}
                 <div>{m.text}</div>

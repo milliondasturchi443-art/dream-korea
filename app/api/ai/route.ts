@@ -23,14 +23,58 @@ function referenceAnswer(q: string): string | null {
   return null;
 }
 
-// POST /api/ai — { messages: [{role, text}] } → { reply, source: "openai" | "reference" | "none" }
+// POST /api/ai — { messages: [{role, text}] } → { reply, source: "openrouter" | "openai" | "reference" | "none" }
+const AXRORBEK_SYSTEM = `Sen "Axrorbek AI" — DREAM KOREA o'quv markazining rasmiy koreys tili yordamchisisan.
+Vazifang: o'quvchilarga koreys tilini o'rgatish — grammatika (격조사/particle'lar, kelishiklar), lug'at, tarjima (koreys↔o'zbek), gap qurish va TOPIK imtihoniga tayyorgarlik.
+Qoidalar:
+- Javobni o'zbek tilida ber, koreys yozuvi bilan misollar keltir.
+- Qisqa, aniq va do'stona yoz; izoh kerak bo'lsa 3-5 gapdan oshirma.
+- Xato bo'lsa muloyimlik bilan tuzatib, to'g'risini ko'rsat.
+- Savol noaniq bo'lsa bir-ikki misol bilan aniqlashtirib so'r.
+- Hech qanday imkoniyatni uddalay olmasang, halol ayt va yordam uchun +998 94 328 05 13 raqamini ber.`;
+
+// POST /api/ai — { messages: [{role, text}] } → { reply, source }
 export async function POST(req: Request) {
   let body: { messages?: { role: string; text: string }[] } = {};
   try { body = await req.json(); } catch {}
   const messages = Array.isArray(body.messages) ? body.messages.slice(-10) : [];
   const lastUser = [...messages].reverse().find(m => m.role === "user")?.text?.trim() ?? "";
 
-  // 1) OpenAI kaliti bo'lsa — real AI
+  // 1) OpenRouter (Axrorbek AI) — OPENROUTER_API_KEY bo'lsa
+  const orKey = process.env.OPENROUTER_API_KEY;
+  if (orKey && lastUser) {
+    try {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${orKey}`,
+          "HTTP-Referer": "https://dream-korea.onrender.com",
+          "X-Title": "DREAM KOREA - Axrorbek AI",
+        },
+        body: JSON.stringify({
+          model: process.env.OPENROUTER_MODEL || "xiaomi/mimo-v2.6-flash",
+          messages: [
+            { role: "system", content: AXRORBEK_SYSTEM },
+            ...messages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text })),
+          ],
+          max_tokens: 600,
+        }),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const reply = d?.choices?.[0]?.message?.content?.trim();
+        if (reply) return Response.json({ reply, source: "openrouter" });
+      } else {
+        const err = await r.text().catch(() => "");
+        console.error("openrouter http", r.status, err.slice(0, 300));
+      }
+    } catch (e) {
+      console.error("openrouter error", e);
+    }
+  }
+
+  // 2) OpenAI kaliti bo'lsa — real AI
   const key = process.env.OPENAI_API_KEY;
   if (key && lastUser) {
     try {
@@ -62,7 +106,7 @@ export async function POST(req: Request) {
 
   // 3) Hech nima topilmadi — halol xabar
   return Response.json({
-    reply: "AI yordamchi hozircha ulanmagan (OPENAI_API_KEY sozlanmagan) va savolingiz ma'lumotnomada yo'q. Administratorga murojaat qiling: +998 94 328 05 13.",
+    reply: "Axrorbek AI hozircha ulanmagan va savolingiz ma'lumotnomada yo'q. Administratorga murojaat qiling: +998 94 328 05 13.",
     source: "none",
   });
 }

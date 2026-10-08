@@ -8,12 +8,13 @@ import { doLogout } from "@/lib/logout";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut
+  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut, Bot
 } from "lucide-react";
 
 export const studentNav = [
   { href: "/dashboard", label: "Bosh sahifa", icon: LayoutDashboard },
   { href: "/courses", label: "Kurslar", icon: BookOpen },
+  { href: "/ai", label: "Axrorbek AI", icon: Bot },
   { href: "/topik", label: "TOPIK testlar", icon: FileText },
   { href: "/vocabulary", label: "Lug‘at", icon: Library },
   { href: "/grammar", label: "Grammatika", icon: SpellCheck },
@@ -110,6 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
           { href: "/courses", icon: BookOpen, label: "Darslar" },
+          { href: "/ai", icon: Bot, label: "AI" },
           { href: "/topik", icon: FileText, label: "TOPIK" },
           { href: "/vocabulary", icon: Library, label: "Lug‘at" },
           { href: "/profile", icon: User, label: "Profil" },
