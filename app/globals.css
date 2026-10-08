@@ -119,3 +119,16 @@ a, button { -webkit-tap-highlight-color: transparent; }
 /* custom scrollbar for sidebar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+
+
+/* — mobile micro-animations — */
+@keyframes navPop {
+  0% { transform: scale(0.6); opacity: 0.4; }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.nav-pop { animation: navPop 0.35s ease-out; }
+
+@media (max-width: 1023px) {
+  button:not(:disabled):active { transform: scale(0.97); }
+}

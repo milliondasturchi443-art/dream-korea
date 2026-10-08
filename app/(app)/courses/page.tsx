@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { getCompleted } from "@/lib/lesson-progress";
 import { motion } from "framer-motion";
+import { Reveal } from "@/components/reveal";
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; lessons: number; color: string };
 const FALLBACK: ApiCourse[] = [
@@ -62,11 +63,12 @@ export default function CoursesPage() {
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {list.map(c => {
+          {list.map((c, i) => {
             const prog = progressMap[c.id] ?? 0;
             const done = getCompleted(c.id).length;
             return (
-              <Card key={c.id} className="overflow-hidden flex flex-col hover:shadow-md hover:border-blue-200 transition-all">
+              <Reveal key={c.id} delay={Math.min(i * 0.06, 0.42)} className="h-full">
+              <Card className="overflow-hidden flex flex-col hover:shadow-md hover:border-blue-200 transition-all h-full">
                 <div className={`h-24 bg-gradient-to-br ${c.color} p-4 flex items-start justify-between`}>
                   <Badge className="bg-white text-slate-800 text-[11px]">{c.level}</Badge>
                   <span className="text-white/90 text-xs font-medium">{done} / {c.lessons} dars</span>
@@ -82,6 +84,7 @@ export default function CoursesPage() {
                   </div>
                 </div>
               </Card>
+              </Reveal>
             );
           })}
         </div>

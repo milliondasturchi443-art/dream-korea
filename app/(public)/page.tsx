@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { Reveal } from "@/components/reveal";
 import { GraduationCap, Cpu, Users, Trophy, BookOpen, Building2, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { universities } from "@/lib/mock-data";
@@ -77,6 +78,7 @@ export default function LandingPage() {
       </section>
 
       {/* FEATURES */}
+      <Reveal>
       <section className="mx-auto max-w-[1200px] px-4 py-10">
         <h2 className="text-2xl font-bold text-[#0f1b3d]">Nega DREAM KOREA?</h2>
         <p className="text-slate-500 text-sm mt-1">Natijaga yo‘naltirilgan EdTech tajribasi</p>
@@ -90,8 +92,10 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      </Reveal>
 
       {/* POPULAR COURSES — real from DB */}
+      <Reveal>
       <section className="mx-auto max-w-[1200px] px-4 py-6">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl font-bold text-[#0f1b3d]">Kurslar</h2>
@@ -120,8 +124,10 @@ export default function LandingPage() {
           </div>
         )}
       </section>
+      </Reveal>
 
       {/* TOPIK */}
+      <Reveal>
       <section className="mx-auto max-w-[1200px] px-4 py-8">
         <Card className="p-6 lg:p-8 bg-gradient-to-br from-[#0f1b3d] to-[#1e3a8a] text-white border-0 overflow-hidden relative">
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
@@ -148,9 +154,11 @@ export default function LandingPage() {
           </div>
         </Card>
       </section>
+      </Reveal>
 
       {/* STATS — real from DB */}
       {stats?.db && (
+      <Reveal>
         <section className="mx-auto max-w-[1200px] px-4 py-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
@@ -166,9 +174,11 @@ export default function LandingPage() {
             ))}
           </div>
         </section>
+      </Reveal>
       )}
 
       {/* UNIVERSITIES */}
+      <Reveal>
       <section className="mx-auto max-w-[1200px] px-4 py-6">
         <div className="flex items-end justify-between"><h2 className="text-2xl font-bold text-[#0f1b3d]">Universitetlar</h2><Link href="/universities" className="text-sm font-medium text-[#2563eb]">Barchasi →</Link></div>
         <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -182,8 +192,10 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      </Reveal>
 
       {/* FAQ */}
+      <Reveal>
       <section className="mx-auto max-w-[1200px] px-4 py-8">
         <h2 className="text-2xl font-bold text-[#0f1b3d]">Ko‘p so‘raladigan savollar</h2>
         <div className="mt-6 space-y-3 max-w-3xl">
@@ -203,8 +215,10 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      </Reveal>
 
       {/* CTA */}
+      <Reveal>
       <section className="mx-auto max-w-[1200px] px-4 pb-10">
         <Card className="p-8 bg-[#2563eb] text-white border-0 text-center">
           <h3 className="text-2xl font-bold">Orzuingizdagi Koreyaga bir qadam yaqin</h3>
@@ -215,6 +229,7 @@ export default function LandingPage() {
           </div>
         </Card>
       </section>
+      </Reveal>
     </div>
   );
 }

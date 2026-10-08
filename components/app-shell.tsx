@@ -138,12 +138,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ].map(i => {
           const active = pathname === i.href;
           return (
-            <Link key={i.label} href={i.href} className={cn("flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-medium min-h-[44px] min-w-[44px]", active ? "text-[#2563eb]" : "text-slate-500")}>
+            <Link key={i.label} href={i.href} className={cn("flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-medium min-h-[44px] min-w-[44px] active:scale-90 transition-transform", active ? "text-[#2563eb] bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.35)] nav-pop" : "text-slate-500")}>
               <i.icon className="h-5 w-5" /> {i.label}
             </Link>
           );
         })}
-        <button onClick={onLogout} className="flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-medium min-h-[44px] min-w-[44px] text-slate-500">
+        <button onClick={onLogout} className="flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-medium min-h-[44px] min-w-[44px] text-slate-500 active:scale-90 transition-transform">
           <LogOut className="h-5 w-5" /> Chiqish
         </button>
       </nav>

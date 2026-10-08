@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
 import { MailCheck, MailWarning } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 export default function VerifyEmailPage() {
@@ -44,6 +45,7 @@ export default function VerifyEmailPage() {
     <div className="min-h-[70vh] grid place-items-center px-4 py-10 isolate relative overflow-hidden">
       <div className="orb -z-10 w-[420px] h-[420px] bg-blue-400/35 -top-32 -left-24" />
       <div className="orb -z-10 w-[360px] h-[360px] bg-pink-300/40 -bottom-28 -right-20" />
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: "easeOut" }}>
       <Card className="w-full max-w-[460px] p-5 sm:p-6 lg:p-8">
         <div className="flex justify-center"><Logo /></div>
         <div className="mt-5 flex justify-center">
@@ -76,6 +78,7 @@ export default function VerifyEmailPage() {
           <Link href="/register" className="text-slate-500 hover:text-slate-700">Ro‘yxatdan o‘tish</Link>
         </div>
       </Card>
+      </motion.div>
     </div>
   );
 }
