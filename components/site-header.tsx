@@ -11,7 +11,6 @@ const nav = [
   { href: "/", label: "Bosh sahifa" },
   { href: "/courses", label: "Kurslar" },
   { href: "/topik", label: "TOPIK" },
-  { href: "/topik", label: "EPS-TOPIK" },
   { href: "/videos", label: "Videodarslar" },
   { href: "/universities", label: "Universitetlar" },
 ];

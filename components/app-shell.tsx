@@ -8,23 +8,20 @@ import { doLogout } from "@/lib/logout";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, BookOpen, GraduationCap, FileText, Library, SpellCheck, BookMarked, Video, Film, Shuffle, Building2, BarChart3, User, Bell, Search, LogOut
+  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut
 } from "lucide-react";
 
 export const studentNav = [
   { href: "/dashboard", label: "Bosh sahifa", icon: LayoutDashboard },
-  { href: "/courses", label: "Mening darslarim", icon: BookOpen },
-  { href: "/courses", label: "Kurslar", icon: GraduationCap },
+  { href: "/courses", label: "Kurslar", icon: BookOpen },
   { href: "/topik", label: "TOPIK testlar", icon: FileText },
   { href: "/vocabulary", label: "Lug‘at", icon: Library },
   { href: "/grammar", label: "Grammatika", icon: SpellCheck },
   { href: "/books", label: "Kitoblar", icon: BookMarked },
   { href: "/videos", label: "Videodarslar", icon: Video },
-  { href: "/media", label: "Seriallar", icon: Film },
-  { href: "/vocabulary", label: "Random so‘z", icon: Shuffle },
+  { href: "/media", label: "Kinolar & seriallar", icon: Film },
   { href: "/admission", label: "Qabul", icon: Building2 },
   { href: "/universities", label: "Universitetlar", icon: Building2 },
-  { href: "/profile", label: "Natijalar", icon: BarChart3 },
   { href: "/profile", label: "Profil", icon: User },
 ];
 

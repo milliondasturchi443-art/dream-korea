@@ -4,23 +4,21 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Book, FileText, Library, Video, Film, Shuffle, Building2, BookMarked, GraduationCap, Headphones } from "lucide-react";
+import { Book, FileText, Library, Video, Film, Shuffle, Building2, BookMarked, Headphones } from "lucide-react";
 import { motion } from "framer-motion";
 import { getCompleted } from "@/lib/lesson-progress";
 
 const quickActions = [
-  { label: "Koreyscha kitob", icon: Book, href: "/books" },
+  { label: "Kurslar", icon: Book, href: "/courses" },
   { label: "TOPIK testlar", icon: FileText, href: "/topik" },
-  { label: "Grammatik kitob", icon: Library, href: "/grammar" },
-  { label: "TOPIK kitoblar", icon: BookMarked, href: "/books" },
-  { label: "Lug‘atlar", icon: Library, href: "/vocabulary" },
-  { label: "EPS-TOPIK", icon: GraduationCap, href: "/topik" },
-  { label: "Kinolar", icon: Film, href: "/media" },
-  { label: "Seriallar", icon: Video, href: "/media" },
-  { label: "Foydali dasturlar", icon: Headphones, href: "/videos" },
-  { label: "Random so‘z", icon: Shuffle, href: "/vocabulary" },
-  { label: "Qabul", icon: Building2, href: "/admission" },
+  { label: "Grammatika", icon: Library, href: "/grammar" },
+  { label: "Lug‘at", icon: Shuffle, href: "/vocabulary" },
+  { label: "Kitoblar", icon: BookMarked, href: "/books" },
+  { label: "Videodarslar", icon: Video, href: "/videos" },
+  { label: "Kinolar & seriallar", icon: Film, href: "/media" },
   { label: "Universitetlar", icon: Building2, href: "/universities" },
+  { label: "Qabul", icon: Building2, href: "/admission" },
+  { label: "Yordamchi", icon: Headphones, href: "/ai" },
 ];
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; lessons: number; color: string };

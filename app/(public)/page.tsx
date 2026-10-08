@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { GraduationCap, Cpu, Users, Trophy, BookOpen, Building2, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
+import { universities } from "@/lib/mock-data";
 
 const features = [
   { icon: GraduationCap, title: "Sifatli ta'lim", desc: "Tajribali ustozlar va tasdiqlangan metodika asosida darslar." },
@@ -171,15 +172,13 @@ export default function LandingPage() {
       <section className="mx-auto max-w-[1200px] px-4 py-6">
         <div className="flex items-end justify-between"><h2 className="text-2xl font-bold text-[#0f1b3d]">Universitetlar</h2><Link href="/universities" className="text-sm font-medium text-[#2563eb]">Barchasi →</Link></div>
         <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { name: "Seoul National University", city: "Seul" },
-            { name: "Korea University", city: "Seul" },
-            { name: "Yonsei University", city: "Seul" },
-          ].map(u => (
-            <Card key={u.name} className="p-4 flex gap-3">
-              <div className="h-12 w-12 rounded-xl bg-[#eff6ff] grid place-items-center shrink-0"><Building2 className="h-6 w-6 text-[#2563eb]" /></div>
-              <div className="min-w-0"><div className="font-semibold text-slate-900 leading-tight truncate">{u.name}</div><div className="text-xs text-slate-500">{u.city} · Batafsil → /universities</div></div>
-            </Card>
+          {universities.slice(0,6).map(u => (
+            <Link key={u.id} href="/universities">
+              <Card className="p-4 flex gap-3 hover:border-blue-200 hover:shadow-md transition-all h-full">
+                <div className="h-12 w-12 rounded-xl bg-[#eff6ff] grid place-items-center shrink-0"><Building2 className="h-6 w-6 text-[#2563eb]" /></div>
+                <div className="min-w-0"><div className="font-semibold text-slate-900 leading-tight truncate">{u.name}</div><div className="text-xs text-slate-500">{u.city} · {u.topik}</div><div className="text-xs text-slate-500 truncate">{u.programs.join(" · ")}</div></div>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>

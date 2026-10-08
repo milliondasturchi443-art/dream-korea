@@ -155,8 +155,16 @@ model Video {
   title     String
   category  String
   duration  String
-  teacher   String?
-  views     String?
+  videoUrl  String?
+  createdAt DateTime @default(now())
+}
+
+model Material {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  kind      String
+  url       String?
+  createdAt DateTime @default(now())
 }
 
 model University {
