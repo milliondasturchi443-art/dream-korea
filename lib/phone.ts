@@ -46,12 +46,6 @@ export function telHref(input: string): string {
   return `tel:${toE164(input)}`;
 }
 
-export function whatsappHref(input: string, text?: string): string {
-  const e164 = toE164(input).replace("+", "");
-  const q = text ? `?text=${encodeURIComponent(text)}` : "";
-  return `https://wa.me/${e164}${q}`;
-}
-
 export function displayPhone(input: string): string {
   const d = digitsOnly(input);
   if (d.startsWith("998") || d.length === 9 || d.length === 12) return formatUZ(input);

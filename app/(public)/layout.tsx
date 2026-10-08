@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
-import { SITE_PHONE_E164, SITE_PHONE_DISPLAY, SITE_PHONE2_E164, SITE_PHONE2_DISPLAY, SITE_EMAIL, SITE_ADDRESS, SITE_TELEGRAM, SITE_INSTAGRAM, SITE_YOUTUBE } from "@/lib/site";
-import { telHref, whatsappHref } from "@/lib/phone";
+import { SITE_PHONE_E164, SITE_PHONE_DISPLAY, SITE_PHONE2_E164, SITE_PHONE2_DISPLAY, SITE_EMAIL, SITE_ADDRESS, SITE_TELEGRAM } from "@/lib/site";
+import { telHref } from "@/lib/phone";
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -15,7 +15,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <p className="mt-3 text-slate-400 leading-relaxed">Koreys tilini o‘rganing, orzuingizga yaqinlashing! TOPIK, EPS-TOPIK va universitetlarga tayyorgarlik.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <a href={telHref(SITE_PHONE_E164)} className="rounded-full bg-white text-[#0f1b3d] px-3 py-1.5 text-xs font-semibold hover:bg-slate-100">📞 {SITE_PHONE_DISPLAY}</a>
-              <a href={whatsappHref(SITE_PHONE_E164, "Assalomu alaykum! DREAM KOREA haqida ma'lumot olmoqchiman.")} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-medium hover:bg-white/10">WhatsApp</a>
             </div>
           </div>
           <div>
@@ -35,7 +34,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <a href={`mailto:${SITE_EMAIL}`} className="block hover:text-white">{SITE_EMAIL}</a>
               <span className="block text-slate-400">{SITE_ADDRESS}</span>
               <div className="pt-1 flex gap-2">
-                <a href={whatsappHref(SITE_PHONE_E164)} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-4 hover:text-white">WhatsApp</a>
                 <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-4 hover:text-white">Telegram</a>
               </div>
             </div>
@@ -44,8 +42,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <div className="font-semibold text-white mb-3">Ijtimoiy tarmoqlar</div>
             <div className="flex flex-wrap gap-2 text-xs">
               <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10">Telegram</a>
-              <a href={SITE_INSTAGRAM} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10">Instagram</a>
-              <a href={SITE_YOUTUBE} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10">YouTube</a>
             </div>
             <p className="mt-6 text-xs text-slate-500">© 2026 DREAM KOREA. Barcha huquqlar himoyalangan.</p>
           </div>

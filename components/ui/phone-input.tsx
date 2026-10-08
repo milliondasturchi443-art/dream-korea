@@ -56,7 +56,7 @@ export function PhoneInput({ value, onValueChange, className, placeholder = "+99
   );
 }
 
-// Oddiy telefon linki (tel: + whatsapp + copy)
+// Oddiy telefon linki (tel:)
 export function PhoneLink({ phone, display, className }: { phone: string; display?: string; className?: string }) {
   const href = `tel:${phone.replace(/\s/g, "")}`;
   return (

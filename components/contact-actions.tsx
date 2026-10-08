@@ -1,21 +1,15 @@
 "use client";
-import { Phone, MessageCircle, Send } from "lucide-react";
+import { Phone, Send } from "lucide-react";
 import { Button } from "./ui/button";
 import { SITE_PHONE_E164, SITE_PHONE_DISPLAY, SITE_TELEGRAM } from "@/lib/site";
-import { telHref, whatsappHref } from "@/lib/phone";
+import { telHref } from "@/lib/phone";
 
 export function ContactActions({ phone = SITE_PHONE_E164, display = SITE_PHONE_DISPLAY, compact = false }: { phone?: string; display?: string; compact?: boolean }) {
-  const waText = "Assalomu alaykum! DREAM KOREA haqida ma'lumot olmoqchiman.";
   return (
     <div className={`flex flex-wrap gap-2 ${compact ? "" : ""}`}>
       <a href={telHref(phone)} aria-label="Qo'ng'iroq qilish">
         <Button size={compact ? "sm" : "default"} className="gap-1.5">
           <Phone className="h-4 w-4" /> {compact ? "Qo'ng'iroq" : display}
-        </Button>
-      </a>
-      <a href={whatsappHref(phone, waText)} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-        <Button size={compact ? "sm" : "default"} variant="outline" className="gap-1.5">
-          <MessageCircle className="h-4 w-4" /> WhatsApp
         </Button>
       </a>
       <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" aria-label="Telegram">
