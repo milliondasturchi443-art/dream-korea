@@ -28,7 +28,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="bg-[#f8fafc]">
+    <div>
       {/* HERO */}
       <section className="mx-auto max-w-[1200px] px-4 py-10 lg:py-14 grid lg:grid-cols-2 gap-8 items-center">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
