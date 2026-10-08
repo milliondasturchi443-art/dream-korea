@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
@@ -15,6 +16,7 @@ const prompts = [
 ];
 
 export default function AiPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>([
     { role: "assistant", text: "Assalomu alaykum! Men Axrorbek AI — koreys tili yordamchisiman. Grammatika, lug‘at, tarjima yoki TOPIK bo‘yicha istalgan savol bering. 🇰🇷", source: "openrouter" },
   ]);
@@ -29,11 +31,17 @@ export default function AiPage() {
     setInput("");
     setLoading(true);
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      try {
+        const t = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token");
+        if (t) headers.Authorization = `Bearer ${t}`;
+      } catch {}
       const r = await fetch("/api/ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ messages: next.map(m => ({ role: m.role, text: m.text })) }),
       });
+      if (r.status === 401) { router.push("/login?next=/ai"); return; }
       const d = await r.json().catch(() => ({}));
       const reply = d.reply || "Server bilan bog‘lanib bo‘lmadi. Administratorga murojaat qiling: +998 94 328 05 13.";
       setMessages(m => [...m, { role: "assistant", text: reply, source: d.source ?? "none" }]);

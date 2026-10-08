@@ -114,15 +114,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.replace("/login?next=/admin");
         return;
       }
-      // 401 — telefonda faqat kalit, desktopda login sahifasi
-      if (typeof window !== "undefined" && window.innerWidth < 1024) {
-        setState("keygate");
-      } else {
-        router.replace("/login?next=/admin");
-      }
+      // 401 — hamma qurilmada (telefon ham, PC ham) kalit ekrani
+      setState("keygate");
     } catch {
-      if (typeof window !== "undefined" && window.innerWidth < 1024) setState("keygate");
-      else router.replace("/login?next=/admin");
+      setState("keygate");
     }
   };
 

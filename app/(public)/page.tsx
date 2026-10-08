@@ -191,7 +191,7 @@ export default function LandingPage() {
             ["Kurs qancha davom etadi?", "Har bir daraja o‘z ritmida. Darslar ketma-ket ochiladi — oldingi darsni yakunlagach keyingisi ochiladi."],
             ["TOPIK sertifikatini olsam bo‘ladimi?", "Ha, biz TOPIK I va II uchun to‘liq tayyorgarlik va mock testlar beramiz."],
             ["Kurslar bepulmi?", "Ha — barcha kurslar bepul. Kontentni administrator qo‘shadi, darslar bosqichma-bosqich ochiladi."],
-            ["Darslar offline ham bormi?", "Ha, Toshkentdagi markazimizda offline guruhlar ham mavjud."],
+            ["Darslar offline ham bormi?", "Ha, Namangandagi markazimizda offline guruhlar ham mavjud."],
           ].map(([q,a], idx) => (
             <Card key={q} className="overflow-hidden">
               <button onClick={() => setOpenFaq(openFaq === idx ? null : idx)} className="w-full flex items-center justify-between p-4 text-left">

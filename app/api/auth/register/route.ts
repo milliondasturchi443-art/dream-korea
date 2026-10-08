@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { normalizeEmail } from "@/lib/auth";
 import { sign } from "@/lib/token";
+import { cookies } from "next/headers";
 import * as bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,8 @@ export async function POST(req: Request) {
     const hash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, role: "STUDENT" } });
     const token = sign({ email: user.email, name: user.name, role: user.role, id: user.id });
+    const cs = await cookies();
+    cs.set("dk_token", token, { httpOnly: true, path: "/", maxAge: 30 * 24 * 3600, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
     return Response.json({ token, email: user.email, name: user.name, role: user.role, id: user.id });
   } catch (e) {
     console.error("register error", e);

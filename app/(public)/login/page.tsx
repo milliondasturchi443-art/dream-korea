@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [regHref, setRegHref] = useState("/register");
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("next");
+    if (n && n.startsWith("/") && !n.startsWith("//")) setRegHref(`/register?next=${encodeURIComponent(n)}`);
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,7 +74,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full mt-2" disabled={loading}>{loading ? "Kirilmoqda…" : "Kirish"}</Button>
           </form>
           <div className="mt-4 flex justify-between text-xs">
-            <Link href="/register" className="text-[#2563eb] hover:underline">Ro‘yxatdan o‘tish</Link>
+            <Link href={regHref} className="text-[#2563eb] hover:underline">Ro‘yxatdan o‘tish</Link>
             <Link href="/forgot-password" className="text-slate-500 hover:text-slate-700">Parolni unutdingizmi?</Link>
           </div>
         </Card>

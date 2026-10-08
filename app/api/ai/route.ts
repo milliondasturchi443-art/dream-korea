@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { readAuth } from "@/lib/token";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,10 @@ Qoidalar:
 
 // POST /api/ai — { messages: [{role, text}] } → { reply, source }
 export async function POST(req: Request) {
+  // AI faqat tizimga kirgan foydalanuvchi uchun
+  if (!readAuth(req)) {
+    return Response.json({ error: "AI dan foydalanish uchun tizimga kiring", code: "UNAUTHORIZED" }, { status: 401 });
+  }
   let body: { messages?: { role: string; text: string }[] } = {};
   try { body = await req.json(); } catch {}
   const messages = Array.isArray(body.messages) ? body.messages.slice(-10) : [];
