@@ -49,13 +49,13 @@ function AdminKeyGate({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="admin-gate min-h-screen isolate relative overflow-hidden flex flex-col items-center justify-center px-6 text-white">
-      <div className="orb -z-10 w-[340px] h-[340px] bg-blue-500/40 -top-24 -left-24" />
-      <div className="orb -z-10 w-[300px] h-[300px] bg-indigo-400/30 -bottom-20 -right-16" />
-      <div className="glass-dark rounded-[32px] p-6 w-full max-w-[380px] flex flex-col items-center">
+    <div className="admin-gate min-h-screen isolate relative overflow-hidden flex flex-col items-center justify-center px-6 text-[#0f1b3d]">
+      <div className="orb -z-10 w-[340px] h-[340px] bg-blue-400/35 -top-24 -left-24" />
+      <div className="orb -z-10 w-[300px] h-[300px] bg-pink-300/50 -bottom-20 -right-16" />
+      <div className="glass rounded-[32px] p-6 w-full max-w-[380px] flex flex-col items-center">
         <Image src="/adminapklogo.png" alt="DREAM KOREA Admin" width={96} height={96} className="rounded-3xl bg-white p-1.5 shadow-2xl" priority />
         <h1 className="mt-5 text-xl font-bold tracking-tight">DREAM KOREA — Admin</h1>
-        <p className="mt-1 text-sm text-slate-300">Kirish uchun kalitni kiriting</p>
+        <p className="mt-1 text-sm text-slate-500">Kirish uchun kalitni kiriting</p>
         <form onSubmit={submit} className="mt-7 w-full space-y-3">
           <div className="relative">
             <input
@@ -64,10 +64,10 @@ function AdminKeyGate({ onDone }: { onDone: () => void }) {
               onChange={e => setKey(e.target.value)}
               placeholder="Kalit"
               autoComplete="off"
-              className="w-full h-12 rounded-2xl bg-white/15 border border-white/25 pl-11 pr-12 text-base placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] focus:bg-white/20 backdrop-blur-md"
+              className="w-full h-12 rounded-2xl bg-white/75 border border-slate-300 pl-11 pr-12 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] focus:bg-white backdrop-blur-md"
             />
-            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
-            <button type="button" onClick={() => setShow(s => !s)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-white">
+            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <button type="button" onClick={() => setShow(s => !s)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700">
               {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
@@ -77,7 +77,7 @@ function AdminKeyGate({ onDone }: { onDone: () => void }) {
         </form>
         <p className="mt-5 text-xs text-slate-400 text-center">Bu qurilmada 30 kun eslab qolinadi.</p>
       </div>
-      <Link href="/" className="mt-5 text-xs text-slate-400 hover:text-white">← Saytga qaytish</Link>
+      <Link href="/" className="mt-5 text-xs text-slate-500 hover:text-[#0f1b3d]">← Saytga qaytish</Link>
     </div>
   );
 }
