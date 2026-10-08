@@ -18,7 +18,7 @@ const nav = [
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
+    <header className="sticky top-0 z-40 glass border-b border-b-white/70">
       <div className="mx-auto max-w-[1200px] px-4 h-[64px] flex items-center justify-between gap-4">
         <Link href="/"><Logo /></Link>
         <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-700">
@@ -41,7 +41,7 @@ export function SiteHeader() {
         </div>
       </div>
       {open && (
-        <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3">
+        <div className="lg:hidden border-t border-t-white/70 glass px-4 py-4 space-y-3">
           <a href={telHref(SITE_PHONE_E164)} className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-semibold text-emerald-700">
             <Phone className="h-4 w-4" /> {SITE_PHONE_DISPLAY} — Qo‘ng‘iroq
           </a>

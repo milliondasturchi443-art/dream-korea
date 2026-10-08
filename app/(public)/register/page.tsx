@@ -36,7 +36,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[70vh] grid place-items-center px-4 py-6 sm:py-10 bg-[#f8fafc]">
+    <div className="min-h-[70vh] grid place-items-center px-4 py-6 sm:py-10 isolate relative overflow-hidden">
+      <div className="orb -z-10 w-[420px] h-[420px] bg-blue-400/35 -top-32 -left-24" />
+      <div className="orb -z-10 w-[360px] h-[360px] bg-indigo-300/30 -bottom-28 -right-20" />
       <Card className="w-full max-w-[480px] p-5 sm:p-6 lg:p-8">
         <div className="flex justify-center"><Logo /></div>
         <h1 className="mt-4 text-xl font-bold text-center">Ro‘yxatdan o‘tish</h1>

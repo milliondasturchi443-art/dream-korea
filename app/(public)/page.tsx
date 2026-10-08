@@ -51,7 +51,7 @@ export default function LandingPage() {
 
         {/* Real courses preview */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
-          <div className="rounded-[24px] bg-white border border-slate-200 shadow-xl overflow-hidden">
+          <div className="rounded-[24px] glass overflow-hidden">
             <div className="h-10 bg-[#0f1b3d] flex items-center px-4 gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-red-400" /><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
               <span className="ml-3 text-xs text-slate-300">dreamkorea.uz — Kurslar</span>

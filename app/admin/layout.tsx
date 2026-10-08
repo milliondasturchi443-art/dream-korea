@@ -49,31 +49,35 @@ function AdminKeyGate({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1b3d] flex flex-col items-center justify-center px-6 text-white">
-      <Image src="/adminapklogo.png" alt="DREAM KOREA Admin" width={96} height={96} className="rounded-3xl bg-white p-1.5 shadow-2xl" priority />
-      <h1 className="mt-5 text-xl font-bold tracking-tight">DREAM KOREA — Admin</h1>
-      <p className="mt-1 text-sm text-slate-300">Kirish uchun kalitni kiriting</p>
-      <form onSubmit={submit} className="mt-7 w-full max-w-[340px] space-y-3">
-        <div className="relative">
-          <input
-            type={show ? "text" : "password"}
-            value={key}
-            onChange={e => setKey(e.target.value)}
-            placeholder="Kalit"
-            autoComplete="off"
-            className="w-full h-12 rounded-xl bg-white/10 border border-white/15 pl-11 pr-12 text-base placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] focus:bg-white/15"
-          />
-          <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <button type="button" onClick={() => setShow(s => !s)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white">
-            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+    <div className="min-h-screen bg-[#0f1b3d] isolate relative overflow-hidden flex flex-col items-center justify-center px-6 text-white">
+      <div className="orb -z-10 w-[340px] h-[340px] bg-blue-500/40 -top-24 -left-24" />
+      <div className="orb -z-10 w-[300px] h-[300px] bg-indigo-400/30 -bottom-20 -right-16" />
+      <div className="glass-dark rounded-[32px] p-6 w-full max-w-[380px] flex flex-col items-center">
+        <Image src="/adminapklogo.png" alt="DREAM KOREA Admin" width={96} height={96} className="rounded-3xl bg-white p-1.5 shadow-2xl" priority />
+        <h1 className="mt-5 text-xl font-bold tracking-tight">DREAM KOREA — Admin</h1>
+        <p className="mt-1 text-sm text-slate-300">Kirish uchun kalitni kiriting</p>
+        <form onSubmit={submit} className="mt-7 w-full space-y-3">
+          <div className="relative">
+            <input
+              type={show ? "text" : "password"}
+              value={key}
+              onChange={e => setKey(e.target.value)}
+              placeholder="Kalit"
+              autoComplete="off"
+              className="w-full h-12 rounded-2xl bg-white/15 border border-white/25 pl-11 pr-12 text-base placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] focus:bg-white/20 backdrop-blur-md"
+            />
+            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+            <button type="button" onClick={() => setShow(s => !s)} tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-white">
+              {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          <button type="submit" disabled={loading || !key.trim()} className="w-full h-12 rounded-2xl bg-gradient-to-b from-[#3b82f6] to-[#2563eb] font-semibold text-sm shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_12px_26px_-10px_rgba(37,99,235,.8)] active:scale-[0.98] transition disabled:opacity-50">
+            {loading ? "Tekshirilmoqda…" : "Kirish"}
           </button>
-        </div>
-        <button type="submit" disabled={loading || !key.trim()} className="w-full h-12 rounded-xl bg-[#2563eb] font-semibold text-sm active:scale-[0.98] transition disabled:opacity-50">
-          {loading ? "Tekshirilmoqda…" : "Kirish"}
-        </button>
-      </form>
-      <p className="mt-6 text-xs text-slate-400 text-center max-w-[300px]">Bu qurilmada 30 kun eslab qolinadi.</p>
-      <Link href="/" className="mt-3 text-xs text-slate-400 hover:text-white">← Saytga qaytish</Link>
+        </form>
+        <p className="mt-5 text-xs text-slate-400 text-center">Bu qurilmada 30 kun eslab qolinadi.</p>
+      </div>
+      <Link href="/" className="mt-5 text-xs text-slate-400 hover:text-white">← Saytga qaytish</Link>
     </div>
   );
 }
@@ -141,7 +145,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-[#f1f5f9]">
-      <div className="h-[56px] bg-[#0f1b3d] text-white flex items-center px-4 lg:px-6 justify-between sticky top-0 z-30 gap-4">
+      <div className="h-[56px] glass-dark text-white flex items-center px-4 lg:px-6 justify-between sticky top-0 z-30 gap-4">
         <Link href="/admin" className="flex items-center gap-2 font-bold tracking-tight">
           <Image src="/adminapklogo.png" alt="" width={30} height={30} className="rounded-lg bg-white p-0.5" />
           <span className="hidden sm:inline">DREAM KOREA — Admin</span>
@@ -154,11 +158,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
       <div className="flex">
-        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto bg-white border-r border-slate-200 p-3 flex flex-col">
+        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
           <nav className="space-y-1 flex-1">
             {nav.map(([label, href, Icon]) => (
-              <Link key={label} href={href} className={cn("flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-                pathname === href ? "bg-[#eff6ff] text-[#2563eb]" : "text-slate-600 hover:bg-slate-50")}>
+              <Link key={label} href={href} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2 text-sm font-medium transition-colors",
+                pathname === href ? "bg-white/90 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.4)]" : "text-slate-600 hover:bg-white/60")}>
                 <Icon className="h-4 w-4 shrink-0" /> {label}
               </Link>
             ))}

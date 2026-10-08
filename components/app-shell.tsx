@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#f1f5f9]">
       {/* top navy bar - desktop */}
-      <div className="hidden lg:flex h-[56px] bg-[#0f1b3d] text-white items-center px-6 justify-between sticky top-0 z-30">
+      <div className="hidden lg:flex h-[56px] glass-dark text-white items-center px-6 justify-between sticky top-0 z-30">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <div className="relative hidden xl:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input placeholder="Qidirish..." className="h-9 w-[260px] rounded-full bg-white/10 border border-white/10 pl-9 pr-4 text-sm placeholder:text-slate-300 focus:outline-none focus:bg-white focus:text-slate-900" />
+            <input placeholder="Qidirish..." className="h-9 w-[260px] rounded-full bg-white/15 border border-white/25 backdrop-blur-md pl-9 pr-4 text-sm placeholder:text-slate-300 focus:outline-none focus:bg-white focus:text-slate-900" />
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* mobile top */}
-      <div className="lg:hidden h-[56px] bg-[#0f1b3d] text-white flex items-center justify-between px-4 sticky top-0 z-30">
+      <div className="lg:hidden h-[56px] glass-dark text-white flex items-center justify-between px-4 sticky top-0 z-30">
         <Link href="/dashboard" className="flex items-center gap-2 font-bold">
           <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
           DREAM KOREA
@@ -100,12 +100,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="flex">
-        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto bg-white border-r border-slate-200 p-3 flex flex-col">
+        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
           <nav className="space-y-1 flex-1">
             {studentNav.map(item => {
               const active = pathname === item.href;
               return (
-                <Link key={item.label + item.href} href={item.href} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors", active ? "bg-[#eff6ff] text-[#2563eb]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900")}>
+                <Link key={item.label + item.href} href={item.href} className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors", active ? "bg-white/90 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.4)]" : "text-slate-600 hover:bg-white/60 hover:text-slate-900")}>
                   <item.icon className="h-[18px] w-[18px] shrink-0" />
                   {item.label}
                 </Link>
@@ -122,12 +122,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* FAB звонка — 94 328 05 13 */}
-      <a href="tel:+998943280513" aria-label="Qo'ng'iroq 94 328 05 13" className="lg:hidden fixed bottom-[76px] right-3 z-30 h-12 w-12 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 grid place-items-center active:scale-95 transition">
+      <a href="tel:+998943280513" aria-label="Qo'ng'iroq 94 328 05 13" className="lg:hidden fixed bottom-[76px] right-3 z-30 h-12 w-12 rounded-full bg-emerald-500/85 backdrop-blur-md border border-white/40 text-white shadow-lg shadow-emerald-500/40 grid place-items-center active:scale-95 transition">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 5.07 9.81 19.79 19.79 0 0 1 2 1.18 2 2 0 0 1 4 0h3a2 2 0 0 1 2 1.72c.12 1.33.43 2.63.92 3.88a2 2 0 0 1-.57 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.57c1.25.49 2.55.8 3.88.92A2 2 0 0 1 22 16.92z" /></svg>
       </a>
 
       {/* mobile bottom nav — safe-area + 44px min tap */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 flex items-center justify-around py-1 z-30 safe-bottom">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 glass border-t border-t-white/70 flex items-center justify-around py-1 z-30 safe-bottom">
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
           { href: "/courses", icon: BookOpen, label: "Darslar" },
