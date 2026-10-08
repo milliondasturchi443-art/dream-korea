@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,17 @@ export const studentNav = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [userName, setUserName] = useState("");
+  const [initials, setInitials] = useState("DK");
+  useEffect(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("dk_user") || "{}");
+      if (u.name) {
+        setUserName(u.name);
+        setInitials(u.name.split(/\s+/).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase());
+      }
+    } catch {}
+  }, [pathname]);
   function onLogout() { doLogout(); router.push("/login"); }
   return (
     <div className="min-h-screen bg-[#f1f5f9]">
@@ -46,13 +58,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/notifications" className="relative p-2 rounded-full hover:bg-white/10">
+          <Link href="/notifications" className="p-2 rounded-full hover:bg-white/10">
             <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-[11px] grid place-items-center font-bold">3</span>
           </Link>
           <Link href="/profile" className="flex items-center gap-2 pl-2">
-            <div className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">BK</div>
-            <span className="text-sm font-medium hidden xl:block">Bobur</span>
+            <div className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">{initials}</div>
+            <span className="text-sm font-medium hidden xl:block">{userName || "Profil"}</span>
           </Link>
           <button onClick={onLogout} aria-label="Chiqish" className="p-2 rounded-full hover:bg-white/10"><LogOut className="h-4 w-4" /></button>
         </div>
@@ -66,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
         <div className="flex items-center gap-2">
           <Link href="/notifications" className="p-2"><Bell className="h-5 w-5" /></Link>
-          <Link href="/profile" className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">BK</Link>
+          <Link href="/profile" className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">{initials}</Link>
         </div>
       </div>
 

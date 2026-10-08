@@ -31,7 +31,12 @@ export default function LoginPage() {
       localStorage.setItem("dk_token", d.token ?? "");
       localStorage.setItem("dk_user", JSON.stringify({ email: norm, name: d.name ?? "Foydalanuvchi", role: d.role, id: d.id }));
       toast.success(`Xush kelibsiz, ${d.name ?? ""}!`);
-      router.push(roleHome(d.role as Role));
+      const next = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null;
+      if (next && next.startsWith("/") && !next.startsWith("//")) {
+        router.push(next);
+      } else {
+        router.push(roleHome(d.role as Role));
+      }
     } catch {
       toast.error("Server bilan bog‘lanib bo‘lmadi");
     } finally { setLoading(false); }
