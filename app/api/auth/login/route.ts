@@ -36,6 +36,10 @@ export async function POST(req: Request) {
     await setSessionCookie(token, "ADMIN");
     return Response.json({ token, email, name: "Administrator", role: "ADMIN" });
   }
+  // Admin faqat env-parol orqali kiradi (eski hash DB'da qolsa ham ishlamaydi)
+  if (email === envAdmin) {
+    return Response.json({ error: "Email yoki parol noto‘g‘ri" }, { status: 401 });
+  }
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
