@@ -9,11 +9,11 @@ import Image from "next/image";
 import { toast } from "sonner";
 
 const nav = [
-  ["Dashboard", "/admin", LayoutDashboard],
-  ["O‘quvchilar", "/admin/users", Users],
-  ["Qabul arizalari", "/admin/admissions", FileText],
-  ["Kontent (kurslar)", "/admin/content", BookOpenCheck],
-  ["Bloklangan ilovalar", "/admin/blocked-apps", ShieldAlert],
+  ["Dashboard", "/adminstrationpanelofdreamkorea", LayoutDashboard],
+  ["O‘quvchilar", "/adminstrationpanelofdreamkorea/users", Users],
+  ["Qabul arizalari", "/adminstrationpanelofdreamkorea/admissions", FileText],
+  ["Kontent (kurslar)", "/adminstrationpanelofdreamkorea/content", BookOpenCheck],
+  ["Bloklangan ilovalar", "/adminstrationpanelofdreamkorea/blocked-apps", ShieldAlert],
   ["Universitetlar", "/universities", Building2],
   ["AI yordamchi", "/ai", Sparkles],
 ] as const;
@@ -111,7 +111,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
       if (r.ok && d.role && d.role !== "ADMIN") {
         // Oddiy foydalanuvchi — sessiyasini buzmay login'ga yuboramiz
-        router.replace("/login?next=/admin");
+        router.replace("/");
         return;
       }
       // 401 — hamma qurilmada (telefon ham, PC ham) kalit ekrani
@@ -141,7 +141,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen">
       <div className="h-[56px] glass-dark text-white flex items-center px-4 lg:px-6 justify-between sticky top-0 z-30 gap-4">
-        <Link href="/admin" className="flex items-center gap-2 font-bold tracking-tight">
+        <Link href="/adminstrationpanelofdreamkorea" className="flex items-center gap-2 font-bold tracking-tight">
           <Image src="/adminapklogo.png" alt="" width={30} height={30} className="rounded-lg bg-white p-0.5" />
           <span className="hidden sm:inline">DREAM KOREA — Admin</span>
           <span className="sm:hidden">Admin</span>

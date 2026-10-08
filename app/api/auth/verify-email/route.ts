@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       await prisma.user.update({ where: { email }, data: { emailVerified: true } });
     }
     const session = sign({ email: user.email, name: user.name, role: String(user.role), id: user.id });
-    const res = NextResponse.redirect(new URL("/dashboard?verified=1", origin), 302);
+    const res = NextResponse.redirect(new URL("/?verified=1", origin), 302);
     res.cookies.set("dk_token", session, {
       httpOnly: true,
       path: "/",

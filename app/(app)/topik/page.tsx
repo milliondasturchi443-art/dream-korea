@@ -76,7 +76,7 @@ export default function TopikPage() {
         <Card className="p-4">
           <div className="font-semibold text-sm">TOPIK II · EPS</div>
           <div className="text-xs text-slate-500">O‘rta-yuqori va EPS. Yetib kelsa — admin qo‘shadi.</div>
-          <Link href="/admin/content"><Button variant="ghost" size="sm" className="mt-3 w-full text-xs">Admin → Kontent</Button></Link>
+          <Link href="/adminstrationpanelofdreamkorea/content"><Button variant="ghost" size="sm" className="mt-3 w-full text-xs">Admin → Kontent</Button></Link>
         </Card>
       </div>
 

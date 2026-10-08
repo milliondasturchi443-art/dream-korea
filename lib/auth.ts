@@ -26,7 +26,7 @@ export const DEMO_USERS: Record<string, { password: string; role: Role; name: st
 };
 
 export function roleHome(role: Role) {
-  if (role === "ADMIN") return "/admin";
+  if (role === "ADMIN") return "/adminstrationpanelofdreamkorea";
   if (role === "TEACHER") return "/teacher";
   return "/dashboard";
 }

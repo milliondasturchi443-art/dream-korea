@@ -44,7 +44,7 @@ export default function RegisterPage() {
       localStorage.setItem("dk_user", JSON.stringify({ email: d.email ?? email, name: d.name ?? name, role: d.role, id: d.id, phone }));
       toast.success("Muvaffaqiyatli ro‘yxatdan o‘tdingiz!");
       if (next && next.startsWith("/") && !next.startsWith("//")) router.push(next);
-      else router.push("/dashboard");
+      else router.push("/");
     } catch { toast.error("Server bilan bog‘lanib bo‘lmadi"); } finally { setLoading(false); }
   }
 

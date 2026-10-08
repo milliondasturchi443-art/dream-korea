@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
-import { roleHome, normalizeEmail, type Role } from "@/lib/auth";
+import { normalizeEmail } from "@/lib/auth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -54,7 +54,7 @@ export default function LoginPage() {
       if (next && next.startsWith("/") && !next.startsWith("//")) {
         router.push(next);
       } else {
-        router.push(roleHome(d.role as Role));
+        router.push("/");
       }
     } catch {
       toast.error("Server bilan bog‘lanib bo‘lmadi");
