@@ -1,12 +1,11 @@
 import { prisma } from "@/lib/db";
-import { verify } from "@/lib/token";
+import { verify, readAuthToken } from "@/lib/token";
 import { isAdminEmail } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 function requireAdmin(req: Request) {
-  const header = req.headers.get("authorization") || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const token = readAuthToken(req);
   const d = verify(token);
   if (!d || d.role !== "ADMIN" || !isAdminEmail(String(d.email ?? ""))) return null;
   return d;
@@ -14,8 +13,7 @@ function requireAdmin(req: Request) {
 
 // GET /api/users?q= — ro'yxat (ADMIN o'qiydi, TEACHER faqat o'qiydi)
 export async function GET(req: Request) {
-  const header = req.headers.get("authorization") || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const token = readAuthToken(req);
   const d = verify(token);
   const role = d ? String(d.role ?? "") : "";
   const emailOk = d ? isAdminEmail(String(d.email ?? "")) : false;

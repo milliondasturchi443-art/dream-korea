@@ -17,6 +17,6 @@ services:
       - key: NEXTAUTH_URL
         sync: false
       - key: ADMIN_EMAIL
-        value: dreamkorea@adminstator.kr
+        sync: false
       - key: ADMIN_PASSWORD
-        value: ahd@123WHDI
+        sync: false

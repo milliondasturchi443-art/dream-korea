@@ -4,6 +4,11 @@ export function doLogout() {
     localStorage.removeItem("dk_role");
     localStorage.removeItem("dk_user");
     localStorage.removeItem("dk_token");
+    sessionStorage.removeItem("dk_token");
     // topik va boshqa dk_* qolsin — faqat auth tozalaymiz
+  } catch {}
+  try {
+    // Server cookie'larini ham o'chiramiz (dk_token, dk_admin)
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
   } catch {}
 }

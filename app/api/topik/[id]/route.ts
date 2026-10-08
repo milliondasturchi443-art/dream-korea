@@ -57,12 +57,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 // ==== ADMIN: savol qo'shish / test o'chirish ====
-import { verify } from "@/lib/token";
+import { verify, readAuthToken } from "@/lib/token";
 import { isAdminEmail } from "@/lib/auth";
 
 function requireAdmin(req: Request) {
-  const header = req.headers.get("authorization") || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const token = readAuthToken(req);
   const d = verify(token);
   return !!d && d.role === "ADMIN" && isAdminEmail(String(d.email ?? ""));
 }

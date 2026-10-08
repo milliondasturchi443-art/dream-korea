@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { verify } from "@/lib/token";
+import { verify, readAuthToken } from "@/lib/token";
 export const dynamic = "force-dynamic";
 
 // POST /api/topik/attempt — сохранить попытку (если залогинен — в БД, иначе просто считает)
@@ -12,8 +12,7 @@ export async function POST(req: Request) {
   const total = Number(body.total ?? 0);
   if (!testId) return Response.json({ error: "testId kerak" }, { status: 400 });
 
-  const auth = req.headers.get("authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const token = readAuthToken(req);
   const data = token ? verify(token) : null;
   const userId = data ? String((data as Record<string, unknown>).id ?? "") : "";
 
@@ -30,8 +29,7 @@ export async function POST(req: Request) {
 
 // GET /api/topik/attempt?userId= — последние попытки (требует auth)
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const token = readAuthToken(req);
   const data = token ? verify(token) : null;
   if (!data) return Response.json({ error: "Auth kerak" }, { status: 401 });
   const userId = String((data as Record<string, unknown>).id ?? "");

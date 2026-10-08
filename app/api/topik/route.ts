@@ -37,12 +37,11 @@ export async function GET() {
 }
 
 // POST /api/topik — создать тест (только ADMIN, Bearer token)
-import { verify } from "@/lib/token";
+import { verify, readAuthToken } from "@/lib/token";
 import { isAdminEmail } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  const auth = req.headers.get("authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const token = readAuthToken(req);
   const data = verify(token);
   const email = String((data as Record<string, unknown>)?.email ?? "");
   if (!data || (data as Record<string, unknown>)?.role !== "ADMIN" || !isAdminEmail(email)) {

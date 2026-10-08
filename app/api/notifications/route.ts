@@ -1,11 +1,10 @@
 import { prisma } from "@/lib/db";
-import { verify } from "@/lib/token";
+import { verify, readAuthToken } from "@/lib/token";
 
 export const dynamic = "force-dynamic";
 
 function auth(req: Request) {
-  const header = req.headers.get("authorization") || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const token = readAuthToken(req);
   const d = verify(token);
   if (!d) return null;
   return { id: String(d.id ?? ""), email: String(d.email ?? "") };

@@ -40,6 +40,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
     } catch {}
   }, [pathname]);
+
+  // Cookie sessiyasini tiklash: localStorage tozalangan bo'lsa ham (30 kunlik cookie)
+  useEffect(() => {
+    (async () => {
+      try {
+        if (localStorage.getItem("dk_token")) return;
+        const r = await fetch("/api/auth/me");
+        if (!r.ok) return;
+        const d = await r.json().catch(() => ({}));
+        if (d.role === "ADMIN" || !d.token) return;
+        localStorage.setItem("dk_token", d.token);
+        localStorage.setItem("dk_role", d.role);
+        localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id }));
+        if (d.name) {
+          setUserName(d.name);
+          setInitials(d.name.split(/\s+/).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase());
+        }
+      } catch {}
+    })();
+  }, []);
   function onLogout() { doLogout(); router.push("/login"); }
   return (
     <div className="min-h-screen bg-[#f1f5f9]">

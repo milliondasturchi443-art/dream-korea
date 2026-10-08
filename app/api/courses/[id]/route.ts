@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/db";
-import { verify } from "@/lib/token";
+import { verify, readAuthToken } from "@/lib/token";
 import { isAdminEmail } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 function isAdmin(req: Request) {
-  const t = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/, "");
+  const t = readAuthToken(req);
   const d = verify(t) as Record<string, unknown> | null;
   return !!d && d.role === "ADMIN" && isAdminEmail(String(d.email ?? ""));
 }

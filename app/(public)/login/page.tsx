@@ -28,7 +28,13 @@ export default function LoginPage() {
       if (!r.ok) { toast.error(d.error ?? "Kirishda xato"); return; }
       const norm = normalizeEmail(d.email ?? em);
       localStorage.setItem("dk_role", d.role);
-      localStorage.setItem("dk_token", d.token ?? "");
+      if (d.role === "ADMIN") {
+        // Admin — sessionStorage: brauzer yopilsa qayta so'raladi ("har doim so'raymiz")
+        try { sessionStorage.setItem("dk_token", d.token ?? ""); localStorage.removeItem("dk_token"); } catch {}
+      } else {
+        // O'quvchi/ustoz — localStorage + 30 kunlik cookie
+        localStorage.setItem("dk_token", d.token ?? "");
+      }
       localStorage.setItem("dk_user", JSON.stringify({ email: norm, name: d.name ?? "Foydalanuvchi", role: d.role, id: d.id }));
       toast.success(`Xush kelibsiz, ${d.name ?? ""}!`);
       const next = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null;

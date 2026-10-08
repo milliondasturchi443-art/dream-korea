@@ -27,9 +27,44 @@ export function verify(token?: string | null): Record<string, unknown> | null {
 }
 
 export function adminFromRequest(req: Request): { email: string; role: string } | null {
-  const header = req.headers.get("authorization") || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-  const data = verify(token);
+  const data = readAuth(req);
   if (!data || data.role !== "ADMIN") return null;
   return { email: String(data.email ?? ""), role: "ADMIN" };
+}
+
+export function parseCookies(header: string | null): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!header) return out;
+  for (const part of header.split(";")) {
+    const i = part.indexOf("=");
+    if (i === -1) continue;
+    const k = part.slice(0, i).trim();
+    const v = part.slice(i + 1).trim();
+    if (k) out[k] = v;
+  }
+  return out;
+}
+
+// Tokenni Bearer header yoki cookie'dan o'qiydi (dk_admin > dk_token)
+export function readAuth(req: Request): Record<string, unknown> | null {
+  const header = req.headers.get("authorization") || "";
+  const bearer = header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (bearer) {
+    const d = verify(bearer);
+    if (d) return d;
+  }
+  const ck = parseCookies(req.headers.get("cookie"));
+  const fromCookie = ck["dk_admin"] || ck["dk_token"] || "";
+  if (fromCookie) return verify(fromCookie);
+  return null;
+}
+
+export function readAuthToken(req: Request): string {
+  const header = req.headers.get("authorization") || "";
+  const bearer = header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (bearer && verify(bearer)) return bearer;
+  const ck = parseCookies(req.headers.get("cookie"));
+  const fromCookie = ck["dk_admin"] || ck["dk_token"] || "";
+  if (fromCookie && verify(fromCookie)) return fromCookie;
+  return bearer;
 }

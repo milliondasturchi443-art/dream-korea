@@ -1,16 +1,23 @@
-import { verify } from "@/lib/token";
+import { verify, sign, readAuthToken } from "@/lib/token";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const header = req.headers.get("authorization") || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const token = readAuthToken(req);
   const data = verify(token);
   if (!data) return Response.json({ error: "Token yaroqsiz" }, { status: 401 });
-  return Response.json({
+  const payload: Record<string, unknown> = {
     email: String(data.email ?? ""),
     name: String(data.name ?? ""),
     role: String(data.role ?? "STUDENT"),
-    id: data.id ? String(data.id) : "",
+  };
+  if (data.id) payload.id = String(data.id);
+  return Response.json({
+    email: payload.email,
+    name: payload.name,
+    role: payload.role,
+    id: payload.id ?? "",
+    // Cookie orqali keldimi — klient localStorage/sessionStorage uchun taze token olsin
+    token: sign(payload),
   });
 }

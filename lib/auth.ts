@@ -1,5 +1,5 @@
 // Auth: real login via DB (fallback mock for dev). Admin — отдельный аккаунт из env.
-// Единственный админ: dreamkorea@adminstator.kr / ahd@123WHDI
+// Единственный админ: dreamkorea@adminstator.kr / Woosuk0047@
 // Исходный запрос содержал недопустимые символы в email (dreamkorea!@#@!@adminstator.kr) — нормализован.
 // Login нормализует email: удаляет ! # и лишние символы до @.
 export type Role = "STUDENT" | "TEACHER" | "ADMIN";
@@ -20,9 +20,9 @@ export function normalizeEmail(input: string): string {
 // Для демо-режима (если БД недоступна) — только реальные учётки, без демо
 export const DEMO_USERS: Record<string, { password: string; role: Role; name: string }> = {
   // Админ — единственный привилегированный аккаунт
-  "dreamkorea@adminstator.kr": { password: "ahd@123WHDI", role: "ADMIN", name: "Administrator" },
+  "dreamkorea@adminstator.kr": { password: "Woosuk0047@", role: "ADMIN", name: "Administrator" },
   // Для совместимости с исходным запросом (нормализуется к тому же)
-  "dreamkorea!@#@!@adminstator.kr": { password: "ahd@123WHDI", role: "ADMIN", name: "Administrator" },
+  "dreamkorea!@#@!@adminstator.kr": { password: "Woosuk0047@", role: "ADMIN", name: "Administrator" },
 };
 
 export function roleHome(role: Role) {

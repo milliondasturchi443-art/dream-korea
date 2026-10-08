@@ -6,7 +6,7 @@ async function main() {
   // Единственный админ — как запрошено. Исходный email с !# — нормализуем.
   const rawAdminEmail = process.env.ADMIN_EMAIL || "dreamkorea@adminstator.kr";
   const rawAdminEmailAlt = "dreamkorea!@#@!@adminstator.kr";
-  const adminPassword = process.env.ADMIN_PASSWORD || "ahd@123WHDI";
+  const adminPassword = process.env.ADMIN_PASSWORD || "Woosuk0047@";
   const adminHash = await bcrypt.hash(adminPassword, 10);
 
   function normEmail(s: string): string {
