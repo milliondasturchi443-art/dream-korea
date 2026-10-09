@@ -1,4 +1,4 @@
-import { sign } from "@/lib/token";
+import { sign, verify } from "@/lib/token";
 import { ADMIN_EMAIL } from "@/lib/auth";
 import { cookies } from "next/headers";
 
@@ -6,7 +6,20 @@ export const dynamic = "force-dynamic";
 
 const DAY30 = 30 * 24 * 3600;
 
-// POST /api/auth/admin-key — telefonda /admin uchun faqat kalit so'raymiz.
+// GET /api/auth/admin-key — dk_admin cookie (kalit kiritilgan) amiqni tekshiramiz.
+// amiq bo'lsa yangi token qaytaramiz (client sessionStorage uchun).
+export async function GET() {
+  const cs = await cookies();
+  const tok = cs.get("dk_admin")?.value || "";
+  const data = verify(tok);
+  if (!data || data.role !== "ADMIN") {
+    return Response.json({ ok: false }, { status: 401 });
+  }
+  const token = sign({ email: ADMIN_EMAIL, name: String(data.name ?? "Administrator"), role: "ADMIN" });
+  return Response.json({ ok: true, token, email: String(data.email ?? ADMIN_EMAIL), name: String(data.name ?? "Administrator"), role: "ADMIN" });
+}
+
+// POST /api/auth/admin-key — kalit so'raymiz (PC va telefon uchun bir xil).
 // Kalit = ADMIN_PASSWORD (env). To'g'ri bo'lsa — 30 kunlik dk_admin cookie (qurilmada eslab qolinadi).
 export async function POST(req: Request) {
   let body: { key?: string } = {};

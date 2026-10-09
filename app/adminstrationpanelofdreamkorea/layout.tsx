@@ -89,34 +89,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [state, setState] = useState<"loading" | "authed" | "keygate">("loading");
   const [name, setName] = useState("Admin");
 
-  // Admin himoyasi: /admin — faqat ADMIN (token yoki dk_admin cookie)
+  // Admin himoyasi: PC ham, telefon ham — faqat kalit (ADMIN_PASSWORD).
+  // Email-login bilan kirsam ham kalit so'raymiz; kalit to'g'ri bo'lsa
+  // dk_admin cookie (30 kun) + to'liq admin huquq beradi.
   const check = async (): Promise<void> => {
-    let token = "";
-    try { token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; } catch {}
     try {
-      const r = await fetch("/api/auth/me", token ? { headers: { Authorization: `Bearer ${token}` } } : {});
+      const r = await fetch("/api/auth/admin-key");
       const d = await r.json().catch(() => ({}));
-      if (r.ok && d.role === "ADMIN") {
+      if (r.ok && d.ok) {
         if (d.token) {
           try {
-            // Desktop email-login — sessionStorage (brauzer yopilsa qayta so'raymiz)
             sessionStorage.setItem("dk_token", d.token);
-            localStorage.removeItem("dk_token"); // eski loginlardan tozalaymiz
             localStorage.setItem("dk_role", "ADMIN");
-            localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: "ADMIN", id: d.id }));
+            localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: "ADMIN" }));
           } catch {}
         }
         setName(d.name || "Admin");
         setState("authed");
         return;
       }
-      // Non-admin (oddiy talaba bo‘lib kirgan bo‘lsa ham) — kalit ekranini ko‘rsatamiz,
-      // kalit to‘g‘ri bo‘lsa dk_admin cookie bilan admin bo‘ladi. Redirect qilmaymiz
-      // — aks holda PC da “hech narsa bo‘lmayapti”dek tuyuladi.
-      setState("keygate");
-    } catch {
-      setState("keygate");
-    }
+    } catch {}
+    setState("keygate");
   };
 
   useEffect(() => { check(); }, []); // eslint-disable-line react-hooks/exhaustive-deps

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { universities } from "@/lib/mock-data";
-import { Building2, MapPin, Search, Star, Calendar, Home, Globe, GraduationCap } from "lucide-react";
+import { Building2, MapPin, Search, Star, Calendar, Home, Globe, GraduationCap, FileText, Award, Info } from "lucide-react";
 import Link from "next/link";
 
 export default function UniversitiesPage() {
@@ -15,7 +15,7 @@ export default function UniversitiesPage() {
   const cities = ["Barchasi", ...Array.from(new Set(universities.map(u=>u.city)))];
   const filtered = universities.filter(u => {
     if (city !== "Barchasi" && u.city !== city) return false;
-    if (q && !(u.name.toLowerCase().includes(q.toLowerCase()) || u.description.toLowerCase().includes(q.toLowerCase()))) return false;
+    if (q && !(u.name.toLowerCase().includes(q.toLowerCase()) || u.description.toLowerCase().includes(q.toLowerCase()) || u.about.toLowerCase().includes(q.toLowerCase()))) return false;
     return true;
   });
 
@@ -23,7 +23,7 @@ export default function UniversitiesPage() {
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
       <div>
         <h1 className="text-[22px] font-bold text-slate-900">Universitetlar — batafsil</h1>
-        <p className="text-sm text-slate-500">18 ta top universitet · reyting, fakultetlar, TOPIK, kontrakt, yotoqxona, dedlayn va rasmiy sayt. Tanlang va ariza bering.</p>
+        <p className="text-sm text-slate-500">18 ta top universitet · reyting, fakultetlar, TOPIK, kontrakt, yotoqxona, dedlayn, qabul shartlari va stipendiyalar. «Batafsil» tugmasini bosing.</p>
       </div>
 
       <Card className="p-4 flex flex-wrap gap-3">
@@ -65,8 +65,20 @@ export default function UniversitiesPage() {
                   {expanded && (
                     <div className="mt-3 space-y-2 text-xs">
                       <div className="rounded-xl bg-[#eff6ff] border border-blue-200 p-3">
+                        <div className="font-semibold text-slate-900 flex items-center gap-1"><Info className="h-3.5 w-3.5" /> Universitet haqida</div>
+                        <p className="mt-1.5 text-slate-700 leading-relaxed">{u.about}</p>
+                      </div>
+                      <div className="rounded-xl bg-[#eff6ff] border border-blue-200 p-3">
                         <div className="font-semibold text-slate-900 flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" /> Fakultetlar</div>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">{u.faculties.map(f => <Badge key={f} className="bg-white text-slate-700 border text-[11px]">{f}</Badge>)}</div>
+                      </div>
+                      <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                        <div className="font-semibold text-slate-900 flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> Qabul shartlari va hujjatlar</div>
+                        <p className="mt-1.5 text-slate-700 leading-relaxed">{u.admission}</p>
+                      </div>
+                      <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3">
+                        <div className="font-semibold text-slate-900 flex items-center gap-1"><Award className="h-3.5 w-3.5" /> Stipendiyalar va moliyaviy yordam</div>
+                        <p className="mt-1.5 text-slate-700 leading-relaxed">{u.scholarship}</p>
                       </div>
                       <div className="flex flex-wrap gap-2 text-slate-600">
                         <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5" /> {u.language}</span>
