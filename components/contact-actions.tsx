@@ -1,7 +1,7 @@
 "use client";
-import { Phone, Send } from "lucide-react";
+import { Phone, Send, Bot } from "lucide-react";
 import { Button } from "./ui/button";
-import { SITE_PHONE_E164, SITE_PHONE_DISPLAY, SITE_TELEGRAM } from "@/lib/site";
+import { SITE_PHONE_E164, SITE_PHONE_DISPLAY, SITE_TELEGRAM, SITE_TELEGRAM_BOT } from "@/lib/site";
 import { telHref } from "@/lib/phone";
 
 export function ContactActions({ phone = SITE_PHONE_E164, display = SITE_PHONE_DISPLAY, compact = false }: { phone?: string; display?: string; compact?: boolean }) {
@@ -12,9 +12,14 @@ export function ContactActions({ phone = SITE_PHONE_E164, display = SITE_PHONE_D
           <Phone className="h-4 w-4" /> {compact ? "Qo'ng'iroq" : display}
         </Button>
       </a>
-      <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" aria-label="Telegram">
+      <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" aria-label="Telegram kanal">
         <Button size={compact ? "sm" : "default"} variant="outline" className="gap-1.5">
-          <Send className="h-4 w-4" /> Telegram
+          <Send className="h-4 w-4" /> Kanal
+        </Button>
+      </a>
+      <a href={SITE_TELEGRAM_BOT} target="_blank" rel="noopener noreferrer" aria-label="Telegram bot">
+        <Button size={compact ? "sm" : "default"} variant="outline" className="gap-1.5">
+          <Bot className="h-4 w-4" /> Bot
         </Button>
       </a>
     </div>

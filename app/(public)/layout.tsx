@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
-import { SITE_PHONE_E164, SITE_PHONE_DISPLAY, SITE_PHONE2_E164, SITE_PHONE2_DISPLAY, SITE_EMAIL, SITE_ADDRESS, SITE_TELEGRAM } from "@/lib/site";
+import { SITE_PHONE_E164, SITE_PHONE_DISPLAY, SITE_PHONE2_E164, SITE_PHONE2_DISPLAY, SITE_EMAIL, SITE_ADDRESS, SITE_TELEGRAM, SITE_TELEGRAM_BOT } from "@/lib/site";
 import { telHref } from "@/lib/phone";
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -34,14 +34,16 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <a href={`mailto:${SITE_EMAIL}`} className="block hover:text-white">{SITE_EMAIL}</a>
               <span className="block text-slate-400">{SITE_ADDRESS}</span>
               <div className="pt-1 flex gap-2">
-                <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-4 hover:text-white">Telegram</a>
+                <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-4 hover:text-white">Telegram kanal</a>
+                <a href={SITE_TELEGRAM_BOT} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-4 hover:text-white">Telegram bot</a>
               </div>
             </div>
           </div>
           <div>
             <div className="font-semibold text-white mb-3">Ijtimoiy tarmoqlar</div>
             <div className="flex flex-wrap gap-2 text-xs">
-              <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10">Telegram</a>
+              <a href={SITE_TELEGRAM} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10">Telegram kanal</a>
+              <a href={SITE_TELEGRAM_BOT} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10">Telegram bot</a>
             </div>
             <p className="mt-6 text-xs text-slate-500">© 2026 DREAM KOREA. Barcha huquqlar himoyalangan.</p>
           </div>

@@ -7,4 +7,5 @@ export const SITE_PHONE2_DISPLAY = "+998 94 328 05 13";
 
 export const SITE_EMAIL = "dreamkorea795@gmail.com";
 export const SITE_ADDRESS = "Namangan";
-export const SITE_TELEGRAM = "https://t.me/dreamkorea_2024";
+export const SITE_TELEGRAM = "https://t.me/dreamkoreaacademy"; // ofitsial kanal
+export const SITE_TELEGRAM_BOT = "https://t.me/dreamkoreauz_bot"; // sayt boti
