@@ -19,7 +19,8 @@ export default function LoginPage() {
   useEffect(() => {
     const n = new URLSearchParams(window.location.search).get("next");
     if (n && n.startsWith("/") && !n.startsWith("//")) setRegHref(`/register?next=${encodeURIComponent(n)}`);
-  }, []);
+    fetch("/api/auth/me").then(r => { if (r.ok) router.replace("/"); }).catch(() => {});
+  }, [router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

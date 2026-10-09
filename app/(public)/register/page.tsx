@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/auth/me").then(r => { if (r.ok) router.replace("/"); }).catch(() => {});
+  }, [router]);
 
   const [loading, setLoading] = useState(false);
   async function onSubmit(e: React.FormEvent) {

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Logo } from "./logo";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X, Phone } from "lucide-react";
 import { SITE_PHONE_E164, SITE_PHONE_DISPLAY } from "@/lib/site";
 import { telHref } from "@/lib/phone";
@@ -17,6 +17,16 @@ const nav = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [me, setMe] = useState<{ name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.email) setMe({ name: d.name || "Foydalanuvchi", role: d.role || "STUDENT" }); })
+      .catch(() => {});
+  }, []);
+
+  const cabHref = me?.role === "ADMIN" ? "/adminstrationpanelofdreamkorea" : "/dashboard";
   return (
     <header className="sticky top-0 z-40 glass border-b border-b-white/70">
       <div className="mx-auto max-w-[1200px] px-4 h-[64px] flex items-center justify-between gap-4">
@@ -28,8 +38,17 @@ export function SiteHeader() {
           <a href={telHref(SITE_PHONE_E164)} className="hidden xl:inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f1b3d] hover:text-[#2563eb] px-2">
             <Phone className="h-4 w-4" /> {SITE_PHONE_DISPLAY}
           </a>
-          <Link href="/login"><Button variant="ghost" size="sm">Kirish</Button></Link>
-          <Link href="/register"><Button size="sm">Ro‘yxatdan o‘tish</Button></Link>
+          {me ? (
+            <>
+              <span className="hidden xl:inline text-sm font-medium text-slate-700">{me.name}</span>
+              <Link href={cabHref}><Button size="sm">Kabinet</Button></Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login"><Button variant="ghost" size="sm">Kirish</Button></Link>
+              <Link href="/register"><Button size="sm">Ro‘yxatdan o‘tish</Button></Link>
+            </>
+          )}
         </div>
         <div className="lg:hidden flex items-center gap-1">
           <a href={telHref(SITE_PHONE_E164)} aria-label="Qo'ng'iroq qilish" className="p-2 rounded-xl hover:bg-slate-100 text-[#0f1b3d]">
@@ -47,8 +66,14 @@ export function SiteHeader() {
           </a>
           {nav.map(i => <Link key={i.label} href={i.href} className="block py-2 text-sm font-medium" onClick={() => setOpen(false)}>{i.label}</Link>)}
           <div className="flex gap-2 pt-2">
-            <Link href="/login" className="flex-1"><Button variant="outline" className="w-full">Kirish</Button></Link>
-            <Link href="/register" className="flex-1"><Button className="w-full">Ro‘yxatdan o‘tish</Button></Link>
+            {me ? (
+              <Link href={cabHref} className="flex-1" onClick={() => setOpen(false)}><Button className="w-full">Kabinet</Button></Link>
+            ) : (
+              <>
+                <Link href="/login" className="flex-1"><Button variant="outline" className="w-full">Kirish</Button></Link>
+                <Link href="/register" className="flex-1"><Button className="w-full">Ro‘yxatdan o‘tish</Button></Link>
+              </>
+            )}
           </div>
         </div>
       )}
