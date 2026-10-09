@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Logo } from "./logo";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, X, Phone } from "lucide-react";
 import { SITE_PHONE_E164, SITE_PHONE_DISPLAY } from "@/lib/site";
 import { telHref } from "@/lib/phone";
@@ -17,14 +18,33 @@ const nav = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const [me, setMe] = useState<{ name: string; role: string } | null>(null);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem("dk_user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u?.email) setMe({ name: u.name || "Foydalanuvchi", role: u.role || "STUDENT" });
+      }
+    } catch {}
     fetch("/api/auth/me")
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (d?.email) setMe({ name: d.name || "Foydalanuvchi", role: d.role || "STUDENT" }); })
+      .then(d => {
+        if (d?.email) {
+          setMe({ name: d.name || "Foydalanuvchi", role: d.role || "STUDENT" });
+          try { localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id })); } catch {}
+        } else {
+          // кука истекла — рассинхрон, чистим
+          try {
+            const hasToken = localStorage.getItem("dk_token") || sessionStorage.getItem("dk_token");
+            if (hasToken) setMe(null);
+          } catch {}
+        }
+      })
       .catch(() => {});
-  }, []);
+  }, [pathname]);
 
   const cabHref = me?.role === "ADMIN" ? "/adminstrationpanelofdreamkorea" : "/dashboard";
   return (

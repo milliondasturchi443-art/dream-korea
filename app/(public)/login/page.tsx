@@ -19,7 +19,10 @@ export default function LoginPage() {
   useEffect(() => {
     const n = new URLSearchParams(window.location.search).get("next");
     if (n && n.startsWith("/") && !n.startsWith("//")) setRegHref(`/register?next=${encodeURIComponent(n)}`);
-    fetch("/api/auth/me").then(r => { if (r.ok) router.replace("/"); }).catch(() => {});
+    const n2 = new URLSearchParams(window.location.search).get("next");
+    fetch("/api/auth/me").then(r => {
+      if (r.ok) router.replace(n2 && n2.startsWith("/") && !n2.startsWith("//") ? n2 : "/dashboard");
+    }).catch(() => {});
   }, [router]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -52,11 +55,9 @@ export default function LoginPage() {
       localStorage.setItem("dk_user", JSON.stringify({ email: norm, name: d.name ?? "Foydalanuvchi", role: d.role, id: d.id }));
       toast.success(`Xush kelibsiz, ${d.name ?? ""}!`);
       const next = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null;
-      if (next && next.startsWith("/") && !next.startsWith("//")) {
-        router.push(next);
-      } else {
-        router.push("/");
-      }
+      if (next && next.startsWith("/") && !next.startsWith("//")) router.push(next);
+      else if (d.role === "ADMIN") router.push("/adminstrationpanelofdreamkorea");
+      else router.push("/dashboard");
     } catch {
       toast.error("Server bilan bog‘lanib bo‘lmadi");
     } finally { setLoading(false); }

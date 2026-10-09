@@ -1,5 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -28,11 +31,30 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState("Talaba");
   const [loading, setLoading] = useState(true);
   const [topikScore, setTopikScore] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
+    // ?verified=1 — после перехода по письму
+    const v = searchParams.get("verified");
+    if (v === "1") {
+      toast.success("Email tasdiqlandi — xush kelibsiz!");
+      const q = new URLSearchParams(searchParams.toString());
+      q.delete("verified");
+      const qs = q.toString();
+      router.replace(qs ? `/dashboard?${qs}` : "/dashboard");
+    }
     try {
       const u = JSON.parse(localStorage.getItem("dk_user") || "{}");
       if (u.name) setUserName(u.name);
+      else {
+        fetch("/api/auth/me").then(r => r.ok ? r.json() : null).then(d => {
+          if (d?.email) {
+            setUserName(d.name || "Foydalanuvchi");
+            try { localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id })); } catch {}
+          }
+        }).catch(()=>{});
+      }
       const sc = localStorage.getItem("dk_topik_score");
       if (sc !== null) setTopikScore(Number(sc));
     } catch {}
