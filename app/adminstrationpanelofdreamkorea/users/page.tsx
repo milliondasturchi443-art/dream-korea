@@ -24,7 +24,7 @@ export default function AdminUsersPage() {
   const load = useCallback(() => {
     setLoading(true);
     setErr("");
-    const token = localStorage.getItem("dk_token") || "";
+    const token = (()=>{ try{ return sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; }catch{ return localStorage.getItem("dk_token") || ""; } })();
     fetch("/api/users", { headers: { Authorization: `Bearer ${token}` } })
       .then(async r => {
         const d = await r.json();
@@ -40,7 +40,7 @@ export default function AdminUsersPage() {
   async function setRole(id: string, role: string) {
     setSavingId(id);
     try {
-      const token = localStorage.getItem("dk_token") || "";
+      const token = (()=>{ try{ return sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; }catch{ return localStorage.getItem("dk_token") || ""; } })();
       const r = await fetch(`/api/users/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
     if (!confirm(`"${u.name}" hisobini o‘chirishni tasdiqlaysizmi? Barcha progress o‘chiriladi.`)) return;
     setSavingId(u.id);
     try {
-      const token = localStorage.getItem("dk_token") || "";
+      const token = (()=>{ try{ return sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; }catch{ return localStorage.getItem("dk_token") || ""; } })();
       const r = await fetch(`/api/users/${u.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Xato");

@@ -16,7 +16,7 @@ export default function AdminAdmissionsPage() {
 
   function load() {
     setLoading(true); setErr("");
-    const token = localStorage.getItem("dk_token") || "";
+    const token = (()=>{ try{ return sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; }catch{ return localStorage.getItem("dk_token") || ""; } })();
     fetch("/api/admissions", { headers: { Authorization: `Bearer ${token}` } })
       .then(async r => {
         const d = await r.json();

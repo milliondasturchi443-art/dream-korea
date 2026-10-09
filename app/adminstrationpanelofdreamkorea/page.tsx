@@ -21,7 +21,7 @@ export default function AdminPage() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("dk_token") || "";
+    const token = (()=>{ try{ return sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; }catch{ return localStorage.getItem("dk_token") || ""; } })();
     fetch("/api/stats", { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => setS(d))

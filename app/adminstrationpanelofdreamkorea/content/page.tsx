@@ -16,7 +16,7 @@ type Material = { id: string; title: string; kind: string; url: string | null };
 type Video = { id: string; title: string; category: string; duration: string; videoUrl: string | null };
 
 function authHeader(): Record<string, string> {
-  try { const t = localStorage.getItem("dk_token"); return t ? { Authorization: `Bearer ${t}` } : {}; } catch { return {}; }
+  try { const t = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token"); return t ? { Authorization: `Bearer ${t}` } : {}; } catch { try { const t2 = localStorage.getItem("dk_token"); return t2 ? { Authorization: `Bearer ${t2}` } : {}; } catch { return {}; } }
 }
 
 export default function AdminContentPage() {

@@ -109,12 +109,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         setState("authed");
         return;
       }
-      if (r.ok && d.role && d.role !== "ADMIN") {
-        // Oddiy foydalanuvchi — sessiyasini buzmay login'ga yuboramiz
-        router.replace("/");
-        return;
-      }
-      // 401 — hamma qurilmada (telefon ham, PC ham) kalit ekrani
+      // Non-admin (oddiy talaba bo‘lib kirgan bo‘lsa ham) — kalit ekranini ko‘rsatamiz,
+      // kalit to‘g‘ri bo‘lsa dk_admin cookie bilan admin bo‘ladi. Redirect qilmaymiz
+      // — aks holda PC da “hech narsa bo‘lmayapti”dek tuyuladi.
       setState("keygate");
     } catch {
       setState("keygate");
