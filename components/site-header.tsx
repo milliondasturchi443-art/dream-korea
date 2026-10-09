@@ -34,7 +34,13 @@ export function SiteHeader() {
       .then(d => {
         if (d?.email) {
           setMe({ name: d.name || "Foydalanuvchi", role: d.role || "STUDENT" });
-          try { localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id })); } catch {}
+          try {
+            localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id }));
+            if (d.token) {
+              try { localStorage.setItem("dk_token", d.token); } catch {}
+              try { sessionStorage.setItem("dk_token", d.token); } catch {}
+            }
+          } catch {}
         } else {
           // кука истекла — рассинхрон, чистим
           try {

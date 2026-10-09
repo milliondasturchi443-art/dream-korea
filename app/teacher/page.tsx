@@ -1,93 +1,64 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Users, BookOpen, FileText, GraduationCap, Loader2, AlertTriangle } from "lucide-react";
+import { Users, ClipboardCheck, CreditCard, BookOpen, Loader2, GraduationCap, Bell } from "lucide-react";
 
-type Stats = { db: boolean; students: number; courses: number; lessons: number; tests: number };
-type U = { id: string; name: string; email: string; role: string; _count: { lessonProgress: number; testAttempts: number } };
+type Group = { id:string; name:string; _count?:{ members:number }; members:{ user:{ id:string; name:string}}[]; teacher:{ name:string }|null };
 
-export default function TeacherPage() {
-  const [s, setS] = useState<Stats | null>(null);
-  const [users, setUsers] = useState<U[]>([]);
-  const [err, setErr] = useState("");
-  const [loading, setLoading] = useState(true);
+function authHeader():Record<string,string>{ try{ const t=sessionStorage.getItem("dk_token")||localStorage.getItem("dk_token")||""; return t?{Authorization:`Bearer ${t}`}:{};}catch{ return {}; } }
 
-  useEffect(() => {
-    const token = localStorage.getItem("dk_token") || "";
-    const h = { Authorization: `Bearer ${token}` };
-    Promise.all([
-      fetch("/api/stats", { headers: h }).then(r => r.json()),
-      fetch("/api/users", { headers: h }).then(r => r.json()).catch(() => ({ users: [] })),
-    ])
-      .then(([st, us]) => {
-        if (!st.db) setErr("Baza bilan bog‘lanib bo‘lmadi");
-        setS(st);
-        setUsers(Array.isArray(us.users) ? us.users.filter((u: U) => u.role === "STUDENT") : []);
-      })
-      .catch(() => setErr("Ma’lumot yuklanmadi"))
-      .finally(() => setLoading(false));
-  }, []);
+export default function TeacherDashboard(){
+  const [groups,setGroups]=useState<Group[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [name,setName]=useState("Ustoz");
+  useEffect(()=>{
+    const h=authHeader();
+    fetch("/api/auth/me",{ headers:h }).then(r=>r.json()).then(d=>{ if(d?.name) setName(d.name); }).catch(()=>{});
+    fetch("/api/groups",{ headers:h }).then(r=>r.json()).then(d=> setGroups(Array.isArray(d.groups)?d.groups:[])).catch(()=>{}).finally(()=> setLoading(false));
+  },[]);
 
-  if (loading) return <div className="mx-auto max-w-[1100px] p-4 lg:p-6 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda…</div>;
-  if (err) return <div className="mx-auto max-w-[1100px] p-4 lg:p-6"><Card className="p-6 flex items-center gap-2 text-amber-700 bg-amber-50 border-amber-200 text-sm"><AlertTriangle className="h-5 w-5" /> {err}</Card></div>;
-
+  if(loading) return <div className="mx-auto max-w-[1100px] p-4 lg:p-6 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div>;
+  const totalStudents = groups.reduce((s,g)=> s + (g.members?.length ?? g._count?.members ?? 0), 0);
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
       <div>
-        <h1 className="text-[22px] font-bold text-slate-900">Ustoz paneli</h1>
-        <p className="text-sm text-slate-500">Haqiqiy ma’lumotlar (MongoDB)</p>
+        <h1 className="text-[22px] font-bold text-slate-900">Assalomu alaykum, {name}!</h1>
+        <p className="text-sm text-slate-500">Ustoz kabineti — guruhlar, davomat, to‘lovlar va uy vazifalari</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {([
-          ["O‘quvchilar", String(s?.students ?? 0), Users],
-          ["Kurslar", String(s?.courses ?? 0), BookOpen],
-          ["Darslar", String(s?.lessons ?? 0), FileText],
-          ["TOPIK testlar", String(s?.tests ?? 0), GraduationCap],
-        ] as [string, string, React.ComponentType<{className?: string}>][]).map(([label, val, Icon]) => (
-          <Card key={label} className="p-5">
-            <div className="flex items-center justify-between"><span className="text-xs text-slate-500">{label}</span><Icon className="h-4 w-4 text-slate-400"/></div>
-            <div className="text-xl font-bold text-slate-900 mt-1">{val}</div>
-          </Card>
-        ))}
+        <Card className="p-5"><div className="text-xs text-slate-500 flex items-center justify-between">Guruhlar <Users className="h-4 w-4 text-slate-400"/></div><div className="text-xl font-bold mt-1">{groups.length}</div></Card>
+        <Card className="p-5"><div className="text-xs text-slate-500 flex items-center justify-between">O‘quvchilar <GraduationCap className="h-4 w-4 text-slate-400"/></div><div className="text-xl font-bold mt-1">{totalStudents}</div></Card>
+        <Card className="p-5"><div className="text-xs text-slate-500 flex items-center justify-between">Davomat <ClipboardCheck className="h-4 w-4 text-slate-400"/></div><Link href="/teacher/attendance" className="text-sm text-[#2563eb] font-medium mt-2 inline-block">Belgilash →</Link></Card>
+        <Card className="p-5"><div className="text-xs text-slate-500 flex items-center justify-between">Uy vazifalari <BookOpen className="h-4 w-4 text-slate-400"/></div><Link href="/teacher/homework" className="text-sm text-[#2563eb] font-medium mt-2 inline-block">Berish →</Link></Card>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="p-5">
-          <div className="font-semibold text-slate-900">O‘quvchilar ({users.length})</div>
-          {users.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-400">Hozircha o‘quvchi yo‘q</p>
-          ) : (
-            <div className="mt-3 space-y-3 text-sm">
-              {users.slice(0, 8).map(u => {
-                const prog = Math.min(100, u._count.lessonProgress * 5);
-                return (
-                  <div key={u.id} className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-[#eff6ff] grid place-items-center text-xs font-bold text-[#2563eb]">{u.name[0]?.toUpperCase()}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-slate-900 leading-none truncate">{u.name}</div>
-                      <div className="text-xs text-slate-500">{u._count.lessonProgress} dars · {u._count.testAttempts} test</div>
-                    </div>
-                    <div className="w-24"><Progress value={prog} /></div>
-                  </div>
-                );
-              })}
+          <div className="font-semibold">Guruhlarim</div>
+          {groups.length===0 ? <p className="text-sm text-slate-400 mt-3">Hali guruh biriktirilmagan — admin sizni guruhga tayinlaydi (/admin/groups).</p> : (
+            <div className="mt-3 space-y-2">
+              {groups.map(g=> (
+                <div key={g.id} className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5">
+                  <div><div className="text-sm font-medium">{g.name}</div><div className="text-xs text-slate-500">{g.members?.length ?? g._count?.members ?? 0} o‘quvchi</div></div>
+                  <Badge className="bg-white border text-slate-700 text-[11px]">{g.members?.length ?? 0} nafar</Badge>
+                </div>
+              ))}
             </div>
           )}
-          <Link href="/courses" className="mt-4 block text-center text-sm text-[#2563eb] font-medium">Barcha kurslarni ko‘rish →</Link>
+          <Link href="/teacher/groups"><Button variant="outline" size="sm" className="mt-4 w-full">Batafsil</Button></Link>
         </Card>
-
         <Card className="p-5">
-          <div className="font-semibold text-slate-900">Tez amallar</div>
+          <div className="font-semibold">Tez amallar</div>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <Link href="/courses"><Card className="p-3 text-center text-sm hover:border-blue-200 transition-colors">Kurslar</Card></Link>
-            <Link href="/topik"><Card className="p-3 text-center text-sm hover:border-blue-200 transition-colors">TOPIK testlar</Card></Link>
-            <Link href="/vocabulary"><Card className="p-3 text-center text-sm hover:border-blue-200 transition-colors">Lug‘at</Card></Link>
-            <Link href="/grammar"><Card className="p-3 text-center text-sm hover:border-blue-200 transition-colors">Grammatika</Card></Link>
+            <Link href="/teacher/attendance"><Card className="p-4 text-center hover:border-blue-200"><ClipboardCheck className="h-6 w-6 mx-auto text-[#2563eb]"/><div className="text-sm font-medium mt-1">Davomat</div></Card></Link>
+            <Link href="/teacher/payments"><Card className="p-4 text-center hover:border-blue-200"><CreditCard className="h-6 w-6 mx-auto text-emerald-600"/><div className="text-sm font-medium mt-1">To‘lovlar</div></Card></Link>
+            <Link href="/teacher/homework"><Card className="p-4 text-center hover:border-blue-200"><BookOpen className="h-6 w-6 mx-auto text-violet-600"/><div className="text-sm font-medium mt-1">Uy vazifasi</div></Card></Link>
+            <Link href="/notifications"><Card className="p-4 text-center hover:border-blue-200"><Bell className="h-6 w-6 mx-auto text-amber-600"/><div className="text-sm font-medium mt-1">Bildirishnomalar</div></Card></Link>
           </div>
-          <p className="mt-4 text-xs text-slate-500">Kontentni qo‘shish — administrator panelida (/admin/content).</p>
         </Card>
       </div>
     </div>

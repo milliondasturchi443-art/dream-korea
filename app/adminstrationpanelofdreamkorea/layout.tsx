@@ -12,6 +12,7 @@ const nav = [
   ["Dashboard", "/adminstrationpanelofdreamkorea", LayoutDashboard],
   ["O‘quvchilar", "/adminstrationpanelofdreamkorea/users", Users],
   ["Qabul arizalari", "/adminstrationpanelofdreamkorea/admissions", FileText],
+  ["Guruhlar", "/adminstrationpanelofdreamkorea/groups", Users],
   ["Kontent (kurslar)", "/adminstrationpanelofdreamkorea/content", BookOpenCheck],
   ["Bloklangan ilovalar", "/adminstrationpanelofdreamkorea/blocked-apps", ShieldAlert],
   ["Universitetlar", "/universities", Building2],

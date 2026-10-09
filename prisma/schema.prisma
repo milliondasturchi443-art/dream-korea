@@ -41,6 +41,10 @@ model User {
   notifications  Notification[]
   achievements   Achievement[]
   certificates   Certificate[]
+  taughtGroups   Group[]
+  groupMembers   GroupMember[]
+  attendances    Attendance[]
+  homeworks      Homework[]
 }
 
 model Course {
@@ -176,6 +180,59 @@ model University {
   topik       String
   tuition     String
   description String?
+  ranking     Int?
+  faculties   String[]
+  deadline    String?
+  language    String?
+  dorm        String?
+  website     String?
+  image       String?
+}
+
+model Group {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  teacherId String?  @db.ObjectId
+  teacher   User?    @relation(fields: [teacherId], references: [id])
+  createdAt DateTime @default(now())
+  members   GroupMember[]
+  attendances Attendance[]
+  homeworks Homework[]
+}
+
+model GroupMember {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  groupId  String   @db.ObjectId
+  group    Group    @relation(fields: [groupId], references: [id])
+  userId   String   @db.ObjectId
+  user     User     @relation(fields: [userId], references: [id])
+  joinedAt DateTime @default(now())
+  @@unique([groupId, userId])
+}
+
+model Attendance {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  groupId   String   @db.ObjectId
+  group     Group    @relation(fields: [groupId], references: [id])
+  studentId String   @db.ObjectId
+  student   User     @relation(fields: [studentId], references: [id])
+  date      String
+  status    String
+  note      String?
+  createdAt DateTime @default(now())
+  @@unique([groupId, studentId, date])
+}
+
+model Homework {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  groupId     String   @db.ObjectId
+  group       Group    @relation(fields: [groupId], references: [id])
+  teacherId   String   @db.ObjectId
+  teacher     User     @relation(fields: [teacherId], references: [id])
+  title       String
+  description String?
+  dueDate     String?
+  createdAt   DateTime @default(now())
 }
 
 model Admission {

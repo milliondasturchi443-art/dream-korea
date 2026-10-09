@@ -8,7 +8,7 @@ import { doLogout } from "@/lib/logout";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut, Bot
+  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut, Bot, GraduationCap
 } from "lucide-react";
 
 export const studentNav = [
@@ -24,6 +24,7 @@ export const studentNav = [
   { href: "/admission", label: "Qabul", icon: Building2 },
   { href: "/universities", label: "Universitetlar", icon: Building2 },
   { href: "/profile", label: "Profil", icon: User },
+  { href: "/teacher", label: "Ustoz kabineti", icon: GraduationCap },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setInitials(u.name.split(/\s+/).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase());
       }
     } catch {}
+    // Подтягиваем актуальную роль из БД (исправляет смену роли без перелогина)
+    fetch("/api/auth/me").then(r=>r.ok?r.json():null).then(d=>{
+      if(d?.email && d?.name){
+        try{
+          const cur = JSON.parse(localStorage.getItem("dk_user")||"{}");
+          if(cur.role !== d.role || cur.name !== d.name){
+            localStorage.setItem("dk_user", JSON.stringify({ email:d.email, name:d.name, role:d.role, id:d.id }));
+            if(d.token){ try{localStorage.setItem("dk_token", d.token);}catch{}
+              try{sessionStorage.setItem("dk_token", d.token);}catch{} }
+            setUserName(d.name);
+            setInitials(d.name.split(/\s+/).map((w:string)=>w[0]).slice(0,2).join("").toUpperCase());
+          }
+        }catch{}
+      }
+    }).catch(()=>{});
   }, [pathname]);
 
   // Cookie sessiyasini tiklash: localStorage tozalangan bo'lsa ham (30 kunlik cookie)

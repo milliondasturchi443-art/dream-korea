@@ -23,9 +23,9 @@ export default function NotificationsPage() {
   const [items, setItems] = useState<N[] | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("dk_token") || "";
-    if (!token) { setItems([]); return; }
-    fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } })
+    let token = "";
+    try { token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; } catch { token = localStorage.getItem("dk_token") || ""; }
+    fetch("/api/notifications", token ? { headers: { Authorization: `Bearer ${token}` } } : {})
       .then(r => r.json())
       .then(d => setItems(Array.isArray(d.items) ? d.items : []))
       .catch(() => setItems([]));
