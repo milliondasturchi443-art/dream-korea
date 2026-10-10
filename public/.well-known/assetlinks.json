@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "kr.dreamkorea.app",
+    "sha256_cert_fingerprints": [
+      "9B:1D:36:3E:82:9E:93:29:CA:D8:BB:A1:C8:05:A4:6B:3C:19:9E:42:8B:54:3D:9B:31:A5:53:6C:F9:EC:F9:53"
+    ]
+  }
+}]
