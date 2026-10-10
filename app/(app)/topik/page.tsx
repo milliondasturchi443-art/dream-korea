@@ -127,11 +127,6 @@ export default function TopikPage() {
         ))}
       </div>
 
-      <Card className="p-4 bg-amber-50 border-amber-200 text-sm">
-        <span className="font-semibold text-amber-900">Backend: </span>
-        <span className="text-amber-800">Testlar MongoDB (Test + Question) da saqlanadi. Bo‘sh payt /api/topik 3 ta seed TOPIK I namuna-testini qaytaradi (3/2/5 savol); admin POST /api/topik orqali to‘liq savollar qo‘shadi — darhol ko‘rinadi. Bалла server hisoblanadi (/api/topik/attempt); login bo‘lsa tarix БД ga yoziladi.</span>
-      </Card>
-
       {history.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-900">Oxirgi natijalar</h2>
