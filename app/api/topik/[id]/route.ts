@@ -16,14 +16,21 @@ const SEED_QUESTIONS: Record<string, { text: string; options: { key: string; tex
   seed_topik2_reading: [],
 };
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const admin = requireAdmin(req);
+  const wantSolutions = admin || new URL(req.url).searchParams.get("solutions") === "1";
   if (id.startsWith("seed_")) {
     const qs = SEED_QUESTIONS[id] ?? SEED_QUESTIONS.seed_topik1_reading;
-    // Для full — объединяем
     if (id === "seed_topik1_full") {
       const all = [...SEED_QUESTIONS.seed_topik1_reading, ...SEED_QUESTIONS.seed_topik1_listening];
-      return Response.json({ id, title: "TOPIK I — Full Mock", level: "TOPIK I", type: "Full", time: "80 daq", questions: all.map((q, i) => ({ id: String(i + 1), text: q.text, options: q.options, correct: q.correct, explanation: q.explanation })) });
+      return Response.json({
+        id, title: "TOPIK I — Full Mock", level: "TOPIK I", type: "Full", time: "80 daq",
+        questions: all.map((q, i) => ({
+          id: String(i + 1), text: q.text, options: q.options,
+          ...(wantSolutions ? { correct: q.correct, explanation: q.explanation } : {}),
+        })),
+      });
     }
     return Response.json({
       id,
@@ -31,7 +38,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       level: id.startsWith("seed_topik2") ? "TOPIK II" : "TOPIK I",
       type: id.includes("full") ? "Full" : id.includes("listening") ? "Listening" : "Reading",
       time: id.includes("full") ? "80 daq" : "40 daq",
-      questions: qs.map((q, i) => ({ id: String(i + 1), text: q.text, options: q.options, correct: q.correct, explanation: q.explanation })),
+      questions: qs.map((q, i) => ({
+        id: String(i + 1), text: q.text, options: q.options,
+        ...(wantSolutions ? { correct: q.correct, explanation: q.explanation } : {}),
+      })),
     });
   }
   try {
@@ -42,13 +52,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       title: test.title,
       level: test.level,
       type: test.type,
-      questions: test.questions.map(q => ({
-        id: q.id,
-        text: q.text,
-        options: Array.isArray(q.options) ? (q.options as { key: string; text: string }[]) : [{ key: "A", text: String(q.options) }],
-        correct: q.correct,
-        explanation: q.explanation ?? "",
-      })),
+      questions: test.questions.map(q => {
+        const base: Record<string, unknown> = {
+          id: q.id,
+          text: q.text,
+          options: Array.isArray(q.options) ? (q.options as { key: string; text: string }[]) : [{ key: "A", text: String(q.options) }],
+        };
+        if (wantSolutions) { base.correct = q.correct; base.explanation = q.explanation ?? ""; }
+        return base;
+      }),
     });
   } catch (e) {
     console.error("GET /api/topik/[id]", e);
@@ -111,6 +123,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const questionId = new URL(req.url).searchParams.get("question");
   try {
     if (questionId) {
+      const q = await prisma.question.findUnique({ where: { id: questionId }, select: { testId: true } });
+      if (!q) return Response.json({ error: "Savol topilmadi" }, { status: 404 });
+      if (q.testId !== id) return Response.json({ error: "Savol bu testga tegishli emas" }, { status: 400 });
       await prisma.question.delete({ where: { id: questionId } });
       return Response.json({ ok: true });
     }

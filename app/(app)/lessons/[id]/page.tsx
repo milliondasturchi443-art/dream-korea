@@ -26,11 +26,11 @@ export default function LessonPage() {
 
   useEffect(() => {
     if (!courseId) { setLoading(false); return; }
-    fetch(`/api/courses/${encodeURIComponent(courseId)}`).then(r=>r.json()).then(d=>{
-      if (d.error) throw new Error(d.error);
-      setLessons(Array.isArray(d.lessons) ? d.lessons : []);
-      setCourseTitle(d.title ?? "");
-    }).catch(()=> toast.error("Darslar yuklanmadi")).finally(()=>setLoading(false));
+    const ac = new AbortController();
+    fetch(`/api/courses/${encodeURIComponent(courseId)}`, { signal: ac.signal })
+      .then(async r => { const d = await r.json().catch(() => ({} as Record<string, unknown>)); if (!r.ok) throw new Error(String((d as Record<string, unknown>).error ?? `HTTP ${r.status}`)); setLessons(Array.isArray((d as Record<string, unknown>).lessons) ? (d as Record<string, unknown>).lessons as Lesson[] : []); setCourseTitle(String((d as Record<string, unknown>).title ?? "")); })
+      .catch(()=> toast.error("Darslar yuklanmadi")).finally(()=>setLoading(false));
+    return () => ac.abort();
   }, [courseId]);
 
   useEffect(() => { if (courseId) setCompleted(getCompleted(courseId)); }, [courseId, lessons.length]);
@@ -39,11 +39,15 @@ export default function LessonPage() {
     return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8"><p className="font-semibold">Kurs tanlanmadi</p><p className="text-sm text-slate-500 mt-1">Kurs sahifasidan darsni oching</p><Link href="/courses"><Button className="mt-4">Kurslar</Button></Link></Card></div>;
   }
   if (loading) return <div className="mx-auto max-w-[1100px] p-8 text-center text-sm text-slate-500 flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div>;
-  if (!lessons.length) return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8">Darslar yo‘q — administrator qo‘shadi</Card></div>;
+  if (!lessons.length) return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8 text-sm text-slate-500">Darslar yo‘q — administrator qo‘shadi (/admin/content)</Card></div>;
 
   const idx = lessons.findIndex(l => l.id === lessonId);
-  const curIdx = idx === -1 ? 0 : idx;
+  if (idx === -1) {
+    return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8"><p className="font-semibold">Dars topilmadi</p><p className="text-sm text-slate-500 mt-1">Ushbu dars mavjud emas</p><Link href={`/courses/${courseId}`}><Button className="mt-4">Kursga qaytish</Button></Link></Card></div>;
+  }
+  const curIdx = idx;
   const cur = lessons[curIdx] ?? lessons[0];
+  if (!cur) return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8"><p className="font-semibold">Dars topilmadi</p></Card></div>;
   const unlocked = isLessonUnlocked(courseId, curIdx);
   const done = completed.includes(curIdx);
   const canGoNext = curIdx < lessons.length - 1 ? completed.includes(curIdx) : true;

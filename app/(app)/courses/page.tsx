@@ -10,30 +10,41 @@ import { motion } from "framer-motion";
 import { Reveal } from "@/components/reveal";
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; lessons: number; color: string };
-const FALLBACK: ApiCourse[] = [
-  { id: "1", title: "Koreys tili 1-daraja", subtitle: "Boshlang‘ich daraja (A1)", level: "A1", lessons: 36, color: "from-[#1e3a8a] to-[#3b82f6]" },
-];
-
 const tabs = ["Mening darslarim", "Kurslar", "Tugagan"] as const;
 
 export default function CoursesPage() {
-  const [tab, setTab] = useState<typeof tabs[number]>("Mening darslarim");
+  const [tab, setTab] = useState<typeof tabs[number]>("Kurslar");
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    fetch("/api/courses").then(r=>r.json()).then(d=>{
-      if (Array.isArray(d.courses) && d.courses.length) setCourses(d.courses);
-      else setCourses(FALLBACK);
-    }).catch(()=>setCourses(FALLBACK)).finally(()=>setLoading(false));
+    const ac = new AbortController();
+    fetch("/api/courses", { signal: ac.signal })
+      .then(async r => {
+        if (!r.ok) throw new Error(await r.text().catch(() => `HTTP ${r.status}`));
+        const d = await r.json();
+        if (!Array.isArray(d.courses)) setCourses([]);
+        else setCourses(d.courses);
+        setError(null);
+      })
+      .catch(e => {
+        if ((e as Error).name === "AbortError") return;
+        setError("Kurslar yuklanmadi. Qayta urinib ko'ring.");
+      })
+      .finally(() => setLoading(false));
+    return () => ac.abort();
   }, []);
+
   useEffect(() => {
     if (!courses.length) return;
     const m: Record<string, number> = {};
     for (const c of courses) {
-      const done = getCompleted(c.id).length;
-      m[c.id] = c.lessons ? Math.round(done / c.lessons * 100) : 0;
+      try {
+        const done = getCompleted(c.id).length;
+        m[c.id] = c.lessons ? Math.round((done / c.lessons) * 100) : 0;
+      } catch { m[c.id] = 0; }
     }
     setProgressMap(m);
   }, [courses]);
@@ -57,19 +68,25 @@ export default function CoursesPage() {
         ))}
       </div>
 
-      {list.length === 0 ? (
+      {error ? (
+        <Card className="p-10 text-center text-sm text-red-600">
+          {error} <button onClick={() => location.reload()} className="ml-2 underline">Qayta yuklash</button>
+        </Card>
+      ) : list.length === 0 ? (
         <Card className="p-10 text-center text-sm text-slate-500">
-          {tab==="Mening darslarim" ? <>Hali boshlamadingiz — <Link href="#" onClick={e=>{e.preventDefault(); setTab("Kurslar");}} className="text-[#2563eb] underline">Kurslar</Link> dan boshlang.</> : tab==="Tugagan" ? "Hali tugatgan kursingiz yo‘q." : "Kurs yo‘q — administrator qo‘shadi."}
+          {tab==="Mening darslarim" ? <><span>Hali boshlamadingiz — </span><button onClick={() => setTab("Kurslar")} className="text-[#2563eb] underline">Kurslar</button><span> dan boshlang.</span></> : tab==="Tugagan" ? "Hali tugatgan kursingiz yo‘q." : "Kurs yo‘q — administrator /admin/content → Kurslar da qo‘shadi."}
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {list.map((c, i) => {
             const prog = progressMap[c.id] ?? 0;
-            const done = getCompleted(c.id).length;
+            let done = 0;
+            try { done = getCompleted(c.id).length; } catch { done = 0; }
+            const color = c.color || "from-[#1e3a8a] to-[#3b82f6]";
             return (
               <Reveal key={c.id} delay={Math.min(i * 0.06, 0.42)} className="h-full">
               <Card className="overflow-hidden flex flex-col hover:shadow-md hover:border-blue-200 transition-all h-full">
-                <div className={`h-24 bg-gradient-to-br ${c.color} p-4 flex items-start justify-between`}>
+                <div className={`h-24 bg-gradient-to-br ${color} p-4 flex items-start justify-between`}>
                   <Badge className="bg-white text-slate-800 text-[11px]">{c.level}</Badge>
                   <span className="text-white/90 text-xs font-medium">{done} / {c.lessons} dars</span>
                 </div>
@@ -95,7 +112,7 @@ export default function CoursesPage() {
           <div className="font-semibold text-slate-900">Keyingi dars</div>
           <div className="text-sm text-slate-600">Kursni oching va birinchi darsdan boshlang — ketma-ket tartib.</div>
         </div>
-        <Link href={courses[0] ? `/courses/${courses[0].id}` : "/courses"}><Button>Darsni davom ettirish</Button></Link>
+        <Link href={courses.length ? `/courses/${courses[0].id}` : "/courses"}><Button>Darsni davom ettirish</Button></Link>
       </Card>
     </div>
   );

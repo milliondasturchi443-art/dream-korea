@@ -10,7 +10,7 @@ function isAdminReq(req: Request): boolean {
   return !!d && d.role === "ADMIN" && isAdminEmail(String(d.email ?? ""));
 }
 
-// GET /api/stats — ochiq: faqat hisoblagichlar. Admin bo'lsa: detall + oxirgi yozuvlar.
+// GET /api/stats — ochiq: faqat hisoblagichlar; admin uchun — to'liq ma'lumot (users, admissions...)
 export async function GET(req: Request) {
   const admin = isAdminReq(req);
   try {
@@ -48,8 +48,8 @@ export async function GET(req: Request) {
     for (let i = 5; i >= 0; i--) {
       const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      const users = await prisma.user.count({ where: { createdAt: { gte: start, lt: end } } });
-      byMonth.push({ name: fmt.format(start), users });
+      const c = await prisma.user.count({ where: { createdAt: { gte: start, lt: end } } });
+      byMonth.push({ name: fmt.format(start), users: c });
     }
 
     return Response.json({ db: true, students, teachers, courses, lessons, tests, attempts, users, admissions, recentCourses, byMonth });

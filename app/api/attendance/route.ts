@@ -81,13 +81,20 @@ export async function POST(req: Request) {
     if (!g || String(g.teacherId ?? "") !== auth.id) return Response.json({ error: "Bu guruh sizniki emas" }, { status: 403 });
   }
 
+  // Teacher: faqat guruhdagi talabalar — begona studentId kiritib bo'lmaydi
+  let allowedIds: Set<string> | null = null;
   try {
-    // upsert each mark
+    const mems = await prisma.groupMember.findMany({ where: { groupId }, select: { userId: true } });
+    allowedIds = new Set(mems.map(m => m.userId));
+  } catch {}
+  try {
+    // upsert each mark — faqat ruxsat berilgan talabalar uchun
     for (const m of marks) {
       const studentId = String(m.studentId ?? "").trim();
+      if (!studentId) continue;
+      if (allowedIds && !allowedIds.has(studentId)) continue;
       let status = String(m.status ?? "").trim().toUpperCase();
       if (status !== "PRESENT" && status !== "ABSENT") status = "ABSENT";
-      if (!studentId) continue;
       await prisma.attendance.upsert({
         where: { groupId_studentId_date: { groupId, studentId, date } },
         create: { groupId, studentId, date, status, note: m.note ? String(m.note).trim() || undefined : undefined },

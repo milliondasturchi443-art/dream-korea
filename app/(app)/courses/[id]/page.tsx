@@ -27,12 +27,13 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/courses/${encodeURIComponent(id)}`).then(r=>r.json()).then(d=>{
-      if (d.error) throw new Error(d.error);
-      setCourse({ id: d.id, title: d.title, subtitle: d.subtitle ?? "", level: d.level, teacher: d.teacher ?? "Administrator", color: "from-[#1e3a8a] to-[#3b82f6]" });
-      setLessons(Array.isArray(d.lessons) ? d.lessons : []);
-    }).catch(()=> toast.error("Kurs yuklanmadi")).finally(()=>setLoading(false));
-    fetch("/api/materials").then(r=>r.json()).then(d=>{ if (Array.isArray(d.items)) setMaterials(d.items); }).catch(()=>{});
+    const ac = new AbortController();
+    fetch(`/api/courses/${encodeURIComponent(id)}`, { signal: ac.signal })
+      .then(async r => { const d = await r.json().catch(() => ({} as Record<string, unknown>)); if (!r.ok) throw new Error(String((d as Record<string, unknown>).error ?? `HTTP ${r.status}`)); if ((d as Record<string, unknown>).error) throw new Error(String((d as Record<string, unknown>).error)); setCourse({ id: String((d as Record<string, unknown>).id ?? id), title: String((d as Record<string, unknown>).title ?? ""), subtitle: String((d as Record<string, unknown>).subtitle ?? ""), level: String((d as Record<string, unknown>).level ?? "A1"), teacher: String((d as Record<string, unknown>).teacher ?? "Administrator"), color: "from-[#1e3a8a] to-[#3b82f6]" }); const ls = Array.isArray((d as Record<string, unknown>).lessons) ? (d as Record<string, unknown>).lessons as Lesson[] : []; setLessons(ls); })
+      .catch(e => { if ((e as Error).name !== "AbortError") toast.error("Kurs yuklanmadi"); })
+      .finally(() => setLoading(false));
+    fetch("/api/materials", { signal: ac.signal }).then(r=>r.json()).then(d=>{ const v = d as { items?: Material[] }; if (Array.isArray(v.items)) setMaterials(v.items); }).catch(()=>{});
+    return () => ac.abort();
   }, [id]);
 
   useEffect(() => { if (course) setCompleted(getCompleted(course.id)); }, [course?.id]);

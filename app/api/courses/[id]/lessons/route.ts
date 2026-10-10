@@ -18,6 +18,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const title = String(b.title ?? "").trim();
   if (!title) return Response.json({ error: "Dars nomi kiriting" }, { status: 400 });
   try {
+    const course = await prisma.course.findUnique({ where: { id: courseId }, select: { id: true } });
+    if (!course) return Response.json({ error: "Kurs topilmadi" }, { status: 404 });
     const last = await prisma.lesson.findFirst({ where: { courseId }, orderBy: { order: "desc" } });
     const order = (last?.order ?? 0) + 1;
     const l = await prisma.lesson.create({ data: { courseId, order, title, duration: String(b.duration ?? "15 daq").trim() || "15 daq", videoUrl: b.videoUrl ? String(b.videoUrl).trim() : null, content: b.content ? String(b.content).trim() : null } });
@@ -36,6 +38,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const lessonId = url.searchParams.get("lessonId") ?? "";
   if (!lessonId) return Response.json({ error: "lessonId kerak" }, { status: 400 });
   try {
+    const l = await prisma.lesson.findUnique({ where: { id: lessonId }, select: { courseId: true } });
+    if (!l) return Response.json({ error: "Dars topilmadi" }, { status: 404 });
+    if (l.courseId !== courseId) return Response.json({ error: "Dars bu kursga tegishli emas" }, { status: 400 });
     await prisma.lesson.delete({ where: { id: lessonId } });
     // перенумеровать order
     const lessons = await prisma.lesson.findMany({ where: { courseId }, orderBy: { order: "asc" } });
