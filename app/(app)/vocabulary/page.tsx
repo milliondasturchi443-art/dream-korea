@@ -31,6 +31,7 @@ export default function VocabularyPage() {
         <Button variant="outline" onClick={() => {
           const rnd = vocabulary[Math.floor(Math.random()*vocabulary.length)];
           toast.info(`Random: ${rnd.ko} — ${rnd.uz}`);
+          if (hasTTS()) { if (!speak(rnd.ko) || !hasKoreanVoice()) toast.info("Ovoz topilmadi — koreys tilini o‘rnatib ko‘ring"); }
         }}><Shuffle className="h-4 w-4 mr-1"/> Random so‘z</Button>
       </div>
 
