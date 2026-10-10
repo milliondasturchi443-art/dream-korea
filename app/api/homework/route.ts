@@ -30,14 +30,20 @@ export async function GET(req: Request) {
       return Response.json({ items });
     }
     if (auth.role === "TEACHER") {
-      const mine = groupId ? [groupId] : (await prisma.group.findMany({ where: { teacherId: auth.id }, select: { id: true } })).map(g => g.id);
+      const own = (await prisma.group.findMany({ where: { teacherId: auth.id }, select: { id: true } })).map(g => g.id);
+      // chiqargan bug: groupId berilsa ham faqat O'Z guruhini ko'rish — begona guruhga kirish mumkin emas
+      if (groupId && !own.includes(groupId)) return Response.json({ error: "Bu guruh sizniki emas" }, { status: 403 });
+      const mine = groupId ? [groupId] : own;
       if (mine.length === 0) return Response.json({ items: [] });
-      const items = await prisma.homework.findMany({ where: { groupId: { in: mine } } as never, include: { group: { select: { id: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
+      // teacher ichida ham teacher include qilinadi — aks holda sahifada h.teacher.name TypeError (qulaydi)
+      const items = await prisma.homework.findMany({ where: { groupId: { in: mine } } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
       return Response.json({ items });
     }
-    // STUDENT
+    // STUDENT — faqat a'zo bo'lgan guruhlar
     const memberships = await prisma.groupMember.findMany({ where: { userId: auth.id }, select: { groupId: true } });
-    const ids = groupId ? [groupId] : memberships.map(m => m.groupId);
+    const myIds = new Set(memberships.map(m => m.groupId));
+    if (groupId && !myIds.has(groupId)) return Response.json({ error: "Bu guruhga ruxsat yo'q" }, { status: 403 });
+    const ids = groupId ? [groupId] : [...myIds];
     if (ids.length === 0) return Response.json({ items: [] });
     const items = await prisma.homework.findMany({ where: { groupId: { in: ids } } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
     return Response.json({ items });

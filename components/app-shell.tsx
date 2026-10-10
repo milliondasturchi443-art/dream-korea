@@ -24,7 +24,6 @@ export const studentNav = [
   { href: "/admission", label: "Qabul", icon: Building2 },
   { href: "/universities", label: "Universitetlar", icon: Building2 },
   { href: "/profile", label: "Profil", icon: User },
-  { href: "/teacher", label: "Ustoz kabineti", icon: GraduationCap },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -32,6 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [userName, setUserName] = useState("");
   const [initials, setInitials] = useState("DK");
+  const [role, setRole] = useState("");
   useEffect(() => {
     try {
       const u = JSON.parse(localStorage.getItem("dk_user") || "{}");
@@ -39,11 +39,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setUserName(u.name);
         setInitials(u.name.split(/\s+/).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase());
       }
+      if (u.role) setRole(String(u.role));
     } catch {}
     // Подтягиваем актуальную роль из БД (исправляет смену роли без перелогина)
     fetch("/api/auth/me").then(r=>r.ok?r.json():null).then(d=>{
       if(d?.email && d?.name){
         try{
+          setRole(String(d.role || ""));
           const cur = JSON.parse(localStorage.getItem("dk_user")||"{}");
           if(cur.role !== d.role || cur.name !== d.name){
             localStorage.setItem("dk_user", JSON.stringify({ email:d.email, name:d.name, role:d.role, id:d.id }));
@@ -66,6 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         if (!r.ok) return;
         const d = await r.json().catch(() => ({}));
         if (d.role === "ADMIN" || !d.token) return;
+        setRole(d.role);
         localStorage.setItem("dk_token", d.token);
         localStorage.setItem("dk_role", d.role);
         localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id }));
@@ -118,7 +121,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex">
         <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
           <nav className="space-y-1 flex-1">
-            {studentNav.map(item => {
+            {[
+              ...studentNav,
+              // Ustoz kabineti — faqat TEACHER (talabalarga ko'rinmaydi)
+              ...(role === "TEACHER" ? [{ href: "/teacher", label: "Ustoz kabineti", icon: GraduationCap }] : []),
+            ].map(item => {
               const active = pathname === item.href;
               return (
                 <Link key={item.label + item.href} href={item.href} className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors", active ? "bg-white/90 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.4)]" : "text-slate-600 hover:bg-white/60 hover:text-slate-900")}>

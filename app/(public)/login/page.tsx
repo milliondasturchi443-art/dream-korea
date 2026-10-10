@@ -55,8 +55,10 @@ export default function LoginPage() {
       localStorage.setItem("dk_user", JSON.stringify({ email: norm, name: d.name ?? "Foydalanuvchi", role: d.role, id: d.id }));
       toast.success(`Xush kelibsiz, ${d.name ?? ""}!`);
       const next = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null;
+      // Ustoz uchun next=/teacher (yoki boshqa himoyalangan yo'l) — teacher layout o'zi tekshiradi, shuning uchun safe
       if (next && next.startsWith("/") && !next.startsWith("//")) router.push(next);
       else if (d.role === "ADMIN") router.push("/adminstrationpanelofdreamkorea");
+      else if (d.role === "TEACHER") router.push("/teacher");
       else router.push("/dashboard");
     } catch {
       toast.error("Server bilan bog‘lanib bo‘lmadi");

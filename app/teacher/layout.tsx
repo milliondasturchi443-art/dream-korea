@@ -18,6 +18,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const router = useRouter();
   const pathname = usePathname();
   const [ok, setOk] = useState<boolean | null>(null);
+  const [denied, setDenied] = useState(false);
   const [name, setName] = useState("Ustoz");
 
   useEffect(() => {
@@ -29,11 +30,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         if (!r.ok || !d.role) throw new Error();
         // роль из БД — уже свежая (me берёт из prisma)
         if (d.role !== "TEACHER" && d.role !== "ADMIN") {
-          router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          // Oldin bu yerga login'ga push qilinardi → login o'zi /teacher'ga qaytarardi (cheksiz loop).
+          // Endi — inline "ruxsat yo'q" ekrani.
+          setDenied(true);
           return;
         }
         if (d.token) {
-          try { sessionStorage.setItem("dk_token", d.token); localStorage.setItem("dk_token", d.token); } catch {}
+          // Admin tokeni localStorage'ga yozilmaydi (key-gate dizayni) — faqat session
+          if (d.role === "TEACHER") { try { localStorage.setItem("dk_token", d.token); } catch {} }
+          try { sessionStorage.setItem("dk_token", d.token); } catch {}
           try { localStorage.setItem("dk_user", JSON.stringify({ email:d.email, name:d.name, role:d.role, id:d.id })); } catch {}
         }
         setName(d.name || "Ustoz");
@@ -42,7 +47,21 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       .catch(()=> { router.replace(`/login?next=${encodeURIComponent(pathname)}`); });
   }, [pathname, router]);
 
-  if (ok === null) return <div className="min-h-screen grid place-items-center text-slate-500"><div className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin"/> Tekshirilmoqda…</div></div>;
+  if (ok === null) {
+    if (denied) {
+      return (
+        <div className="min-h-screen grid place-items-center p-6 text-center">
+          <div className="max-w-sm space-y-3">
+            <GraduationCap className="h-10 w-10 mx-auto text-slate-300" />
+            <h1 className="text-lg font-bold text-slate-900">Ruxsat yo'q</h1>
+            <p className="text-sm text-slate-500">Ustoz kabineti faqat ustozlar uchun.</p>
+            <Link href="/dashboard" className="inline-block rounded-xl bg-[#0f1b3d] px-4 py-2 text-sm font-medium text-white">Bosh sahifaga qaytish</Link>
+          </div>
+        </div>
+      );
+    }
+    return <div className="min-h-screen grid place-items-center text-slate-500"><div className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin"/> Tekshirilmoqda…</div></div>;
+  }
   if (!ok) return null;
 
   function onLogout(){ doLogout(); router.push("/login"); }

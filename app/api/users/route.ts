@@ -17,7 +17,9 @@ export async function GET(req: Request) {
   const d = verify(token);
   const role = d ? String(d.role ?? "") : "";
   const emailOk = d ? isAdminEmail(String(d.email ?? "")) : false;
-  if (!d || !emailOk || (role !== "ADMIN" && role !== "TEACHER")) {
+  // TEACHER: o'qish uchun (to'lov qo'shishda o'quvchi qidiradi) — email talab qilinmaydi
+  // ADMIN: faqat env-aman email
+  if (!d || (role !== "TEACHER" && !(role === "ADMIN" && emailOk))) {
     return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
   const q = (new URL(req.url).searchParams.get("q") || "").trim().toLowerCase();

@@ -52,7 +52,7 @@ export function SiteHeader() {
       .catch(() => {});
   }, [pathname]);
 
-  const cabHref = me?.role === "ADMIN" ? "/adminstrationpanelofdreamkorea" : "/dashboard";
+  const cabHref = me?.role === "ADMIN" ? "/adminstrationpanelofdreamkorea" : me?.role === "TEACHER" ? "/teacher" : "/dashboard";
   const initials = me?.name ? me.name.split(/\s+/).map((w: string) => w[0]).slice(0,2).join("").toUpperCase() : "";
   return (
     <header className="sticky top-0 z-40 glass border-b border-b-white/70">
@@ -102,7 +102,7 @@ export function SiteHeader() {
                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white grid place-items-center text-xs font-bold shrink-0">{initials}</div>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-slate-900 truncate leading-none">{me.name}</div>
-                    <div className="text-[11px] text-slate-500 leading-none mt-0.5">{me.role === "ADMIN" ? "Admin" : "Talaba"}</div>
+                    <div className="text-[11px] text-slate-500 leading-none mt-0.5">{me.role === "ADMIN" ? "Admin" : me.role === "TEACHER" ? "Ustoz" : "Talaba"}</div>
                   </div>
                 </div>
                 <Link href={cabHref} onClick={() => setOpen(false)}><Button className="w-full">Kabinetga o‘tish</Button></Link>

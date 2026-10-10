@@ -40,12 +40,16 @@ export async function GET(req: Request) {
     if (groupId) where.groupId = groupId;
     if (date) where.date = date;
     if (studentId) where.studentId = studentId;
-    // teacher: only own groups
-    if (auth.role === "TEACHER" && !groupId) {
+    // teacher: faqat o'z guruhlari (groupId bo'lsa ham tekshiriladi — begona guruhga kirib bo'lmaydi)
+    if (auth.role === "TEACHER") {
       const mine = await prisma.group.findMany({ where: { teacherId: auth.id }, select: { id: true } });
       const ids = mine.map(g => g.id);
-      where.groupId = { in: ids } as unknown as string;
       if (ids.length === 0) return Response.json({ rows: [] });
+      if (groupId) {
+        if (!ids.includes(groupId)) return Response.json({ error: "Bu guruh sizniki emas" }, { status: 403 });
+      } else {
+        where.groupId = { in: ids } as unknown as string;
+      }
     }
     const rows = await prisma.attendance.findMany({
       where: where as never,

@@ -8,7 +8,7 @@ import { Loader2, BookOpen, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 type Group = { id:string; name:string };
-type HW = { id:string; title:string; description:string|null; dueDate:string|null; createdAt:string; group:{ id:string; name:string }; teacher:{ id:string; name:string } };
+type HW = { id:string; title:string; description:string|null; dueDate:string|null; createdAt:string; group:{ id:string; name:string }; teacher?:{ id:string; name:string } };
 function authHeader():Record<string,string>{ try{ const t=sessionStorage.getItem("dk_token")||localStorage.getItem("dk_token")||""; return t?{Authorization:`Bearer ${t}`}:{};}catch{ return {}; } }
 
 export default function TeacherHomeworkPage(){
@@ -79,7 +79,7 @@ export default function TeacherHomeworkPage(){
                 <div className="min-w-0">
                   <div className="text-sm font-semibold">{h.title}</div>
                   {h.description && <div className="text-xs text-slate-600 mt-1">{h.description}</div>}
-                  <div className="text-xs text-slate-500 mt-1">{new Date(h.createdAt).toLocaleDateString("uz-UZ")} · {h.group.name} · {h.teacher.name}</div>
+                  <div className="text-xs text-slate-500 mt-1">{new Date(h.createdAt).toLocaleDateString("uz-UZ")} · {h.group.name}{h.teacher ? ` · ${h.teacher.name}` : ""}</div>
                 </div>
                 {h.dueDate && <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] shrink-0">Topshirish: {h.dueDate}</Badge>}
               </div>
