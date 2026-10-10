@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { vocabulary } from "@/lib/mock-data";
 import { Search, Volume2, Heart, Shuffle } from "lucide-react";
 import { toast } from "sonner";
+import { speak, hasTTS, hasKoreanVoice } from "@/lib/tts";
 
 export default function VocabularyPage() {
   const [q, setQ] = useState("");
@@ -72,7 +73,10 @@ export default function VocabularyPage() {
                     <div className="text-xs text-slate-500">{v.tr}</div>
                     <div className="mt-2 flex gap-2">
                       <Button size="sm" onClick={()=>setFlash(idx)}>Tarjimani ko‘rish</Button>
-                      <Button size="sm" variant="outline" onClick={()=>toast.info("🔊 "+v.ko)}><Volume2 className="h-4 w-4"/></Button>
+                      <Button size="sm" variant="outline" onClick={()=>{
+                        if (!hasTTS()) { toast.error("Bu qurilmada ovoz chiqarish qo‘llab-quvvatlanmaydi"); return; }
+                        if (!speak(v.ko) || !hasKoreanVoice()) toast.info("Ovoz topilmadi — qurilmangizga koreys tilini o‘rnatib ko‘ring");
+                      }}><Volume2 className="h-4 w-4"/></Button>
                     </div>
                   </>
                 )}

@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight, Play, FileText, Volume2, Download, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getCompleted, isLessonUnlocked, markCompleted } from "@/lib/lesson-progress";
+import { speak, hasTTS, hasKoreanVoice } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Lesson = { id: string; order: number; title: string; duration: string; videoUrl?: string; content?: string };
@@ -123,7 +124,7 @@ export default function LessonPage() {
                     {[["안녕하세요","annyeonghaseyo","salom"],["감사합니다","kamsahamnida","rahmat"]].map(([ko,tr,uz]) => (
                       <div key={ko} className="flex items-center justify-between rounded-xl border border-slate-200 p-3">
                         <div><div className="font-bold">{ko} <span className="text-xs font-normal text-slate-500">· {tr}</span></div><div className="text-xs text-slate-500">{uz}</div></div>
-                        <button onClick={()=>toast.info("🔊 "+ko)} className="h-8 w-8 rounded-full bg-slate-100 grid place-items-center"><Volume2 className="h-4 w-4"/></button>
+                        <button onClick={()=>{ if(!hasTTS()){toast.error("Ovoz chiqarish qo‘llab-quvvatlanmaydi");return;} if(!speak(ko)||!hasKoreanVoice()) toast.info("Ovoz topilmadi — koreys tilini o‘rnatib ko‘ring"); }} className="h-8 w-8 rounded-full bg-slate-100 grid place-items-center"><Volume2 className="h-4 w-4"/></button>
                       </div>
                     ))}
                     <p className="text-xs text-slate-400">To‘liq lug‘atni administrator qo‘shadi.</p>
