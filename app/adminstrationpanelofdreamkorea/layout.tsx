@@ -5,16 +5,17 @@ import { usePathname, useRouter } from "next/navigation";
 import { doLogout } from "@/lib/logout";
 import { LayoutDashboard, Users, Building2, Bell, Sparkles, ShieldAlert, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { adminBase } from "@/lib/admin-base";
 import Image from "next/image";
 import { toast } from "sonner";
 
-const nav = [
-  ["Dashboard", "/adminstrationpanelofdreamkorea", LayoutDashboard],
-  ["O‘quvchilar", "/adminstrationpanelofdreamkorea/users", Users],
-  ["Qabul arizalari", "/adminstrationpanelofdreamkorea/admissions", FileText],
-  ["Guruhlar", "/adminstrationpanelofdreamkorea/groups", Users],
-  ["Kontent (kurslar)", "/adminstrationpanelofdreamkorea/content", BookOpenCheck],
-  ["Bloklangan ilovalar", "/adminstrationpanelofdreamkorea/blocked-apps", ShieldAlert],
+const nav = (base: string) => [
+  ["Dashboard", base, LayoutDashboard],
+  ["O‘quvchilar", `${base}/users`, Users],
+  ["Qabul arizalari", `${base}/admissions`, FileText],
+  ["Guruhlar", `${base}/groups`, Users],
+  ["Kontent (kurslar)", `${base}/content`, BookOpenCheck],
+  ["Bloklangan ilovalar", `${base}/blocked-apps`, ShieldAlert],
   ["Universitetlar", "/universities", Building2],
   ["AI yordamchi", "/ai", Sparkles],
 ] as const;
@@ -128,11 +129,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   function onLogout() { doLogout(); router.push("/login"); }
   const initials = name.split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase() || "AD";
+  const base = adminBase(pathname);
 
   return (
     <div className="min-h-screen">
       <div className="h-[56px] glass-dark text-white flex items-center px-4 lg:px-6 justify-between sticky top-0 z-30 gap-4">
-        <Link href="/adminstrationpanelofdreamkorea" className="flex items-center gap-2 font-bold tracking-tight">
+        <Link href={base} className="flex items-center gap-2 font-bold tracking-tight">
           <Image src="/adminapklogo.png" alt="" width={30} height={30} className="rounded-lg bg-white p-0.5" />
           <span className="hidden sm:inline">DREAM KOREA — Admin</span>
           <span className="sm:hidden">Admin</span>
@@ -146,7 +148,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex">
         <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
           <nav className="space-y-1 flex-1">
-            {nav.map(([label, href, Icon]) => (
+            {nav(base).map(([label, href, Icon]) => (
               <Link key={label} href={href} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2 text-sm font-medium transition-colors",
                 pathname === href ? "bg-white/90 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.4)]" : "text-slate-600 hover:bg-white/60")}>
                 <Icon className="h-4 w-4 shrink-0" /> {label}

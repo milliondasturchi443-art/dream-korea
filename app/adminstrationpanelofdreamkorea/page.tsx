@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Users, GraduationCap, Layers, BookOpenCheck, ArrowUpRight, Loader2, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { adminBase } from "@/lib/admin-base";
 
 type Stats = {
   db: boolean;
@@ -19,6 +21,8 @@ const fmtDate = (s: string) => new Date(s).toLocaleDateString("uz-UZ", { day: "2
 export default function AdminPage() {
   const [s, setS] = useState<Stats | null>(null);
   const [err, setErr] = useState("");
+  const pathname = usePathname();
+  const base = adminBase(pathname);
 
   useEffect(() => {
     const token = (()=>{ try{ return sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; }catch{ return localStorage.getItem("dk_token") || ""; } })();
@@ -43,10 +47,10 @@ export default function AdminPage() {
   }
 
   const cards = [
-    { label: "O‘quvchilar", value: s.students, icon: Users, href: "/adminstrationpanelofdreamkorea/users" },
-    { label: "Ustozlar", value: s.teachers, icon: GraduationCap, href: "/adminstrationpanelofdreamkorea/users" },
-    { label: "Kurslar", value: s.courses, icon: Layers, href: "/adminstrationpanelofdreamkorea/content" },
-    { label: "Darslar", value: s.lessons, icon: BookOpenCheck, href: "/adminstrationpanelofdreamkorea/content" },
+    { label: "O‘quvchilar", value: s.students, icon: Users, href: `${base}/users` },
+    { label: "Ustozlar", value: s.teachers, icon: GraduationCap, href: `${base}/users` },
+    { label: "Kurslar", value: s.courses, icon: Layers, href: `${base}/content` },
+    { label: "Darslar", value: s.lessons, icon: BookOpenCheck, href: `${base}/content` },
   ];
 
   return (
@@ -69,10 +73,10 @@ export default function AdminPage() {
 
       <div className="grid lg:grid-cols-3 gap-4">
         {[
-          ["O‘quvchilar", "Ro‘yxat va rollar", "/adminstrationpanelofdreamkorea/users"],
-          ["Qabul arizalari", "Arizalar ro‘yxati", "/adminstrationpanelofdreamkorea/admissions"],
-          ["Kontent", "Kurslar va darslar", "/adminstrationpanelofdreamkorea/content"],
-          ["Bloklangan ilovalar", "Ruxsatlar", "/adminstrationpanelofdreamkorea/blocked-apps"],
+          ["O‘quvchilar", "Ro‘yxat va rollar", `${base}/users`],
+          ["Qabul arizalari", "Arizalar ro‘yxati", `${base}/admissions`],
+          ["Kontent", "Kurslar va darslar", `${base}/content`],
+          ["Bloklangan ilovalar", "Ruxsatlar", `${base}/blocked-apps`],
           ["TOPIK testlar", "Testlar", "/topik"],
           ["Universitetlar", "Ro‘yxat", "/universities"],
         ].map(([title, sub, href]) => (
@@ -116,7 +120,7 @@ export default function AdminPage() {
         <Card className="p-5">
           <div className="font-semibold text-slate-900 flex items-center justify-between">
             <span>So‘nggi qabul arizalari</span>
-            <Link href="/adminstrationpanelofdreamkorea/admissions" className="text-xs text-[#2563eb] font-medium">Barchasi →</Link>
+            <Link href={`${base}/admissions`} className="text-xs text-[#2563eb] font-medium">Barchasi →</Link>
           </div>
           <ul className="mt-3 space-y-2 text-sm">
             {(s.admissions ?? []).length === 0 && <li className="text-sm text-slate-400">Arizalar yo‘q</li>}
@@ -131,7 +135,7 @@ export default function AdminPage() {
         <Card className="p-5">
           <div className="font-semibold text-slate-900 flex items-center justify-between">
             <span>Yangi kurslar</span>
-            <Link href="/adminstrationpanelofdreamkorea/content" className="text-xs text-[#2563eb] font-medium">Boshqarish →</Link>
+            <Link href={`${base}/content`} className="text-xs text-[#2563eb] font-medium">Boshqarish →</Link>
           </div>
           <ul className="mt-3 space-y-2 text-sm">
             {(s.recentCourses ?? []).length === 0 && <li className="text-sm text-slate-400">Kurs yo‘q</li>}
