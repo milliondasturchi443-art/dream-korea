@@ -22,21 +22,33 @@ async function getAuth(req: Request) {
 
 function isAdmin(a: { role: string; email: string } | null) { return !!a && a.role === "ADMIN" && isAdminEmail(a.email); }
 
-// POST /api/groups/[id]/members — admin adds student(s): { userIds: string[] } or { userId }
+// Guruh ustozimi (yoki admin) — teacher faqat o'z guruhi boshqaradi
+async function canManage(a: { id: string; email: string; role: string } | null, groupId: string): Promise<boolean> {
+  if (!a) return false;
+  if (isAdmin(a)) return true;
+  if (a.role !== "TEACHER" || !a.id) return false;
+  try {
+    const g = await prisma.group.findUnique({ where: { id: groupId }, select: { teacherId: true } });
+    return !!g && g.teacherId === a.id;
+  } catch { return false; }
+}
+
+// POST /api/groups/[id]/members — admin/teacher adds student(s): { userIds: string[] } or { userId } or { email }
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getAuth(req);
-  if (!isAdmin(auth)) return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   const { id: groupId } = await params;
+  if (!(await canManage(auth, groupId))) return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   let body: { userId?: string; userIds?: string[]; email?: string } = {};
   try { body = await req.json(); } catch {}
   let ids: string[] = [];
   if (Array.isArray(body.userIds)) ids = body.userIds.map(s => String(s).trim()).filter(Boolean);
   else if (body.userId) ids = [String(body.userId).trim()];
   else if (body.email) {
-    const u = await prisma.user.findUnique({ where: { email: normalizeEmail(String(body.email)) }, select: { id: true } });
-    if (u?.id) ids = [u.id];
+    const u = await prisma.user.findUnique({ where: { email: normalizeEmail(String(body.email)) }, select: { id: true, role: true } });
+    // Teacher faqat STUDENT qo'shishi mumkin; admin istalgan rol
+    if (u?.id && (isAdmin(auth) || String(u.role) === "STUDENT")) ids = [u.id];
   }
-  if (ids.length === 0) return Response.json({ error: "O'quvchi tanlang" }, { status: 400 });
+  if (ids.length === 0) return Response.json({ error: "O'quvchi topilmadi yoki tanlanmagan" }, { status: 400 });
   try {
     let added = 0;
     for (const userId of ids) {
@@ -49,11 +61,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (e) { console.error("add members", e); return Response.json({ error: "Qo'shib bo'lmadi" }, { status: 500 }); }
 }
 
-// DELETE /api/groups/[id]/members?userId= — admin removes student
+// DELETE /api/groups/[id]/members?userId= — admin/teacher removes student
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getAuth(req);
-  if (!isAdmin(auth)) return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   const { id: groupId } = await params;
+  if (!(await canManage(auth, groupId))) return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   const userId = new URL(req.url).searchParams.get("userId")?.trim() || "";
   if (!userId) return Response.json({ error: "userId kerak" }, { status: 400 });
   try {
