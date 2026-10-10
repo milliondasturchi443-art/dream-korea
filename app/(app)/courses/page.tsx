@@ -74,7 +74,7 @@ export default function CoursesPage() {
         </Card>
       ) : list.length === 0 ? (
         <Card className="p-10 text-center text-sm text-slate-500">
-          {tab==="Mening darslarim" ? <><span>Hali boshlamadingiz — </span><button onClick={() => setTab("Kurslar")} className="text-[#2563eb] underline">Kurslar</button><span> dan boshlang.</span></> : tab==="Tugagan" ? "Hali tugatgan kursingiz yo‘q." : "Kurs yo‘q — administrator /admin/content → Kurslar da qo‘shadi."}
+          {tab==="Mening darslarim" ? <><span>Hali boshlamadingiz — </span><button onClick={() => setTab("Kurslar")} className="text-[#2563eb] underline">Kurslar</button><span> dan boshlang.</span></> : tab==="Tugagan" ? "Hali tugatgan kursingiz yo‘q." : "Kurs yo‘q — administrator qo‘shadi."}
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">

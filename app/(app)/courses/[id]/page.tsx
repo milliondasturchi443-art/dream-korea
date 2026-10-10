@@ -82,7 +82,7 @@ export default function CourseDetailPage() {
       <AnimatePresence mode="wait">
         {tab === "Darslar" && (
           <motion.div key="darslar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-2">
-            {lessons.length === 0 ? <Card className="p-8 text-center text-sm text-slate-500">Hali dars yo‘q — administrator qo‘shadi (/admin/content)</Card> :
+            {lessons.length === 0 ? <Card className="p-8 text-center text-sm text-slate-500">Hali dars yo‘q — administrator qo‘shadi</Card> :
               lessons.map((l, idx) => {
                 const unlocked = isLessonUnlocked(course.id, idx);
                 const done = completed.includes(idx);

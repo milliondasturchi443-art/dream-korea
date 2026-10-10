@@ -46,7 +46,7 @@ export default function MediaPage() {
         <Card className="p-10 text-center">
           <Play className="h-8 w-8 mx-auto text-slate-300" />
           <p className="mt-3 text-sm font-medium text-slate-700">Hali kino/serial qo‘shilmagan</p>
-          <p className="text-xs text-slate-500 mt-1">Administrator /admin/content → Videolar orqali qo‘shadi</p>
+          <p className="text-xs text-slate-500 mt-1">Administrator videolarni qo‘shadi</p>
         </Card>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

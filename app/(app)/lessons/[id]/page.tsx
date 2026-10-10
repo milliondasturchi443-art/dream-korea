@@ -40,7 +40,7 @@ export default function LessonPage() {
     return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8"><p className="font-semibold">Kurs tanlanmadi</p><p className="text-sm text-slate-500 mt-1">Kurs sahifasidan darsni oching</p><Link href="/courses"><Button className="mt-4">Kurslar</Button></Link></Card></div>;
   }
   if (loading) return <div className="mx-auto max-w-[1100px] p-8 text-center text-sm text-slate-500 flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div>;
-  if (!lessons.length) return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8 text-sm text-slate-500">Darslar yo‘q — administrator qo‘shadi (/admin/content)</Card></div>;
+  if (!lessons.length) return <div className="mx-auto max-w-[1100px] p-8 text-center"><Card className="p-8 text-sm text-slate-500">Darslar yo‘q — administrator qo‘shadi</Card></div>;
 
   const idx = lessons.findIndex(l => l.id === lessonId);
   if (idx === -1) {
@@ -112,7 +112,7 @@ export default function LessonPage() {
                 {tab==="konspekt" && (
                   <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed">
                     <h3 className="font-semibold text-slate-900 flex items-center gap-2"><FileText className="h-4 w-4"/> Dars konspekti</h3>
-                    {cur.content ? <p className="whitespace-pre-wrap">{cur.content}</p> : <p className="text-sm text-slate-500">Kontentni administrator to‘ldiradi (/admin/content). Barcha kurslar bepul.</p>}
+                    {cur.content ? <p className="whitespace-pre-wrap">{cur.content}</p> : <p className="text-sm text-slate-500">Kontentni administrator to‘ldiradi. Barcha kurslar bepul.</p>}
                     <ul className="list-disc pl-5 space-y-1 mt-3">
                       <li>안녕하세요? — Salomlashish (rasmiy)</li>
                       <li>감사합니다 — Rahmat</li>

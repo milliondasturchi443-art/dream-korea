@@ -104,7 +104,7 @@ function TopikExamInner() {
       <div className="mx-auto max-w-[820px] p-4 lg:p-6">
         <Card className="p-8 text-center">
           <p className="font-semibold">Savollar topilmadi</p>
-          <p className="text-sm text-slate-500 mt-1">Admin hali savol qo‘shmagan: /admin/content → Testlar</p>
+          <p className="text-sm text-slate-500 mt-1">Admin hali savol qo‘shmagan</p>
           <Button className="mt-4" onClick={() => router.push("/topik")}>Orqaga</Button>
         </Card>
       </div>
