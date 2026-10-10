@@ -11,4 +11,10 @@ export function doLogout() {
     // Server cookie'larini ham o'chiramiz (dk_token, dk_admin)
     fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
   } catch {}
+  // Кэш оболочки очищаем, чтобы следующий юзер не увидел чужой контент
+  try {
+    if (typeof window !== "undefined" && "caches" in window) {
+      caches.keys().then((keys) => keys.filter((k) => k.startsWith("dk-")).forEach((k) => caches.delete(k))).catch(() => {});
+    }
+  } catch {}
 }

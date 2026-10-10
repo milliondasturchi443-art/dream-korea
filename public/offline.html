@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>DREAM KOREA</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      background: #0f1b3d;
+      color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 18px; text-align: center; padding: 24px;
+      -webkit-user-select: none; user-select: none;
+    }
+    .logo {
+      width: 96px; height: 96px; border-radius: 24px; background: #fff;
+      object-fit: contain; padding: 8px;
+      box-shadow: 0 18px 40px -16px rgba(0,0,0,.5);
+    }
+    h1 { font-size: 20px; font-weight: 800; letter-spacing: .3px; }
+    p { font-size: 13px; color: #b8c4e0; max-width: 260px; line-height: 1.5; }
+    .spin {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.2); border-top-color: #3b82f6;
+      animation: spin .8s linear infinite; margin-top: 4px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <img class="logo" src="/icon-512.png" alt="DREAM KOREA" />
+  <h1>DREAM KOREA</h1>
+  <p>Yuklanmoqda… Iltimos, internet aloqangizni tekshiring.</p>
+  <div class="spin" aria-hidden="true"></div>
+</body>
+</html>
