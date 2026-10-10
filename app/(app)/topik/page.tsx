@@ -31,22 +31,7 @@ export default function TopikPage() {
   useEffect(() => {
     const ac = new AbortController();
     fetch("/api/topik", { signal: ac.signal }).then(r => r.json()).then(d => { if (Array.isArray(d.tests)) setTests(d.tests); }).catch(()=>{});
-    // 1) Серверная история (login bo'lsa), 2) fallback localStorage
-    try {
-      const token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token");
-      if (token) {
-        fetch("/api/topik/attempt", { headers: { Authorization: `Bearer ${token}` }, signal: ac.signal })
-          .then(r => (r.ok ? r.json() : null))
-          .then(d => {
-            if (!d || !Array.isArray(d.attempts)) return;
-            setHistory(d.attempts as Attempt[]);
-            const last = d.attempts[0];
-            if (last && last.total) setLastScore({ correct: last.score, total: last.total, pct: Math.round(last.score / last.total * 100) });
-          })
-          .catch(()=>{});
-        return () => ac.abort();
-      }
-    } catch {}
+    // 1) localStorage-фолбэк (seed-попытки в БД не пишутся)
     try {
       const raw = localStorage.getItem("dk_topik_score");
       if (raw) {
@@ -54,6 +39,21 @@ export default function TopikPage() {
         const correct = Number(d.correct ?? 0);
         const total = Number(d.total ?? 1);
         setLastScore({ correct, total, pct: Math.round(correct / total * 100) });
+      }
+    } catch {}
+    // 2) Серверная история (login bo'lsa) — перекрывает lastScore, если есть
+    try {
+      const token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token");
+      if (token) {
+        fetch("/api/topik/attempt", { headers: { Authorization: `Bearer ${token}` }, signal: ac.signal })
+          .then(r => (r.ok ? r.json() : null))
+          .then(d => {
+            if (!d || !Array.isArray(d.attempts) || !d.attempts.length) return;
+            setHistory(d.attempts as Attempt[]);
+            const last = d.attempts[0];
+            if (last && last.total) setLastScore({ correct: last.score, total: last.total, pct: Math.round(last.score / last.total * 100) });
+          })
+          .catch(()=>{});
       }
     } catch {}
     return () => ac.abort();
