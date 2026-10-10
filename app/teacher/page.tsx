@@ -39,7 +39,7 @@ export default function TeacherDashboard(){
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="p-5">
           <div className="font-semibold">Guruhlarim</div>
-          {groups.length===0 ? <p className="text-sm text-slate-400 mt-3">Hali guruh biriktirilmagan — admin sizni guruhga tayinlaydi (/admin/groups).</p> : (
+          {groups.length===0 ? <p className="text-sm text-slate-400 mt-3">Hali guruh biriktirilmagan — admin “Guruhlar” bo‘limida sizni tayinlaydi.</p> : (
             <div className="mt-3 space-y-2">
               {groups.map(g=> (
                 <div key={g.id} className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5">

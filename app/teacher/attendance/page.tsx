@@ -64,7 +64,7 @@ export default function TeacherAttendancePage(){
   }
 
   if(loading) return <div className="mx-auto max-w-[1100px] p-4 lg:p-6 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div>;
-  if(groups.length===0) return <div className="mx-auto max-w-[1100px] p-4 lg:p-6"><Card className="p-6 text-sm text-slate-500">Sizga hali guruh biriktirilmagan — admin /admin/groups da tayinlaydi.</Card></div>;
+  if(groups.length===0) return <div className="mx-auto max-w-[1100px] p-4 lg:p-6"><Card className="p-6 text-sm text-slate-500">Sizga hali guruh biriktirilmagan — admin “Guruhlar” bo‘limida sizni tayinlaydi.</Card></div>;
 
   return (
     <div className="mx-auto max-w-[900px] p-4 lg:p-6 space-y-4">
