@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useState, useMemo, Suspense, useRef } from "react";
+import { useEffect, useState, useMemo, Suspense, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Clock, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Clock, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +60,7 @@ function TopikExamInner() {
   const selected = q ? answers[q.id] : undefined;
   const allAnswered = useMemo(() => questions.length > 0 && questions.every(x => answers[x.id]), [questions, answers]);
 
-  async function finish() {
+  const finish = useCallback(async () => {
     if (!questions.length || finishing) return;
     setFinishing(true);
     const cur = { ...answers };
@@ -81,7 +81,7 @@ function TopikExamInner() {
       toast.error(String((e as Error).message ?? "Xatolik"));
       setFinishing(false);
     }
-  }
+  }, [questions.length, finishing, answers, q, selected, testId, router]);
 
   useEffect(() => {
     if (!didAutoFinish.current && !loading && questions.length && seconds === 0) {
@@ -89,7 +89,7 @@ function TopikExamInner() {
       toast.info("Vaqt tugadi — yakunlanmoqda…");
       void finish();
     }
-  }, [seconds, loading, questions.length]);
+  }, [seconds, loading, questions.length, finish]);
 
   function next() {
     if (idx < questions.length - 1) setIdx(i => i + 1);

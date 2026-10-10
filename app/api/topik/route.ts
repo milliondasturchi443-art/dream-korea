@@ -8,16 +8,16 @@ export async function GET() {
       include: { _count: { select: { questions: true } } },
       orderBy: { createdAt: "desc" },
     });
-    // Если пусто — отдаём 2 встроенных TOPIK I мока (чтобы фронт не был пустым до админ-CRUD)
+    // Если пусто — отдаём встроенные seed-тесты (реальное число вопросов, без выдумки)
     if (tests.length === 0) {
       return Response.json({
         tests: [
-          { id: "seed_topik1_reading", title: "TOPIK I — Reading", level: "TOPIK I", type: "Reading", questions: 30, time: "40 daq" },
-          { id: "seed_topik1_listening", title: "TOPIK I — Listening", level: "TOPIK I", type: "Listening", questions: 30, time: "35 daq" },
-          { id: "seed_topik1_full", title: "TOPIK I — Full Mock", level: "TOPIK I", type: "Full", questions: 60, time: "80 daq" },
-          { id: "seed_topik2_reading", title: "TOPIK II — Reading", level: "TOPIK II", type: "Reading", questions: 50, time: "70 daq" },
+          { id: "seed_topik1_reading", title: "TOPIK I — Reading", level: "TOPIK I", type: "Reading", questions: 3, time: "10 daq" },
+          { id: "seed_topik1_listening", title: "TOPIK I — Listening", level: "TOPIK I", type: "Listening", questions: 2, time: "5 daq" },
+          { id: "seed_topik1_full", title: "TOPIK I — Full Mock", level: "TOPIK I", type: "Full", questions: 5, time: "15 daq" },
         ],
         seeded: true,
+        note: "Namuna seed-testlar (demo). To'liq TOPIK to'plamini admin Kontent bo'limidan qo'shadi.",
       });
     }
     return Response.json({

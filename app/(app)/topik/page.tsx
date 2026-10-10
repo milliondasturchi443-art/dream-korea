@@ -9,6 +9,7 @@ import { Clock, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 type T = { id: string; title: string; level: string; type: string; questions: number; time: string };
+type Attempt = { id: string; testId: string; score: number; total: number; createdAt: string; test?: { title: string; level: string } };
 
 const COLORS: Record<string, string> = {
   "TOPIK I": "from-blue-600 to-indigo-600",
@@ -25,9 +26,27 @@ export default function TopikPage() {
   const [tests, setTests] = useState<T[]>([]);
   const [filter, setFilter] = useState("Barchasi");
   const [lastScore, setLastScore] = useState<{ correct: number; total: number; pct: number } | null>(null);
+  const [history, setHistory] = useState<Attempt[]>([]);
 
   useEffect(() => {
-    fetch("/api/topik").then(r => r.json()).then(d => { if (Array.isArray(d.tests)) setTests(d.tests); }).catch(()=>{});
+    const ac = new AbortController();
+    fetch("/api/topik", { signal: ac.signal }).then(r => r.json()).then(d => { if (Array.isArray(d.tests)) setTests(d.tests); }).catch(()=>{});
+    // 1) Серверная история (login bo'lsa), 2) fallback localStorage
+    try {
+      const token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token");
+      if (token) {
+        fetch("/api/topik/attempt", { headers: { Authorization: `Bearer ${token}` }, signal: ac.signal })
+          .then(r => (r.ok ? r.json() : null))
+          .then(d => {
+            if (!d || !Array.isArray(d.attempts)) return;
+            setHistory(d.attempts as Attempt[]);
+            const last = d.attempts[0];
+            if (last && last.total) setLastScore({ correct: last.score, total: last.total, pct: Math.round(last.score / last.total * 100) });
+          })
+          .catch(()=>{});
+        return () => ac.abort();
+      }
+    } catch {}
     try {
       const raw = localStorage.getItem("dk_topik_score");
       if (raw) {
@@ -37,6 +56,7 @@ export default function TopikPage() {
         setLastScore({ correct, total, pct: Math.round(correct / total * 100) });
       }
     } catch {}
+    return () => ac.abort();
   }, []);
 
   const filtered = filter === "Barchasi" ? tests : tests.filter(t => t.level === filter || t.type === filter);
@@ -67,10 +87,10 @@ export default function TopikPage() {
         </Card>
         <Card className="p-4">
           <div className="font-semibold text-sm">TOPIK I</div>
-          <div className="text-xs text-slate-500">Boshlang‘ich — 2 daraja (1~2급). 30–60 savol, 40–80 daqiqa.</div>
+          <div className="text-xs text-slate-500">Haqiqiy TOPIK I: 30+30 savol, 40+35 daqiqa. Saytdagi seed-testlar — qisqa namuna; to‘liq to‘plamni admin qo‘shadi.</div>
           <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <span className="rounded-lg bg-slate-100 px-2 py-1.5">Reading 30</span>
-            <span className="rounded-lg bg-slate-100 px-2 py-1.5">Listening 30</span>
+            <span className="rounded-lg bg-slate-100 px-2 py-1.5">Reading 30 (rasmiy)</span>
+            <span className="rounded-lg bg-slate-100 px-2 py-1.5">Listening 30 (rasmiy)</span>
           </div>
         </Card>
         <Card className="p-4">
@@ -109,8 +129,29 @@ export default function TopikPage() {
 
       <Card className="p-4 bg-amber-50 border-amber-200 text-sm">
         <span className="font-semibold text-amber-900">Backend: </span>
-        <span className="text-amber-800">Testlar MongoDB (`Test`+`Question`) da saqlanadi. Bo‘sh payt /api/topik otomatik 3 ta seed TOPIK I testini qaytaradi; admin POST /api/topik orqali qo‘shadi — darhol ko‘rinadi. Natija localStorage + /api/topik/attempt (agar login bo‘lsa, БД ga yoziladi).</span>
+        <span className="text-amber-800">Testlar MongoDB (Test + Question) da saqlanadi. Bo‘sh payt /api/topik 3 ta seed TOPIK I namuna-testini qaytaradi (3/2/5 savol); admin POST /api/topik orqali to‘liq savollar qo‘shadi — darhol ko‘rinadi. Bалла server hisoblanadi (/api/topik/attempt); login bo‘lsa tarix БД ga yoziladi.</span>
       </Card>
+
+      {history.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-slate-900">Oxirgi natijalar</h2>
+          {history.slice(0, 8).map(a => {
+            const pct = a.total ? Math.round(a.score / a.total * 100) : 0;
+            return (
+              <Card key={a.id} className="p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-slate-900 truncate">{a.test?.title ?? a.testId}</div>
+                  <div className="text-xs text-slate-500">{new Date(a.createdAt).toLocaleDateString("uz-UZ")}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-sm font-bold text-[#0f1b3d]">{pct}% · {a.score}/{a.total}</div>
+                  <Link href="/topik/result" className="text-xs text-[#2563eb] hover:underline">tahlil →</Link>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
