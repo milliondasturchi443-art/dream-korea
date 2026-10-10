@@ -32,6 +32,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [{ url: "/logo.png" }],
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
