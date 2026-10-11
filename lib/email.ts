@@ -10,9 +10,10 @@ export function verificationUrl(token: string): string {
 
 type SendResult = { ok: boolean; error?: string; via?: string };
 
-// Email tasdiqlash faqat EMAIL_VERIFY_ENABLED="true" bo'lganda majburiy
+// Email tasdiqlash hozircha O'CHIRILDI (vaqtincha).
+// SMTP bloklangani uchun — Brevo/Resend API sozlanganda qayta yoqiladi.
 export function emailVerifyEnabled(): boolean {
-  return process.env.EMAIL_VERIFY_ENABLED === "true";
+  return false; // TODO: Brevo API tayyor bo'lganda → process.env.EMAIL_VERIFY_ENABLED === "true"
 }
 
 // Umumiy email yuborish (uy vazifasi, to'lov, bildirishnoma uchun).
