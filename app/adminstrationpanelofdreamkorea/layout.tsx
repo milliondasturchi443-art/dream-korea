@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { doLogout } from "@/lib/logout";
-import { LayoutDashboard, Users, Building2, Bell, Sparkles, ShieldAlert, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
+import { LayoutDashboard, Users, Bell, ShieldAlert, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminBase } from "@/lib/admin-base";
 import Image from "next/image";
@@ -16,9 +16,13 @@ const nav = (base: string) => [
   ["Guruhlar", `${base}/groups`, Users],
   ["Kontent (kurslar)", `${base}/content`, BookOpenCheck],
   ["Bloklangan ilovalar", `${base}/blocked-apps`, ShieldAlert],
-  ["Universitetlar", "/universities", Building2],
-  ["AI yordamchi", "/ai", Sparkles],
+  ["Talaba ko‘rinishi", "/dashboard", Eye],
 ] as const;
+
+// "Talaba ko'rinishi" — admin o'zini talaba sifatida ko'radi (preview)
+function enterStudentView() {
+  try { sessionStorage.setItem("dk_viewas_student", "1"); } catch {}
+}
 
 // Telefonda /admin — faqat kalit so'raydigan alohida ekran
 function AdminKeyGate({ onDone }: { onDone: () => void }) {
@@ -149,7 +153,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
           <nav className="space-y-1 flex-1">
             {nav(base).map(([label, href, Icon]) => (
-              <Link key={label} href={href} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2 text-sm font-medium transition-colors",
+              <Link key={label} href={href} onClick={label === "Talaba ko‘rinishi" ? enterStudentView : undefined} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2 text-sm font-medium transition-colors",
                 pathname === href ? "bg-white/90 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.4)]" : "text-slate-600 hover:bg-white/60")}>
                 <Icon className="h-4 w-4 shrink-0" /> {label}
               </Link>

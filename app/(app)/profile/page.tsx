@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [courses, setCourses] = useState<ApiCourse[]>([]);
+  const [role, setRole] = useState("");
 
   useEffect(() => {
     try {
@@ -31,7 +32,22 @@ export default function ProfilePage() {
       setName(u.name || "");
       setEmail(u.email || "");
       setPhone(u.phone || "");
+      setRole(String(u.role || "STUDENT"));
     } catch {}
+    // Роль из БД — источник правды (если админ сменил роль)
+    let tk = "";
+    try { tk = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; } catch {}
+    fetch("/api/auth/me", tk ? { headers: { Authorization: `Bearer ${tk}` } } : undefined)
+      .then(r => r.ok ? r.json() : null).then(d => {
+        if (d?.role) {
+          setRole(String(d.role));
+          try {
+            const cur = JSON.parse(localStorage.getItem("dk_user") || "{}");
+            localStorage.setItem("dk_user", JSON.stringify({ ...cur, name: d.name || cur.name, email: d.email || cur.email, role: d.role, id: d.id || cur.id }));
+            if (d.name) setName(d.name);
+          } catch {}
+        }
+      }).catch(() => {});
     fetch("/api/courses").then(r => r.json()).then(d => { if (Array.isArray(d.courses)) setCourses(d.courses); }).catch(() => {});
     setLoaded(true);
   }, []);
@@ -80,7 +96,9 @@ export default function ProfilePage() {
           <div className="font-bold text-slate-900 truncate">{name || "Foydalanuvchi"}</div>
           <div className="text-xs text-slate-500 truncate">{email}{phone ? <> · <a href={telHref(phone)} className="font-medium text-[#2563eb] hover:underline">{phone}</a></> : null}</div>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">O‘quvchi</Badge>
+            <Badge className={role === "ADMIN" ? "bg-violet-50 text-violet-700 border border-violet-200 text-[11px]" : role === "TEACHER" ? "bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px]" : "bg-blue-50 text-blue-700 border border-blue-200 text-[11px]"}>
+              {role === "ADMIN" ? "Admin" : role === "TEACHER" ? "Ustoz" : "O‘quvchi"}
+            </Badge>
             {topikScore !== null && <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px]">TOPIK: {topikScore}</Badge>}
           </div>
         </div>

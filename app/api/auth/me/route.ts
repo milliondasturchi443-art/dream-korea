@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { verify, sign, readAuthToken } from "@/lib/token";
 import { normalizeEmail } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -43,12 +44,29 @@ export async function GET(req: Request) {
 
   const payload: Record<string, unknown> = { email, name, role };
   if (id) payload.id = id;
+  const freshToken = sign(payload);
+  // Cookie'ni yangilaymiz — admin rol o'zgartirsa, cookie-auth ham yangi rolni ko'rsin
+  try {
+    const cs = await cookies();
+    const cur = cs.get("dk_token")?.value || "";
+    const curRole = cur ? String(verify(cur)?.role ?? "") : "";
+    if (cur && curRole !== role) {
+      const isEnvAdmin = email === "dreamkorea@adminstator.kr";
+      cs.set("dk_token", freshToken, {
+        httpOnly: true,
+        path: "/",
+        ...(isEnvAdmin ? {} : { maxAge: 30 * 24 * 3600 }),
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+  } catch {}
   return Response.json({
     email: payload.email,
     name: payload.name,
     role: payload.role,
     id: payload.id ?? "",
     // Cookie orqali keldimi — klient localStorage/sessionStorage uchun taze token olsin
-    token: sign(payload),
+    token: freshToken,
   });
 }

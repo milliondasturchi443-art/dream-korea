@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 import { doLogout } from "@/lib/logout";
 import Image from "next/image";
@@ -31,7 +30,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState("");
   const [initials, setInitials] = useState("DK");
   const [role, setRole] = useState("");
+  const [viewAsStudent, setViewAsStudent] = useState(false);
   useEffect(() => {
+    try { setViewAsStudent(sessionStorage.getItem("dk_viewas_student") === "1"); } catch {}
     try {
       const u = JSON.parse(localStorage.getItem("dk_user") || "{}");
       if (u.name) {
@@ -40,8 +41,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
       if (u.role) setRole(String(u.role));
     } catch {}
-    // Подтягиваем актуальную роль из БД (исправляет смену роли без перелогина)
-    fetch("/api/auth/me").then(r=>r.ok?r.json():null).then(d=>{
+    // Подтягиваем актуальную роль из БД (исправляет смену роли без перелогина).
+    // Шлём Bearer-токен, чтобы работало даже если cookie устарел.
+    let tk = "";
+    try { tk = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; } catch {}
+    fetch("/api/auth/me", tk ? { headers: { Authorization: `Bearer ${tk}` } } : undefined)
+      .then(r=>r.ok?r.json():null).then(d=>{
       if(d?.email && d?.name){
         try{
           setRole(String(d.role || ""));
@@ -122,8 +127,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="space-y-1 flex-1">
             {[
               ...studentNav,
-              // Ustoz kabineti — faqat TEACHER (talabalarga ko'rinmaydi)
-              ...(role === "TEACHER" ? [{ href: "/teacher", label: "Ustoz kabineti", icon: GraduationCap }] : []),
+              // Ustoz kabineti — faqat TEACHER (talabalarga ko'rinmaydi); "Talaba ko'rinishi" rejimida yashiriladi
+              ...(role === "TEACHER" && !viewAsStudent ? [{ href: "/teacher", label: "Ustoz kabineti", icon: GraduationCap }] : []),
             ].map(item => {
               const active = pathname === item.href;
               return (
@@ -138,7 +143,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <LogOut className="h-[18px] w-[18px] shrink-0" /> Chiqish
           </button>
         </aside>
-        <main className="flex-1 min-w-0 pb-[72px] lg:pb-0">{children}</main>
+        <main className="flex-1 min-w-0 pb-[72px] lg:pb-0">
+          {viewAsStudent && (
+            <div className="sticky top-[56px] z-20 flex items-center justify-between gap-3 bg-amber-100 border-b border-amber-300 px-4 py-2 text-sm text-amber-900">
+              <span className="font-medium">Talaba ko‘rinishi — siz talaba sifatida ko‘ryapsiz</span>
+              <button onClick={() => { try { sessionStorage.removeItem("dk_viewas_student"); } catch {} setViewAsStudent(false); router.push("/adminstrationpanelofdreamkorea"); }} className="shrink-0 rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 text-xs font-semibold transition-colors">Admin rejimga qaytish</button>
+            </div>
+          )}
+          {children}
+        </main>
       </div>
 
       {/* FAB звонка — 94 328 05 13 */}
