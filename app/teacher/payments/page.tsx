@@ -48,10 +48,20 @@ export default function TeacherPaymentsPage() {
   }
   useEffect(() => { load(); }, [groupId]);
 
-  // Tanlangan guruhdagi o'quvchilar (email yozish shart emas)
+  // Tanlangan guruhdagi o'quvchilar (yoki "Barcha guruhlarim" bo'lsa — barcha guruhlardagi barcha o'quvchilar)
   const students = useMemo(() => {
-    const g = groups.find(x => x.id === groupId);
-    return (g?.members ?? []).map(m => m.user);
+    if (groupId) {
+      const g = groups.find(x => x.id === groupId);
+      return (g?.members ?? []).map(m => m.user);
+    }
+    // Barcha guruhlar — noyob o'quvchilar
+    const seen = new Map<string, { id: string; name: string; email: string }>();
+    for (const g of groups) {
+      for (const m of g.members ?? []) {
+        if (m.user?.id && !seen.has(m.user.id)) seen.set(m.user.id, m.user);
+      }
+    }
+    return [...seen.values()];
   }, [groups, groupId]);
 
   useEffect(() => { setStudentId(""); }, [groupId]);
@@ -123,7 +133,7 @@ export default function TeacherPaymentsPage() {
           <Button onClick={sendReminder} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin mr-1"/> : <BellRing className="h-4 w-4 mr-1"/>} Yuborish</Button>
         </div>
         <p className="text-xs text-slate-500 mt-2">
-          {groupId ? "Guruh o'quvchilari ro'yxatdan tanlang — email yozish shart emas." : "Avval guruhni tanlang (yukoridan)."}
+          {groupId ? "Guruh o'quvchilari ro'yxatdan tanlang — email yozish shart emas." : "Barcha guruhlaringizdagi o'quvchilar ro'yxatdan tanlang."}
           {pendingCount > 0 && <span className="ml-2 font-medium text-amber-600">{pendingCount} ta to'lov kutilmoqda</span>}
         </p>
       </Card>
@@ -145,7 +155,7 @@ export default function TeacherPaymentsPage() {
           {filtered.map(p => (
             <Card key={p.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-sm font-semibold">{p.user.name} <span className="text-xs text-slate-500">· {p.user.email}</span></div>
+                <div className="text-sm font-semibold">{p.user?.name ?? "O'quvchi"} <span className="text-xs text-slate-500">· {p.user?.email ?? ""}</span></div>
                 <div className="text-xs text-slate-500 mt-0.5">
                   {p.month && <span className="font-medium text-slate-600">{p.month} · </span>}
                   {new Date(p.createdAt).toLocaleDateString("uz-UZ")}
