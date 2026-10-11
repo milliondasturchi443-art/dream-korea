@@ -49,20 +49,19 @@ export default function TeacherPaymentsPage() {
   useEffect(() => { load(); }, [groupId]);
 
   // Tanlangan guruhdagi o'quvchilar (yoki "Barcha guruhlarim" bo'lsa — barcha guruhlardagi barcha o'quvchilar)
+  // Doimo BARCHA guruhlardagi barcha o'quvchilar (guruh tanlashdan qat'i nazar), guruh nomi bilan
   const students = useMemo(() => {
-    if (groupId) {
-      const g = groups.find(x => x.id === groupId);
-      return (g?.members ?? []).map(m => m.user);
-    }
-    // Barcha guruhlar — noyob o'quvchilar
-    const seen = new Map<string, { id: string; name: string; email: string }>();
+    const seen = new Map<string, { id: string; name: string; email: string; groupNames: string[] }>();
     for (const g of groups) {
       for (const m of g.members ?? []) {
-        if (m.user?.id && !seen.has(m.user.id)) seen.set(m.user.id, m.user);
+        if (!m.user?.id) continue;
+        const cur = seen.get(m.user.id);
+        if (cur) { if (g.name && !cur.groupNames.includes(g.name)) cur.groupNames.push(g.name); }
+        else seen.set(m.user.id, { ...m.user, groupNames: g.name ? [g.name] : [] });
       }
     }
     return [...seen.values()];
-  }, [groups, groupId]);
+  }, [groups]);
 
   useEffect(() => { setStudentId(""); }, [groupId]);
 
@@ -125,7 +124,11 @@ export default function TeacherPaymentsPage() {
         <div className="mt-3 grid sm:grid-cols-[1fr_140px_160px_1fr_auto] gap-2">
           <select value={studentId} onChange={e => setStudentId(e.target.value)} className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm">
             <option value="">— O'quvchini tanlang —</option>
-            {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.email})</option>)}
+            {students.map(s => (
+              <option key={s.id} value={s.id}>
+                {s.groupNames.length ? `${s.groupNames.join(", ")} — ` : ""}{s.name} ({s.email})
+              </option>
+            ))}
           </select>
           <Input placeholder="Summa" inputMode="numeric" value={amount} onChange={e => setAmount(e.target.value)} />
           <Input type="month" value={month} onChange={e => setMonth(e.target.value)} />
@@ -133,7 +136,7 @@ export default function TeacherPaymentsPage() {
           <Button onClick={sendReminder} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin mr-1"/> : <BellRing className="h-4 w-4 mr-1"/>} Yuborish</Button>
         </div>
         <p className="text-xs text-slate-500 mt-2">
-          {groupId ? "Guruh o'quvchilari ro'yxatdan tanlang — email yozish shart emas." : "Barcha guruhlaringizdagi o'quvchilar ro'yxatdan tanlang."}
+          Barcha guruhlaringizdagi o'quvchilar — guruh nomi bilan ko'rsatiladi (guruh tanlash shart emas).
           {pendingCount > 0 && <span className="ml-2 font-medium text-amber-600">{pendingCount} ta to'lov kutilmoqda</span>}
         </p>
       </Card>
