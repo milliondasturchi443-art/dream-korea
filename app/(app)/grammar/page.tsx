@@ -5,12 +5,38 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { grammarList } from "@/lib/mock-data";
-import { Search } from "lucide-react";
+import { Search, CheckCircle2, XCircle } from "lucide-react";
+
+type Exercise = { q: string; options: string[]; correct: number };
+
+const exercises: Record<string, Exercise> = {
+  "1": { q: "Bo‘sh joyni to‘ldiring: 저는 한국 사람___.", options: ["입니다", "은", "를"], correct: 0 },
+  "2": { q: "Bo‘sh joyni to‘ldiring: 저 __ 학생입니다.", options: ["는", "가", "를"], correct: 0 },
+  "3": { q: "Bo‘sh joyni to‘ldiring: 물___ 마셔요.", options: ["을", "가", "은"], correct: 0 },
+  "4": { q: "Bo‘sh joyni to‘ldiring: 책___ 읽어요.", options: ["를", "는", "가"], correct: 0 },
+  "5": { q: "Bo‘sh joyni to‘ldiring: 학교___ 갑니다.", options: ["에", "에서", "하고"], correct: 0 },
+  "6": { q: "Bo‘sh joyni to‘ldiring: 카페___ 커피를 마셔요.", options: ["에서", "에", "는"], correct: 0 },
+  "7": { q: "Bo‘sh joyni to‘ldiring: 친구___ 영화를 봅니다.", options: ["하고", "에", "를"], correct: 0 },
+  "8": { q: "‘그리고’ qaysi ma’noda ishlatiladi?", options: ["Va (bog‘lovchi)", "Lekin", "Shuning uchun"], correct: 0 },
+};
 
 export default function GrammarPage() {
   const [q, setQ] = useState("");
   const [active, setActive] = useState<string | null>("1");
+  const [picked, setPicked] = useState<number | null>(null);
   const filtered = grammarList.filter(g => g.title.includes(q) || g.desc.toLowerCase().includes(q.toLowerCase()));
+
+  function selectGrammar(id: string) {
+    setActive(id);
+    setPicked(null);
+  }
+
+  function answer(i: number) {
+    if (picked !== null) return; // faqat bir marta javob beriladi
+    setPicked(i);
+  }
+
+  const ex = active ? exercises[active] : undefined;
 
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
@@ -27,7 +53,7 @@ export default function GrammarPage() {
       <div className="grid lg:grid-cols-[360px_1fr] gap-4">
         <div className="space-y-2">
           {filtered.map(g => (
-            <button key={g.id} onClick={()=>setActive(g.id)} className={`w-full text-left rounded-2xl border p-4 flex items-center justify-between ${active===g.id ? "bg-[#eff6ff] border-blue-200" : "bg-white border-slate-200 hover:border-slate-300"}`}>
+            <button key={g.id} onClick={()=>selectGrammar(g.id)} className={`w-full text-left rounded-2xl border p-4 flex items-center justify-between ${active===g.id ? "bg-[#eff6ff] border-blue-200" : "bg-white border-slate-200 hover:border-slate-300"}`}>
               <div>
                 <div className="font-bold text-slate-900">{g.title}</div>
                 <div className="text-xs text-slate-500">{g.desc}</div>
@@ -67,12 +93,37 @@ export default function GrammarPage() {
                 </div>
                 <div className="rounded-xl bg-[#eff6ff] border border-blue-200 p-4">
                   <div className="font-semibold text-sm text-[#0f1b3d]">Mashq</div>
-                  <p className="text-sm text-slate-700 mt-1">Bo‘sh joyni to‘ldiring: 저는 한국 사람___.</p>
-                  <div className="mt-2 flex gap-2">
-                    <Button size="sm" variant="outline">입니다</Button>
-                    <Button size="sm" variant="outline">은</Button>
-                    <Button size="sm" variant="outline">를</Button>
-                  </div>
+                  {ex ? (
+                    <>
+                      <p className="text-sm text-slate-700 mt-1">{ex.q}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {ex.options.map((opt, i) => {
+                          const isCorrect = ex.correct === i;
+                          const chosen = picked === i;
+                          let cls = "bg-white border-slate-200 text-slate-800 hover:border-blue-300";
+                          if (picked !== null) {
+                            if (isCorrect) cls = "bg-emerald-50 border-emerald-300 text-emerald-700";
+                            else if (chosen) cls = "bg-red-50 border-red-300 text-red-600";
+                            else cls = "bg-white border-slate-200 text-slate-400";
+                          }
+                          return (
+                            <Button key={i} size="sm" variant="outline" className={cls} onClick={() => answer(i)}>
+                              {opt}
+                              {picked !== null && isCorrect && <CheckCircle2 className="h-4 w-4 ml-1" />}
+                              {picked !== null && chosen && !isCorrect && <XCircle className="h-4 w-4 ml-1" />}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      {picked !== null && (
+                        <p className={`text-sm mt-2 font-medium ${picked === ex.correct ? "text-emerald-600" : "text-red-600"}`}>
+                          {picked === ex.correct ? "To‘g‘ri! ✓" : `Noto‘g‘ri. To‘g‘ri javob: ${ex.options[ex.correct]}`}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-500 mt-1">Mashq topilmadi</p>
+                  )}
                 </div>
               </div>
             );
