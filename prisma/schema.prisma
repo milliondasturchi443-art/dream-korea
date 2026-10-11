@@ -45,6 +45,7 @@ model User {
   groupMembers   GroupMember[]
   attendances    Attendance[]
   homeworks      Homework[]
+  homeworkDones  HomeworkDone[]
 }
 
 model Course {
@@ -233,6 +234,18 @@ model Homework {
   description String?
   dueDate     String?
   createdAt   DateTime @default(now())
+  dones       HomeworkDone[]
+}
+
+// O'quvchining uy vazifasini bajarilganlik belgisi (Bajar gan / Bajar magan)
+model HomeworkDone {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  homeworkId String   @db.ObjectId
+  homework   Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  studentId  String   @db.ObjectId
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  @@unique([homeworkId, studentId])
 }
 
 model Admission {

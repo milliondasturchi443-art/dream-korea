@@ -2,11 +2,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, BookOpen, Users, GraduationCap, CalendarDays, BarChart3 } from "lucide-react";
+import { Loader2, BookOpen, Users, GraduationCap, CalendarDays, BarChart3, CheckCircle2, Circle } from "lucide-react";
 
 type Member = { user: { id: string; name: string; email: string } };
 type Group = { id: string; name: string; teacher?: { id: string; name: string } | null; members?: Member[] };
-type HW = { id: string; title: string; description?: string | null; dueDate?: string | null; createdAt: string; group?: { id: string; name: string }; teacher?: { id: string; name: string } };
+type HW = { id: string; title: string; description?: string | null; dueDate?: string | null; createdAt: string; group?: { id: string; name: string }; teacher?: { id: string; name: string }; dones?: { studentId: string }[] };
 type TStats = { groups: number; students: number; homework: number; attendance: number; groupNames: string[] };
 
 function authHeader(): Record<string, string> {
@@ -19,9 +19,27 @@ export default function StudentHomeworkPage() {
   const [stats, setStats] = useState<Record<string, TStats>>({});
   const [loading, setLoading] = useState(true);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [myId, setMyId] = useState("");
+  const [toggling, setToggling] = useState("");
+
+  async function toggleMine(hwId: string, currentlyDone: boolean) {
+    setToggling(hwId);
+    try {
+      const r = await fetch("/api/homework", { method: "PATCH", headers: { "Content-Type": "application/json", ...authHeader() }, body: JSON.stringify({ homeworkId: hwId, done: !currentlyDone }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "O'zgartirib bo'lmadi");
+      setHw(prev => prev.map(x => {
+        if (x.id !== hwId) return x;
+        const dones = x.dones ?? [];
+        const next = !currentlyDone ? [...dones.filter(y => y.studentId !== myId), { studentId: myId }] : dones.filter(y => y.studentId !== myId);
+        return { ...x, dones: next };
+      }));
+    } catch { /* silent */ } finally { setToggling(""); }
+  }
 
   useEffect(() => {
     const h = authHeader();
+    try { const u = JSON.parse(localStorage.getItem("dk_user") || "{}"); if (u.id) setMyId(u.id); } catch {}
     (async () => {
       try {
         const [g, w] = await Promise.all([
@@ -113,7 +131,9 @@ export default function StudentHomeworkPage() {
               <Card className="mt-3 p-6 text-center text-sm text-slate-500">Hali uy vazifasi yo‘q</Card>
             ) : (
               <div className="mt-3 space-y-2">
-                {hw.map(x => (
+                {hw.map(x => {
+                  const mineDone = (x.dones ?? []).some(d => d.studentId === myId);
+                  return (
                   <Card key={x.id} className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -127,8 +147,21 @@ export default function StudentHomeworkPage() {
                       </div>
                       {x.dueDate && <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] shrink-0">Topshirish: {x.dueDate}</Badge>}
                     </div>
+                    {myId && (
+                      <div className="mt-3 border-t border-slate-100 pt-3">
+                        <button
+                          onClick={() => toggleMine(x.id, mineDone)}
+                          disabled={toggling === x.id}
+                          className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${mineDone ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}
+                        >
+                          {toggling === x.id ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : mineDone ? <CheckCircle2 className="h-3.5 w-3.5"/> : <Circle className="h-3.5 w-3.5"/>}
+                          {mineDone ? "Bajar gan" : "Bajar diman"}
+                        </button>
+                      </div>
+                    )}
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

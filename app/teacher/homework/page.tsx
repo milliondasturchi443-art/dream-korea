@@ -4,11 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, BookOpen, Plus } from "lucide-react";
+import { Loader2, BookOpen, Plus, Users, CheckCircle2, Circle } from "lucide-react";
 import { toast } from "sonner";
 
-type Group = { id:string; name:string };
-type HW = { id:string; title:string; description:string|null; dueDate:string|null; createdAt:string; group:{ id:string; name:string }; teacher?:{ id:string; name:string } };
+type Group = { id:string; name:string; members?: { user:{ id:string; name:string; email:string } }[] };
+type HW = { id:string; title:string; description:string|null; dueDate:string|null; createdAt:string; group:{ id:string; name:string }; teacher?:{ id:string; name:string }; dones?: { studentId:string }[] };
 function authHeader():Record<string,string>{ try{ const t=sessionStorage.getItem("dk_token")||localStorage.getItem("dk_token")||""; return t?{Authorization:`Bearer ${t}`}:{};}catch{ return {}; } }
 
 export default function TeacherHomeworkPage(){
@@ -20,6 +20,29 @@ export default function TeacherHomeworkPage(){
   const [due,setDue]=useState("");
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
+  const [expanded,setExpanded]=useState<string|null>(null);
+  const [toggling,setToggling]=useState("");
+
+  // Guruh a'zolarini homeworkId bo'yicha olish
+  function membersOf(hwGroupId:string): { id:string; name:string; email:string }[] {
+    const g=groups.find(x=>x.id===hwGroupId);
+    return (g?.members??[]).map(m=>({ id:m.user.id, name:m.user.name, email:m.user.email }));
+  }
+
+  async function toggleDone(hwId:string, studentId:string, currentlyDone:boolean){
+    setToggling(hwId+studentId);
+    try{
+      const r=await fetch("/api/homework",{ method:"PATCH", headers:{ "Content-Type":"application/json", ...authHeader()}, body:JSON.stringify({ homeworkId:hwId, studentId, done:!currentlyDone }) });
+      const d=await r.json();
+      if(!r.ok) throw new Error(d.error||"O'zgartirib bo'lmadi");
+      setItems(prev=>prev.map(x=>{
+        if(x.id!==hwId) return x;
+        const dones=x.dones??[];
+        const next=!currentlyDone ? [...dones.filter(y=>y.studentId!==studentId),{ studentId }] : dones.filter(y=>y.studentId!==studentId);
+        return { ...x, dones:next };
+      }));
+    }catch(e){ toast.error((e as Error).message); }finally{ setToggling(""); }
+  }
 
   async function load(){
     const h=authHeader();
@@ -73,7 +96,12 @@ export default function TeacherHomeworkPage(){
 
       {loading ? <div className="flex items-center gap-2 text-sm text-slate-500 p-4"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div> : items.length===0 ? <Card className="p-8 text-center text-sm text-slate-500">Hali vazifa yo'q</Card> : (
         <div className="space-y-2">
-          {items.map(h=> (
+          {items.map(h=> {
+            const members=membersOf(h.group.id);
+            const doneSet=new Set((h.dones??[]).map(d=>d.studentId));
+            const doneCount=members.filter(m=>doneSet.has(m.id)).length;
+            const isOpen=expanded===h.id;
+            return (
             <Card key={h.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -81,10 +109,41 @@ export default function TeacherHomeworkPage(){
                   {h.description && <div className="text-xs text-slate-600 mt-1">{h.description}</div>}
                   <div className="text-xs text-slate-500 mt-1">{new Date(h.createdAt).toLocaleDateString("uz-UZ")} · {h.group.name}{h.teacher ? ` · ${h.teacher.name}` : ""}</div>
                 </div>
-                {h.dueDate && <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] shrink-0">Topshirish: {h.dueDate}</Badge>}
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  {h.dueDate && <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px]">Topshirish: {h.dueDate}</Badge>}
+                  {members.length>0 && (
+                    <button onClick={()=>setExpanded(isOpen?null:h.id)} className="text-xs text-[#2563eb] font-medium flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5"/> {doneCount}/{members.length} bajarildi {isOpen?"▲":"▼"}
+                    </button>
+                  )}
+                </div>
               </div>
+              {isOpen && members.length>0 && (
+                <div className="mt-3 border-t border-slate-100 pt-3 space-y-1">
+                  {members.map(m=>{
+                    const isDone=doneSet.has(m.id);
+                    return (
+                      <div key={m.id} className="flex items-center justify-between py-1.5">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-slate-800">{m.name}</div>
+                          <div className="text-xs text-slate-400">{m.email}</div>
+                        </div>
+                        <button
+                          onClick={()=>toggleDone(h.id,m.id,isDone)}
+                          disabled={toggling===h.id+m.id}
+                          className={`shrink-0 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${isDone?"bg-emerald-50 text-emerald-700 border-emerald-300":"bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}
+                        >
+                          {toggling===h.id+m.id ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : isDone?<CheckCircle2 className="h-3.5 w-3.5"/>:<Circle className="h-3.5 w-3.5"/>}
+                          {isDone?"Bajar gan":"Bajar magan"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

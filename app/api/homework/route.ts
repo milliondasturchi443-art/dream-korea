@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     if (auth.role === "ADMIN") {
       const items = await prisma.homework.findMany({
         where: groupId ? { groupId } : undefined,
-        include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } } },
+        include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } }, dones: { select: { studentId: true } } },
         orderBy: { createdAt: "desc" }, take: 100,
       });
       return Response.json({ items });
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
       const mine = groupId ? [groupId] : own;
       if (mine.length === 0) return Response.json({ items: [] });
       // teacher ichida ham teacher include qilinadi — aks holda sahifada h.teacher.name TypeError (qulaydi)
-      const items = await prisma.homework.findMany({ where: { groupId: { in: mine } } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
+      const items = await prisma.homework.findMany({ where: { groupId: { in: mine } } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } }, dones: { select: { studentId: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
       return Response.json({ items });
     }
     // STUDENT — faqat a'zo bo'lgan guruhlar
@@ -46,7 +46,7 @@ export async function GET(req: Request) {
     if (groupId && !myIds.has(groupId)) return Response.json({ error: "Bu guruhga ruxsat yo'q" }, { status: 403 });
     const ids = groupId ? [groupId] : [...myIds];
     if (ids.length === 0) return Response.json({ items: [] });
-    const items = await prisma.homework.findMany({ where: { groupId: { in: ids } } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
+    const items = await prisma.homework.findMany({ where: { groupId: { in: ids } } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } }, dones: { select: { studentId: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
     return Response.json({ items });
   } catch (e) { console.error("GET homework", e); return Response.json({ items: [] }); }
 }
@@ -110,4 +110,40 @@ export async function POST(req: Request) {
     } catch {}
     return Response.json({ ok: true, item: hw });
   } catch (e) { console.error("POST homework", e); return Response.json({ error: "Saqlab bo'lmadi" }, { status: 500 }); }
+}
+
+// PATCH /api/homework — uy vazifasini "bajarilgan" deb belgilash (Bajar gan / Bajar magan)
+// body: { homeworkId, studentId?, done }  — studentId berilsa ustoz/o'zi, bo'lmasa o'zi
+export async function PATCH(req: Request) {
+  const auth = await getAuth(req);
+  if (!auth) return Response.json({ error: "Auth kerak" }, { status: 401 });
+  let body: { homeworkId?: string; studentId?: string; done?: boolean } = {};
+  try { body = await req.json(); }catch {}
+  const homeworkId = String(body.homeworkId ?? "").trim();
+  let studentId = String(body.studentId ?? "").trim() || auth.id;
+  const done = body.done !== false;
+  if (!homeworkId) return Response.json({ error: "homeworkId kerak" }, { status: 400 });
+  try {
+    const hw = await prisma.homework.findUnique({ where: { id: homeworkId }, select: { id: true, groupId: true, teacherId: true } });
+    if (!hw) return Response.json({ error: "Vazifa topilmadi" }, { status: 404 });
+    // Ruxsat: o'zi (guruh a'zosi) yoki ustoz (guruh egasi) yoki admin
+    const isSelf = studentId === auth.id;
+    if (auth.role === "STUDENT") {
+      if (!isSelf) return Response.json({ error: "Faqat o'zingiz uchun belgilaysiz" }, { status: 403 });
+      const mem = await prisma.groupMember.findFirst({ where: { groupId: hw.groupId, userId: auth.id } });
+      if (!mem) return Response.json({ error: "Bu guruhda a'zo emassiz" }, { status: 403 });
+    } else if (auth.role === "TEACHER") {
+      if (String(hw.teacherId) !== auth.id) return Response.json({ error: "Bu vazifa sizniki emas" }, { status: 403 });
+    }
+    if (done) {
+      await prisma.homeworkDone.upsert({
+        where: { homeworkId_studentId: { homeworkId, studentId } },
+        create: { homeworkId, studentId },
+        update: {},
+      });
+    } else {
+      await prisma.homeworkDone.deleteMany({ where: { homeworkId, studentId } });
+    }
+    return Response.json({ ok: true, done });
+  } catch (e) { console.error("PATCH homework", e); return Response.json({ error: "O'zgartirib bo'lmadi" }, { status: 500 }); }
 }
