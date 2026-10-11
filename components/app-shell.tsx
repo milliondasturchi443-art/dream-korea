@@ -167,6 +167,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           { href: "/ai", icon: Bot, label: "AI" },
           { href: "/topik", icon: FileText, label: "TOPIK" },
           { href: "/vocabulary", icon: Library, label: "Lug‘at" },
+          // Ustoz kabineti — faqat TEACHER (Lug'at va Profil orasida)
+          ...(role === "TEACHER" && !viewAsStudent ? [{ href: "/teacher", icon: GraduationCap, label: "Ustoz" }] : []),
           { href: "/profile", icon: User, label: "Profil" },
         ].map(i => {
           const active = pathname === i.href;

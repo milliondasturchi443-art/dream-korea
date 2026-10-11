@@ -51,11 +51,10 @@ export async function GET(req: Request) {
     const cur = cs.get("dk_token")?.value || "";
     const curRole = cur ? String(verify(cur)?.role ?? "") : "";
     if (cur && curRole !== role) {
-      const isEnvAdmin = email === "dreamkorea@adminstator.kr";
       cs.set("dk_token", freshToken, {
         httpOnly: true,
         path: "/",
-        ...(isEnvAdmin ? {} : { maxAge: 30 * 24 * 3600 }),
+        maxAge: 30 * 24 * 3600,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
       });

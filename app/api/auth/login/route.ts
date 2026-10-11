@@ -11,13 +11,9 @@ const DAY30 = 30 * 24 * 3600;
 
 async function setSessionCookie(token: string, role: string) {
   const cs = await cookies();
-  if (role === "ADMIN") {
-    // Admin — session cookie (brauzer yopilsa qayta so'raymiz — "har doim so'raysin")
-    cs.set("dk_token", token, { httpOnly: true, path: "/", sameSite: "lax", secure: process.env.NODE_ENV === "production" });
-  } else {
-    // O'quvchi/ustoz — 30 kun saqlanadi
-    cs.set("dk_token", token, { httpOnly: true, path: "/", maxAge: DAY30, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
-  }
+  // Barcha rollar (admin ham) — 30 kun saqlanadi: APK ilovasi qayta ochilsa kirish yo'qolmaydi.
+  // Admin panel baribir maxfiy yo'l + kalit (key-gate) bilan himoyalangan.
+  cs.set("dk_token", token, { httpOnly: true, path: "/", maxAge: DAY30, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
 }
 
 export async function POST(req: Request) {
