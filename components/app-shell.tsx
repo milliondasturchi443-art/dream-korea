@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       {/* top navy bar - desktop */}
-      <div className="hidden lg:flex h-[56px] glass-dark text-white items-center px-6 justify-between sticky top-0 z-30">
+      <div className="hidden md:flex h-[56px] glass-dark text-white items-center px-6 justify-between sticky top-0 z-30">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* mobile top */}
-      <div className="lg:hidden h-[56px] glass-dark text-white flex items-center justify-between px-4 sticky top-0 z-30">
+      <div className="md:hidden h-[56px] glass-dark text-white flex items-center justify-between px-4 sticky top-0 z-30">
         <Link href="/dashboard" className="flex items-center gap-2 font-bold">
           <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
           DREAM KOREA
@@ -123,7 +123,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="flex">
-        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
+        <aside className="hidden md:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
           <nav className="space-y-1 flex-1">
             {[
               ...studentNav,
@@ -149,7 +149,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <LogOut className="h-[18px] w-[18px] shrink-0" /> Chiqish
           </button>
         </aside>
-        <main className="flex-1 min-w-0 pb-[72px] lg:pb-0">
+        <main className="flex-1 min-w-0 pb-[72px] md:pb-0">
           {viewAsStudent && (
             <div className="sticky top-[56px] z-20 flex items-center justify-between gap-3 bg-amber-100 border-b border-amber-300 px-4 py-2 text-sm text-amber-900">
               <span className="font-medium">Talaba ko‘rinishi — siz talaba sifatida ko‘ryapsiz</span>
@@ -161,7 +161,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* mobile bottom nav — safe-area + 44px min tap */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 glass border-t border-t-white/70 flex items-center justify-around py-1 z-30 safe-bottom">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 glass border-t border-t-white/70 flex items-center justify-around py-1 z-30 safe-bottom">
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
           { href: "/courses", icon: BookOpen, label: "Darslar" },

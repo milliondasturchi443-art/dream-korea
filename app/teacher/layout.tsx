@@ -78,7 +78,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         </div>
       </div>
       <div className="flex">
-        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
+        <aside className="hidden md:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
           <nav className="space-y-1 flex-1">
             {nav.map(i => {
               const active = pathname === i.href;

@@ -149,7 +149,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
       <div className="flex">
-        <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
+        <aside className="hidden md:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
           <nav className="space-y-1 flex-1">
             {nav(base).map(([label, href, Icon]) => (
               <Link key={label} href={href} onClick={label === "Talaba ko‘rinishi" ? enterStudentView : undefined} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2 text-sm font-medium transition-colors",
