@@ -48,8 +48,17 @@ export async function sendEmail(to: string, subject: string, html: string, text?
   const gmailPass = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
   if (gmailUser && gmailPass) {
     try {
-      const t = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
-      await t.sendMail({ from: `"DREAM KOREA" <${gmailUser}>`, to, subject, html, text: plain });
+      const t = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: gmailUser, pass: gmailPass },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
+      });
+      await Promise.race([
+        t.sendMail({ from: `"DREAM KOREA" <${gmailUser}>`, to, subject, html, text: plain }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("Gmail timeout")), 12000)),
+      ]);
       return { ok: true, via: "gmail" };
     } catch (e) {
       console.error("gmail smtp error", e instanceof Error ? e.message : e);
