@@ -33,7 +33,12 @@ export async function GET(req: Request) {
       const where: Record<string, unknown> = { studentId: auth.id };
       if (groupId) (where as Record<string, unknown>).groupId = groupId;
       if (date) (where as Record<string, unknown>).date = date;
-      const rows = await prisma.attendance.findMany({ where: where as never, orderBy: { date: "desc" }, take: 100 });
+      const rows = await prisma.attendance.findMany({
+        where: where as never,
+        include: { group: { select: { id: true, name: true } } },
+        orderBy: { date: "desc" },
+        take: 100,
+      });
       return Response.json({ rows });
     }
     const where: Record<string, unknown> = {};

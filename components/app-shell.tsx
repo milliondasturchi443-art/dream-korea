@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { doLogout } from "@/lib/logout";
 import Image from "next/image";
 import {
-  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut, Bot, GraduationCap, CreditCard
+  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut, Bot, GraduationCap, CreditCard, ClipboardList, CalendarCheck
 } from "lucide-react";
 
 export const studentNav = [
@@ -127,8 +127,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="space-y-1 flex-1">
             {[
               ...studentNav,
-              // To'lovlarim — faqat STUDENT (tolyq to'lovlar sahifasi)
-              ...(role === "STUDENT" ? [{ href: "/payment", label: "To'lovlarim", icon: CreditCard }] : []),
+              // To'lovlarim / Uy vazifalarim / Davomat — faqat STUDENT
+              ...(role === "STUDENT" ? [
+                { href: "/homework", label: "Uy vazifalarim", icon: ClipboardList },
+                { href: "/attendance", label: "Davomat", icon: CalendarCheck },
+                { href: "/payment", label: "To'lovlarim", icon: CreditCard },
+              ] : []),
               // Ustoz kabineti — faqat TEACHER (talabalarga ko'rinmaydi); "Talaba ko'rinishi" rejimida yashiriladi
               ...(role === "TEACHER" && !viewAsStudent ? [{ href: "/teacher", label: "Ustoz kabineti", icon: GraduationCap }] : []),
             ].map(item => {
