@@ -134,7 +134,7 @@ export default function TeacherHomeworkPage(){
                           className={`shrink-0 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${isDone?"bg-emerald-50 text-emerald-700 border-emerald-300":"bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}
                         >
                           {toggling===h.id+m.id ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : isDone?<CheckCircle2 className="h-3.5 w-3.5"/>:<Circle className="h-3.5 w-3.5"/>}
-                          {isDone?"Bajar gan":"Bajar magan"}
+                          {isDone?"Bajargan":"Bajarmagan"}
                         </button>
                       </div>
                     );

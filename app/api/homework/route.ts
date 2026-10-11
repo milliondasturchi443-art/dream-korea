@@ -126,12 +126,9 @@ export async function PATCH(req: Request) {
   try {
     const hw = await prisma.homework.findUnique({ where: { id: homeworkId }, select: { id: true, groupId: true, teacherId: true } });
     if (!hw) return Response.json({ error: "Vazifa topilmadi" }, { status: 404 });
-    // Ruxsat: o'zi (guruh a'zosi) yoki ustoz (guruh egasi) yoki admin
-    const isSelf = studentId === auth.id;
+    // Ruxsat: faqat ustoz (guruh egasi) yoki admin belgilaydi — o'quvchi o'zini belgilay olmaydi
     if (auth.role === "STUDENT") {
-      if (!isSelf) return Response.json({ error: "Faqat o'zingiz uchun belgilaysiz" }, { status: 403 });
-      const mem = await prisma.groupMember.findFirst({ where: { groupId: hw.groupId, userId: auth.id } });
-      if (!mem) return Response.json({ error: "Bu guruhda a'zo emassiz" }, { status: 403 });
+      return Response.json({ error: "Uy vazifasini faqat ustoz belgilaydi" }, { status: 403 });
     } else if (auth.role === "TEACHER") {
       if (String(hw.teacherId) !== auth.id) return Response.json({ error: "Bu vazifa sizniki emas" }, { status: 403 });
     }

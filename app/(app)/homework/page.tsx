@@ -20,22 +20,6 @@ export default function StudentHomeworkPage() {
   const [loading, setLoading] = useState(true);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [myId, setMyId] = useState("");
-  const [toggling, setToggling] = useState("");
-
-  async function toggleMine(hwId: string, currentlyDone: boolean) {
-    setToggling(hwId);
-    try {
-      const r = await fetch("/api/homework", { method: "PATCH", headers: { "Content-Type": "application/json", ...authHeader() }, body: JSON.stringify({ homeworkId: hwId, done: !currentlyDone }) });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "O'zgartirib bo'lmadi");
-      setHw(prev => prev.map(x => {
-        if (x.id !== hwId) return x;
-        const dones = x.dones ?? [];
-        const next = !currentlyDone ? [...dones.filter(y => y.studentId !== myId), { studentId: myId }] : dones.filter(y => y.studentId !== myId);
-        return { ...x, dones: next };
-      }));
-    } catch { /* silent */ } finally { setToggling(""); }
-  }
 
   useEffect(() => {
     const h = authHeader();
@@ -149,14 +133,15 @@ export default function StudentHomeworkPage() {
                     </div>
                     {myId && (
                       <div className="mt-3 border-t border-slate-100 pt-3">
-                        <button
-                          onClick={() => toggleMine(x.id, mineDone)}
-                          disabled={toggling === x.id}
-                          className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${mineDone ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}
-                        >
-                          {toggling === x.id ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : mineDone ? <CheckCircle2 className="h-3.5 w-3.5"/> : <Circle className="h-3.5 w-3.5"/>}
-                          {mineDone ? "Bajar gan" : "Bajar diman"}
-                        </button>
+                        {mineDone ? (
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-300 px-3 py-1.5 text-xs font-semibold">
+                            <CheckCircle2 className="h-3.5 w-3.5"/> Bajargan
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 px-3 py-1.5 text-xs font-semibold">
+                            <Circle className="h-3.5 w-3.5"/> Bajarmagan
+                          </span>
+                        )}
                       </div>
                     )}
                   </Card>
