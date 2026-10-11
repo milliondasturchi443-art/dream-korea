@@ -40,7 +40,7 @@ export default function RegisterPage() {
       if (!r.ok) { toast.error(d.error ?? "Ro‘yxatdan o‘tishda xato"); return; }
       const next = new URLSearchParams(window.location.search).get("next");
       if (d.requiresVerification) {
-        toast.success("Ro‘yxatdan o‘tdingiz! Pochtaga tasdiqlash havolasini yubordik.");
+        toast.success("Ro‘yxatdan o‘tdingiz! Pochtaga tasdiqlash kodini yubordik.");
         if (d.emailSent === false) toast.warning(d.emailError ?? "Xat yuborilmadi — keyinroq qayta yuborishingiz mumkin");
         const q = new URLSearchParams({ email: String(d.email ?? email) });
         if (next && next.startsWith("/") && !next.startsWith("//")) q.set("next", next);

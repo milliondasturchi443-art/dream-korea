@@ -1,11 +1,10 @@
 import { prisma } from "@/lib/db";
 import { normalizeEmail } from "@/lib/auth";
-import { sign } from "@/lib/token";
-import { sendVerificationEmail, verificationUrl, emailVerifyEnabled } from "@/lib/email";
+import { sendVerificationCode, generateOtp, emailVerifyEnabled } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
-// Tasdiqlash xatini qayta yuborish
+// Tasdiqlash KODINI qayta yuborish (OTP)
 export async function POST(req: Request) {
   let body: { email?: string } = {};
   try { body = await req.json(); } catch {}
@@ -17,8 +16,10 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({ where: { email } });
     // Bor-yo‘qligini oshkor qilmaymiz
     if (!user || user.emailVerified === true) return Response.json({ ok: true });
-    const token = sign({ email, purpose: "verify" }, 24 * 3600 * 1000);
-    const sent = await sendVerificationEmail(email, verificationUrl(token));
+    const code = generateOtp();
+    const exp = new Date(Date.now() + 10 * 60 * 1000);
+    await prisma.user.update({ where: { email }, data: { verifyCode: code, verifyCodeExp: exp } }).catch(() => {});
+    const sent = await sendVerificationCode(email, code);
     return Response.json({ ok: sent.ok, emailSent: sent.ok, error: sent.error });
   } catch {
     return Response.json({ error: "Server xatosi — qayta urinib ko‘ring" }, { status: 500 });

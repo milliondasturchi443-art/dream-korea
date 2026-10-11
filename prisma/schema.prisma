@@ -25,8 +25,10 @@ model User {
   email     String   @unique
   name      String
   phone     String?
-  password  String
+  password     String
   emailVerified Boolean?
+  verifyCode   String?
+  verifyCodeExp DateTime?
   role      Role     @default(STUDENT)
   avatar    String?
   topikLevel String? @default("TOPIK I")

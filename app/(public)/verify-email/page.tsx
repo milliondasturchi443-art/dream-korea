@@ -1,25 +1,56 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
-import { MailCheck, MailWarning } from "lucide-react";
+import { MailCheck, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 export default function VerifyEmailPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
-  const [invalid, setInvalid] = useState(false);
+  const [code, setCode] = useState("");
   const [sending, setSending] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const e = p.get("email");
     if (e) setEmail(e);
-    if (p.get("error") === "invalid") setInvalid(true);
   }, []);
+
+  async function verify(e?: React.FormEvent) {
+    e?.preventDefault();
+    const em = email.trim();
+    const cd = code.trim();
+    if (!em || cd.length < 6) { toast.error("Email va 6 xonali kodni kiriting"); return; }
+    setChecking(true);
+    try {
+      const r = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: em, code: cd }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { toast.error(d.error ?? "Kodni tekshirib bo‘lmadi"); return; }
+      try {
+        localStorage.setItem("dk_role", d.role);
+        localStorage.setItem("dk_token", d.token ?? "");
+        localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id }));
+        sessionStorage.setItem("dk_token", d.token ?? "");
+      } catch {}
+      toast.success("Email tasdiqlandi — xush kelibsiz!");
+      router.push("/dashboard?verified=1");
+    } catch {
+      toast.error("Server bilan bog‘lanib bo‘lmadi");
+    } finally {
+      setChecking(false);
+    }
+  }
 
   async function resend() {
     const em = email.trim();
@@ -33,7 +64,7 @@ export default function VerifyEmailPage() {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || d.ok === false) toast.error(d.error ?? "Yuborib bo‘lmadi");
-      else toast.success("Tasdiqlash havolasi qayta yuborildi!");
+      else toast.success("Yangi kod pochtangizga yuborildi!");
     } catch {
       toast.error("Server bilan bog‘lanib bo‘lmadi");
     } finally {
@@ -55,24 +86,33 @@ export default function VerifyEmailPage() {
         </div>
         <h1 className="mt-4 text-xl font-bold text-center text-slate-900">Pochtangizni tasdiqlang</h1>
         <p className="mt-2 text-sm text-slate-500 text-center leading-relaxed">
-          {email ? <> <b className="text-slate-700">{email}</b> manziliga tasdiqlash havolasini yubordik.</> : "Tasdiqlash havolasini pochtangizga yubordik."}
-          {" "}Havola 24 soat amal qiladi. Xat kelmasa spam papkani ham tekshiring.
+          {email ? <> <b className="text-slate-700">{email}</b> manziliga 6 xonali kod yubordik.</> : "Pochtaga 6 xonali tasdiqlash kodini yubordik."}
+          {" "}Kod 10 daqiqa amal qiladi. Kelmasa spam papkani ham tekshiring.
         </p>
-        {invalid && (
-          <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-start gap-2 text-sm text-amber-700">
-            <MailWarning className="h-4 w-4 mt-0.5 shrink-0" />
-            Havola yaroqsiz yoki muddati o‘tgan. Quyidan qayta yuboring.
-          </div>
-        )}
-        <form onSubmit={e => { e.preventDefault(); resend(); }} className="mt-6 space-y-3">
+        <form onSubmit={verify} className="mt-6 space-y-3">
           <div>
             <label className="text-xs font-medium text-slate-700">Email</label>
             <Input inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" className="mt-1" />
           </div>
-          <Button type="submit" className="w-full h-11" disabled={sending || !email.trim()}>
-            {sending ? "Yuborilmoqda…" : "Havolani qayta yuborish"}
+          <div>
+            <label className="text-xs font-medium text-slate-700">Tasdiqlash kodi</label>
+            <Input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={code}
+              onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="123456"
+              className="mt-1 text-center text-2xl font-bold tracking-[10px] h-14"
+            />
+          </div>
+          <Button type="submit" className="w-full h-11" disabled={checking || code.length < 6 || !email.trim()}>
+            {checking ? "Tekshirilmoqda…" : <><ShieldCheck className="h-4 w-4 mr-1"/> Tasdiqlash</>}
           </Button>
         </form>
+        <button onClick={resend} disabled={sending || !email.trim()} className="mt-4 w-full text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50">
+          {sending ? "Yuborilmoqda…" : "Kodni qayta yuborish"}
+        </button>
         <div className="mt-5 flex justify-between text-xs">
           <Link href="/login" className="text-[#2563eb] hover:underline">Kirish</Link>
           <Link href="/register" className="text-slate-500 hover:text-slate-700">Ro‘yxatdan o‘tish</Link>
