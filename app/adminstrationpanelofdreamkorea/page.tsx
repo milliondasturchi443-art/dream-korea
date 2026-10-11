@@ -76,7 +76,6 @@ export default function AdminPage() {
           ["O‘quvchilar", "Ro‘yxat va rollar", `${base}/users`],
           ["Qabul arizalari", "Arizalar ro‘yxati", `${base}/admissions`],
           ["Kontent", "Kurslar va darslar", `${base}/content`],
-          ["Bloklangan ilovalar", "Ruxsatlar", `${base}/blocked-apps`],
           ["TOPIK testlar", "Testlar", "/topik"],
           ["Universitetlar", "Ro‘yxat", "/universities"],
         ].map(([title, sub, href]) => (

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { doLogout } from "@/lib/logout";
-import { LayoutDashboard, Users, Bell, ShieldAlert, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
+import { LayoutDashboard, Users, Bell, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminBase } from "@/lib/admin-base";
 import Image from "next/image";
@@ -15,7 +15,6 @@ const nav = (base: string) => [
   ["Qabul arizalari", `${base}/admissions`, FileText],
   ["Guruhlar", `${base}/groups`, Users],
   ["Kontent (kurslar)", `${base}/content`, BookOpenCheck],
-  ["Bloklangan ilovalar", `${base}/blocked-apps`, ShieldAlert],
   ["Talaba ko‘rinishi", "/dashboard", Eye],
 ] as const;
 
