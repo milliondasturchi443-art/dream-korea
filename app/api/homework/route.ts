@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { verify, readAuthToken } from "@/lib/token";
 import { normalizeEmail } from "@/lib/auth";
+import { sendEmail, emailShell } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 async function getAuth(req: Request) {
@@ -67,11 +68,44 @@ export async function POST(req: Request) {
     const hw = await prisma.homework.create({
       data: { groupId, teacherId: auth.id, title, description: body.description ? String(body.description).trim() : undefined, dueDate: body.dueDate ? String(body.dueDate).trim() : undefined },
     });
-    // уведомления ученикам группы
+    // Guruh + ustoz nomini olish (bildirishnoma va email uchun)
+    let groupName = "", teacherName = "";
     try {
-      const members = await prisma.groupMember.findMany({ where: { groupId }, select: { userId: true } });
+      const g = await prisma.group.findUnique({ where: { id: groupId }, select: { name: true, teacher: { select: { name: true } } } });
+      groupName = g?.name ?? "";
+      teacherName = g?.teacher?.name ?? "";
+    } catch {}
+    const dueTxt = hw.dueDate ? `Topshirish sanasi: ${hw.dueDate}.` : "";
+    const descTxt = body.description ? String(body.description).trim() : "";
+    // O'quvchilarga bildirishnoma (Bildirishnoma) + email
+    try {
+      const members = await prisma.groupMember.findMany({
+        where: { groupId },
+        select: { user: { select: { id: true, email: true, name: true } } },
+      });
       for (const m of members) {
-        await prisma.notification.create({ data: { userId: m.userId, title: `Yangi uy vazifasi: ${title}`, body: `${hw.dueDate ? `Topshirish: ${hw.dueDate}. ` : ""}${(body.description ?? "").slice(0, 120)}` } }).catch(()=>{});
+        const u = m.user;
+        if (!u?.id) continue;
+        await prisma.notification.create({
+          data: {
+            userId: u.id,
+            title: `Yangi uy vazifasi: ${title}`,
+            body: `${groupName ? `Guruh: ${groupName}. ` : ""}${teacherName ? `Ustoz: ${teacherName}. ` : ""}${dueTxt} ${descTxt}`.trim().slice(0, 300),
+          },
+        }).catch(() => {});
+        // Email ham yuboriladi (xato bilan to'xtamasin)
+        if (u.email) {
+          const rows = `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;margin:4px 0 14px;">
+              <tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;font-size:13px;">Mavzu</span><div style="font-weight:bold;color:#0f1b3d;margin-top:2px;">${title}</div></td></tr>
+              ${groupName ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;font-size:13px;">Guruh</span><div style="color:#0f1b3d;margin-top:2px;">${groupName}</div></td></tr>` : ""}
+              ${teacherName ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;font-size:13px;">Ustoz</span><div style="color:#0f1b3d;margin-top:2px;">${teacherName}</div></td></tr>` : ""}
+              ${hw.dueDate ? `<tr><td style="padding:14px 16px;"><span style="color:#64748b;font-size:13px;">Topshirish sanasi</span><div style="color:#b45309;font-weight:bold;margin-top:2px;">${hw.dueDate}</div></td></tr>` : ""}
+            </table>
+            ${descTxt ? `<p style="margin:0 0 8px;font-size:14px;color:#334155;">${descTxt}</p>` : ""}`;
+          const html = emailShell("Yangi uy vazifasi berildi", `Salom ${u.name ?? ""}! Ustozingiz ${groupName ? `"${groupName}"` : "guruhingizga"} yangi uy vazifasi berdi.`, rows, { label: "Bildirishnomalarni ko‘rish", url: `${(process.env.NEXTAUTH_URL || "https://dream-korea.onrender.com").replace(/\/$/, "")}/notifications` });
+          sendEmail(u.email, `DREAM KOREA — uy vazifasi: ${title}`, html, `${title}. ${dueTxt}`).catch(() => {});
+        }
       }
     } catch {}
     return Response.json({ ok: true, item: hw });

@@ -72,6 +72,18 @@ export async function POST(req:Request){
   }
   try{
     const p=await prisma.payment.create({ data:{ userId, amount, method, status: status as never }});
+    // O'quvchiga to'lov bildirishnomasi (Bildirishnoma)
+    try {
+      const su = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+      const label = status === "PAID" ? "qabul qilindi" : status === "PENDING" ? "kutilmoqda" : status.toLowerCase();
+      await prisma.notification.create({
+        data: {
+          userId,
+          title: `To'lov ${label}`,
+          body: `${amount.toLocaleString("uz-UZ")} so'm · uslub: ${method}. ${su?.name ? `${su.name}, ` : ""}hisobingiz yangilandi.`,
+        },
+      }).catch(()=>{});
+    } catch {}
     return Response.json({ ok:true, payment:p });
   }catch(e){ console.error("POST payment",e); return Response.json({ error:"Saqlab bo'lmadi"}, { status:500});}
 }

@@ -7,12 +7,14 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Book, FileText, Library, Video, Film, Shuffle, Building2, BookMarked, Headphones } from "lucide-react";
+import { Book, FileText, Library, Video, Film, Shuffle, Building2, BookMarked, Headphones, ClipboardList, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { getCompleted } from "@/lib/lesson-progress";
 
 const quickActions = [
   { label: "Kurslar", icon: Book, href: "/courses" },
+  { label: "Uy vazifalari", icon: ClipboardList, href: "/homework" },
+  { label: "Statistika", icon: BarChart3, href: "/statistics" },
   { label: "TOPIK testlar", icon: FileText, href: "/topik" },
   { label: "Grammatika", icon: Library, href: "/grammar" },
   { label: "Lug‘at", icon: Shuffle, href: "/vocabulary" },
