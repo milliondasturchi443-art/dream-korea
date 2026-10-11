@@ -58,10 +58,11 @@ export async function GET(req:Request){
 export async function POST(req:Request){
   const auth=await getAuth(req);
   if(!auth || (auth.role!=="ADMIN" && auth.role!=="TEACHER")) return Response.json({ error:"Faqat ustoz/admin"}, { status:403});
-  let b: { userId?:string; amount?:number; method?:string; status?:string }={};
+  let b: { userId?:string; amount?:number; method?:string; status?:string; month?:string; note?:string }={};
   try{ b=await req.json(); }catch{}
   const userId=String(b.userId??"").trim(); const amount=Number(b.amount??0); const method=String(b.method??"cash").trim()||"cash";
-  let status=String(b.status??"PAID").trim().toUpperCase(); if(!["PENDING","PAID","CANCELLED","FAILED"].includes(status)) status="PAID";
+  const month=String(b.month??"").trim(); const note=String(b.note??"").trim();
+  let status=String(b.status??"PENDING").trim().toUpperCase(); if(!["PENDING","PAID","CANCELLED","FAILED"].includes(status)) status="PENDING";
   if(!userId || !amount) return Response.json({ error:"userId va amount kerak"}, { status:400 });
   // teacher can only for own group members
   if(auth.role==="TEACHER"){
@@ -71,19 +72,57 @@ export async function POST(req:Request){
     if(!ids.has(userId)) return Response.json({ error:"Bu o'quvchi sizning guruhingizda emas"}, { status:403});
   }
   try{
-    const p=await prisma.payment.create({ data:{ userId, amount, method, status: status as never }});
-    // O'quvchiga to'lov bildirishnomasi (Bildirishnoma)
+    const p=await prisma.payment.create({ data:{ userId, amount, method, month: month||undefined, note: note||undefined, status: status as never }});
+    // O'quvchiga bildirishnoma: eslatma (PENDING) yoki to'lov qabul qilindi (PAID)
     try {
       const su = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
-      const label = status === "PAID" ? "qabul qilindi" : status === "PENDING" ? "kutilmoqda" : status.toLowerCase();
-      await prisma.notification.create({
-        data: {
-          userId,
-          title: `To'lov ${label}`,
-          body: `${amount.toLocaleString("uz-UZ")} so'm · uslub: ${method}. ${su?.name ? `${su.name}, ` : ""}hisobingiz yangilandi.`,
-        },
-      }).catch(()=>{});
+      const who = su?.name ? `${su.name}, ` : "";
+      let title:string, body:string;
+      if(status==="PENDING"){
+        title="To'lov eslatmasi";
+        body=`${who}${amount.toLocaleString("uz-UZ")} so'm${month?` — ${month} oy uchun`:""} to'lash talab qilinadi. Iltimos, to'lovni amalga oshiring.${note?` Izoh: ${note}`:""}`;
+      } else {
+        title="To'lov qabul qilindi";
+        body=`${who}${amount.toLocaleString("uz-UZ")} so'm${month?` — ${month} oy uchun`:""} muvaffaqiyatli to'landi.${note?` Izoh: ${note}`:""}`;
+      }
+      await prisma.notification.create({ data:{ userId, title, body } }).catch(()=>{});
     } catch {}
     return Response.json({ ok:true, payment:p });
   }catch(e){ console.error("POST payment",e); return Response.json({ error:"Saqlab bo'lmadi"}, { status:500});}
+}
+
+// PATCH /api/payments — to'lov holatini almashtirish (masalan: PENDING → PAID) + o'quvchiga bildirishnoma
+export async function PATCH(req:Request){
+  const auth=await getAuth(req);
+  if(!auth || (auth.role!=="ADMIN" && auth.role!=="TEACHER")) return Response.json({ error:"Faqat ustoz/admin"}, { status:403});
+  let b: { id?:string; status?:string }={};
+  try{ b=await req.json(); }catch{}
+  const id=String(b.id??"").trim(); const status=String(b.status??"").trim().toUpperCase();
+  if(!id || !["PENDING","PAID","CANCELLED","FAILED"].includes(status)) return Response.json({ error:"id va status kerak"}, { status:400 });
+  try{
+    const p=await prisma.payment.findUnique({ where:{ id }, select:{ id:true, userId:true, amount:true, month:true, note:true, status:true }});
+    if(!p) return Response.json({ error:"To'lov topilmadi"}, { status:404});
+    // teacher faqat o'z guruhidagi o'quvchining to'lovini o'zgartira oladi
+    if(auth.role==="TEACHER"){
+      const groups=await prisma.group.findMany({ where:{ teacherId: auth.id }, select:{ id:true }});
+      const mems=await prisma.groupMember.findMany({ where:{ groupId:{ in: groups.map(g=>g.id)}}, select:{ userId:true }});
+      const ids=new Set(mems.map(m=>m.userId));
+      if(!ids.has(p.userId)) return Response.json({ error:"Bu o'quvchi sizning guruhingizda emas"}, { status:403});
+    }
+    const upd=await prisma.payment.update({ where:{ id }, data:{ status: status as never }});
+    // Status "PAID" bo'lsa — o'quvchiga "muvaffaqiyatli to'landi" bildirishnomasi
+    if(status==="PAID"){
+      try {
+        const su=await prisma.user.findUnique({ where:{ id:p.userId }, select:{ name:true }});
+        await prisma.notification.create({
+          data:{
+            userId:p.userId,
+            title:"To'lov muvaffaqiyatli qabul qilindi",
+            body:`${su?.name?`${su.name}, `:""}${p.amount.toLocaleString("uz-UZ")} so'm${p.month?` — ${p.month} oy uchun`:""} to'lov tasdiqlandi. Rahmat!`,
+          },
+        }).catch(()=>{});
+      } catch {}
+    }
+    return Response.json({ ok:true, payment:upd });
+  }catch(e){ console.error("PATCH payment",e); return Response.json({ error:"O'zgartirib bo'lmadi"}, { status:500});}
 }

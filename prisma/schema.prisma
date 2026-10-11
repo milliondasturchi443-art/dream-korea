@@ -256,6 +256,8 @@ model Payment {
   user      User          @relation(fields: [userId], references: [id])
   amount    Int
   method    String
+  month     String?
+  note      String?
   status    PaymentStatus @default(PENDING)
   createdAt DateTime      @default(now())
 }
