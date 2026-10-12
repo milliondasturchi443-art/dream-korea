@@ -31,10 +31,17 @@ function TopikExamInner() {
   const [seconds, setSeconds] = useState(40 * 60);
   const [finishing, setFinishing] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  // Har bir savol uchun taymer (soniya)
+  const [qLimit, setQLimit] = useState(30);
+  const [qLeft, setQLeft] = useState(30);
+  const [timerOn, setTimerOn] = useState(true);
   const didAutoFinish = useRef(false);
+  const qLeftRef = useRef(30); // oxirgi qolgan soniya (stale-state himoyasi)
   const q = questions[idx];
 
   const isListening = (meta?.type === "Listening") || (q?.text?.includes("[Listening]") ?? false);
+  // URL dan ?sec=NN orqali chegarani o'zgartirsa bo'ladi
+  const qLimitRef = useRef<number>(30);
   const speakText = q?.audio ?? (q?.text ? q.text.replace(/^\[Listening\]\s*/, "").trim() : "");
 
   function playAudio(text?: string, qid?: string) {
@@ -61,6 +68,16 @@ function TopikExamInner() {
         setMeta({ title: d.title ?? String(testId), level: d.level ?? "TOPIK I", type: d.type ?? "Reading" });
         const mins = d.type === "Full" ? 80 : d.level === "TOPIK II" ? 70 : 40;
         setSeconds(mins * 60);
+        // Har savol uchun vaqt: listening ozroq eshitish uchun, reading ko'proq o'qish uchun
+        let lim = d.type === "Listening" ? 25 : 30;
+        try {
+          const sp = new URLSearchParams(window.location.search);
+          const custom = Number(sp.get("sec"));
+          if (custom && custom > 0 && custom <= 120) lim = custom;
+        } catch {}
+        qLimitRef.current = lim;
+        setQLimit(lim);
+        setQLeft(lim);
       })
       .catch(e => { if ((e as Error).name !== "AbortError") toast.error(String((e as Error).message ?? e)); })
       .finally(() => setLoading(false));
@@ -98,6 +115,31 @@ function TopikExamInner() {
     }
   }, [questions.length, finishing, answers, q, selected, testId, router]);
 
+  // Savolga o'tganda taymerni tiklash
+  useEffect(() => {
+    if (!loading && questions.length) { setQLeft(qLimit); qLeftRef.current = qLimit; }
+  }, [idx, loading, questions.length, qLimit]);
+
+  // Har savol uchun countdown (faqat kamaytirish — side-effectsiz)
+  useEffect(() => {
+    if (loading || !questions.length || !timerOn || finishing) return;
+    const t = setInterval(() => setQLeft(v => { const n = v <= 0 ? 0 : v - 1; qLeftRef.current = n; return n; }), 1000);
+    return () => clearInterval(t);
+  }, [loading, questions.length, timerOn, finishing]);
+
+  // Vaqt tugadi -> keyingi savolga o'tish (oxirgi bo'lsa — yakunlash)
+  useEffect(() => {
+    if (loading || finishing || !questions.length) return;
+    if (qLeft !== 0 || qLeftRef.current !== 0) return; // stale-state himoyasi
+    if (idx < questions.length - 1) {
+      setIdx(i => i + 1);
+    } else {
+      toast.info("Savollar bo'ylab vaqt tugadi — test yakunlanmoqda");
+      void finish();
+    }
+  }, [qLeft, idx, loading, questions.length, finishing, finish]);
+
+
   useEffect(() => {
     if (!didAutoFinish.current && !loading && questions.length && seconds === 0) {
       didAutoFinish.current = true;
@@ -131,10 +173,31 @@ function TopikExamInner() {
       <Card className="p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="text-sm font-semibold text-slate-900 truncate">{meta?.title ?? String(testId)} — {idx + 1}/{questions.length}</div>
         <div className="flex items-center gap-3">
-          <span className={`flex items-center gap-1.5 text-sm font-medium ${seconds < 300 ? "text-red-600" : "text-[#2563eb]"}`}><Clock className="h-4 w-4" /> {formatTime(seconds)}</span>
+          {/* Savolga berilgan vaqt */}
+          <span className={`flex items-center gap-1.5 text-sm font-bold px-2.5 py-1 rounded-full border ${qLeft <= 5 ? "bg-red-50 border-red-300 text-red-600 animate-pulse" : qLeft <= 10 ? "bg-amber-50 border-amber-300 text-amber-600" : "bg-blue-50 border-blue-200 text-[#2563eb]"}`}>
+            ⏱ {qLeft}s
+          </span>
+          <span className={`flex items-center gap-1.5 text-sm font-medium ${seconds < 300 ? "text-red-600" : "text-slate-500"}`}><Clock className="h-4 w-4" /> {formatTime(seconds)}</span>
           <div className="hidden sm:block w-24"><Progress value={((idx + 1) / questions.length) * 100} /></div>
         </div>
       </Card>
+
+      {/* Savol taymeri — progress bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-1000 ease-linear ${qLeft <= 5 ? "bg-red-500" : qLeft <= 10 ? "bg-amber-500" : "bg-[#2563eb]"}`}
+            style={{ width: `${qLimit ? Math.max(0, (qLeft / qLimit) * 100) : 0}%` }}
+          />
+        </div>
+        <button
+          onClick={() => setTimerOn(t => !t)}
+          className={`shrink-0 h-7 px-2.5 rounded-full text-[11px] font-semibold border ${timerOn ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : "bg-white text-slate-500 border-slate-200"}`}
+          title="Savol taymerini to'xtatish / qayta ishga tushirish"
+        >
+          {timerOn ? "⏸ Pauza" : "▶ Davom"}
+        </button>
+      </div>
 
       <div className="flex flex-wrap gap-1.5">
         {questions.map((_, i) => {
