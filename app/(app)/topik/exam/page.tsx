@@ -4,13 +4,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Clock, ChevronRight, Loader2 } from "lucide-react";
+import { Clock, ChevronRight, Loader2, Volume2, Pause } from "lucide-react";
 import { toast } from "sonner";
+import { speak, hasTTS } from "@/lib/tts";
 
 export const dynamic = "force-dynamic";
 
 type Opt = { key: string; text: string };
-type Q = { id: string; text: string; options: Opt[]; correct?: string; explanation?: string };
+type Q = { id: string; text: string; audio?: string; options: Opt[]; correct?: string; explanation?: string };
 
 function formatTime(s: number) {
   const m = String(Math.floor(s / 60)).padStart(2, "0");
@@ -29,8 +30,29 @@ function TopikExamInner() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [seconds, setSeconds] = useState(40 * 60);
   const [finishing, setFinishing] = useState(false);
+  const [playingId, setPlayingId] = useState<string | null>(null);
   const didAutoFinish = useRef(false);
   const q = questions[idx];
+
+  const isListening = (meta?.type === "Listening") || q?.text?.includes("[Listening]");
+
+  function playAudio(text?: string, qid?: string) {
+    if (!text || !hasTTS()) { toast.error("Ovoz yo‘q — brauzer qo‘llamaydi"); return; }
+    if (playingId === qid) {
+      try { window.speechSynthesis.cancel(); } catch {}
+      setPlayingId(null);
+      return;
+    }
+    try { window.speechSynthesis.cancel(); } catch {}
+    setPlayingId(qid ?? "x");
+    const ok = speak(text);
+    if (!ok) { setPlayingId(null); toast.error("Ovoz chiqarib bo‘lmadi"); return; }
+    // sarg'ish: onend bilan to'xtatish
+    const iv = setInterval(() => {
+      try { if (!window.speechSynthesis.speaking) { clearInterval(iv); setPlayingId(null); } } catch { clearInterval(iv); setPlayingId(null); }
+    }, 300);
+    setTimeout(() => { clearInterval(iv); setPlayingId(null); }, 8000);
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -39,8 +61,7 @@ function TopikExamInner() {
       .then(async r => { const d = await r.json().catch(() => ({} as Record<string, unknown>)); if (!r.ok) throw new Error(String((d as Record<string, unknown>).error ?? `HTTP ${r.status}`)); return d as { questions: Q[]; title: string; level: string; type: string }; })
       .then(d => {
         if (!Array.isArray(d.questions)) throw new Error("Savollar olinmadi");
-        // Без ?solutions=1 correct не приходит — нельзя подсмотреть до завершения
-        const withoutLeak = d.questions.map(qq => ({ id: qq.id, text: qq.text, options: qq.options }));
+        const withoutLeak = d.questions.map(qq => ({ id: qq.id, text: qq.text, audio: (qq as { audio?: string }).audio, options: qq.options }));
         setQuestions(withoutLeak as Q[]);
         setMeta({ title: d.title ?? String(testId), level: d.level ?? "TOPIK I", type: d.type ?? "Reading" });
         const mins = d.type === "Full" ? 80 : d.level === "TOPIK II" ? 70 : 40;
@@ -74,7 +95,6 @@ function TopikExamInner() {
       });
       const d = await r.json().catch(() => ({} as Record<string, unknown>));
       if (!r.ok) throw new Error(String((d as Record<string, unknown>).error ?? "Saqlab bo'lmadi"));
-      // Сервер сам посчитал баллы — кладём в результат (не клиентские)
       localStorage.setItem("dk_topik_score", JSON.stringify({ correct: d.score ?? 0, total: d.total ?? questions.length, pct: d.pct ?? 0, answers: cur, testId, at: Date.now(), isSeed: d.isSeed ?? false }));
       router.push("/topik/result");
     } catch (e) {
@@ -134,6 +154,18 @@ function TopikExamInner() {
       </div>
 
       <Card className="p-5 lg:p-6">
+        {isListening && q.audio && (
+          <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3">
+            <Button
+              size="sm"
+              onClick={() => playAudio(q.audio, q.id)}
+              className={playingId === q.id ? "bg-emerald-600 hover:bg-emerald-700" : "bg-[#0f1b3d] hover:bg-[#1a2a5a]"}
+            >
+              {playingId === q.id ? <><Pause className="h-4 w-4 mr-1"/> To'xtatish</> : <><Volume2 className="h-4 w-4 mr-1"/> Eshitish</>}
+            </Button>
+            <span className="text-xs text-emerald-700">Koreyscha matnni tinglang, so‘ng javobni tanlang</span>
+          </div>
+        )}
         <div className="text-[15px] font-medium text-slate-900 leading-relaxed whitespace-pre-wrap">{q.text}</div>
         <div className="mt-5 grid gap-2.5">
           {q.options.map(o => {

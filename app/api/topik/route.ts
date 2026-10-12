@@ -1,23 +1,24 @@
 import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
-// GET /api/topik — список TOPIK тестов (для студентов и админа)
+// GET /api/topik — список TOPIK тестов
 export async function GET() {
   try {
     const tests = await prisma.test.findMany({
       include: { _count: { select: { questions: true } } },
       orderBy: { createdAt: "desc" },
     });
-    // Если пусто — отдаём встроенные seed-тесты (реальное число вопросов, без выдумки)
     if (tests.length === 0) {
       return Response.json({
         tests: [
-          { id: "seed_topik1_reading", title: "TOPIK I — Reading", level: "TOPIK I", type: "Reading", questions: 3, time: "10 daq" },
-          { id: "seed_topik1_listening", title: "TOPIK I — Listening", level: "TOPIK I", type: "Listening", questions: 2, time: "5 daq" },
-          { id: "seed_topik1_full", title: "TOPIK I — Full Mock", level: "TOPIK I", type: "Full", questions: 5, time: "15 daq" },
+          { id: "seed_topik1_reading", title: "TOPIK I — Reading", level: "TOPIK I", type: "Reading", questions: 15, time: "40 daq" },
+          { id: "seed_topik1_listening", title: "TOPIK I — Listening", level: "TOPIK I", type: "Listening", questions: 15, time: "35 daq" },
+          { id: "seed_topik1_full", title: "TOPIK I — Full Mock", level: "TOPIK I", type: "Full", questions: 30, time: "80 daq" },
+          { id: "seed_topik2_reading", title: "TOPIK II — Reading", level: "TOPIK II", type: "Reading", questions: 5, time: "50 daq" },
+          { id: "seed_eps_reading", title: "EPS-TOPIK — Mehnat", level: "EPS", type: "Reading", questions: 5, time: "20 daq" },
         ],
         seeded: true,
-        note: "Namuna seed-testlar (demo). To'liq TOPIK to'plamini admin Kontent bo'limidan qo'shadi.",
+        note: "Seed-testlar (original savollar, rasmiyga o'xshash).",
       });
     }
     return Response.json({
@@ -36,7 +37,7 @@ export async function GET() {
   }
 }
 
-// POST /api/topik — создать тест (только ADMIN, Bearer token)
+// POST /api/topik — создать тест (только ADMIN)
 import { verify, readAuthToken } from "@/lib/token";
 import { isAdminEmail } from "@/lib/auth";
 
