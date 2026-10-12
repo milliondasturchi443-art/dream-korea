@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { grammarFolders } from "@/lib/grammar-data";
-import { Search, CheckCircle2, XCircle, FolderOpen, ChevronRight } from "lucide-react";
+import { Search, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 
 export default function GrammarPage() {
   const [q, setQ] = useState("");
@@ -48,7 +48,7 @@ export default function GrammarPage() {
         {filteredFolders.map(f => (
           <button key={f.id} onClick={() => openFolder(f.id)}
             className={`text-left rounded-2xl border p-4 flex flex-col gap-2 transition-all ${folderId===f.id ? "bg-[#eff6ff] border-blue-300 shadow-sm" : "bg-white border-slate-200 hover:border-slate-300"}`}>
-            <div className="flex items-center gap-2"><FolderOpen className={`h-4 w-4 ${folderId===f.id?"text-[#2563eb]":"text-slate-400"}`} /><span className="font-bold text-sm text-slate-900">{f.title}</span></div>
+            <div className="flex items-center gap-2"><span className="text-lg leading-none">{f.icon}</span><span className="font-bold text-sm text-slate-900">{f.title}</span></div>
             <div className="text-xs text-slate-500 leading-relaxed line-clamp-2">{f.desc}</div>
             <div className="text-xs text-slate-400">{f.topics.length} mavzu</div>
           </button>

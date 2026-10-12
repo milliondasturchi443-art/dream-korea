@@ -4,9 +4,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Clock, ChevronRight, Loader2, Volume2, Pause } from "lucide-react";
+import { Clock, ChevronRight, Loader2, Volume2 } from "lucide-react";
 import { toast } from "sonner";
-import { speak, hasTTS } from "@/lib/tts";
+import { speak, stopSpeak } from "@/lib/tts";
 
 export const dynamic = "force-dynamic";
 
@@ -34,24 +34,19 @@ function TopikExamInner() {
   const didAutoFinish = useRef(false);
   const q = questions[idx];
 
-  const isListening = (meta?.type === "Listening") || q?.text?.includes("[Listening]");
+  const isListening = (meta?.type === "Listening") || (q?.text?.includes("[Listening]") ?? false);
+  const speakText = q?.audio ?? (q?.text ? q.text.replace(/^\[Listening\]\s*/, "").trim() : "");
 
   function playAudio(text?: string, qid?: string) {
-    if (!text || !hasTTS()) { toast.error("Ovoz yo‘q — brauzer qo‘llamaydi"); return; }
-    if (playingId === qid) {
-      try { window.speechSynthesis.cancel(); } catch {}
-      setPlayingId(null);
-      return;
-    }
-    try { window.speechSynthesis.cancel(); } catch {}
+    const t = String(text || "").trim();
+    if (!t) { toast.error("Ovoz matni yo\u2018q"); return; }
+    if (playingId === qid) { stopSpeak(); setPlayingId(null); return; }
+    stopSpeak();
     setPlayingId(qid ?? "x");
-    const ok = speak(text);
-    if (!ok) { setPlayingId(null); toast.error("Ovoz chiqarib bo‘lmadi"); return; }
-    // sarg'ish: onend bilan to'xtatish
-    const iv = setInterval(() => {
-      try { if (!window.speechSynthesis.speaking) { clearInterval(iv); setPlayingId(null); } } catch { clearInterval(iv); setPlayingId(null); }
-    }, 300);
-    setTimeout(() => { clearInterval(iv); setPlayingId(null); }, 8000);
+    const ok = speak(t);
+    if (!ok) { setPlayingId(null); toast.error("Ovoz chiqarib bo\u2018lmadi"); return; }
+    const approx = Math.max(1500, t.length * 130);
+    setTimeout(() => setPlayingId(cur => (cur === (qid ?? "x") ? null : cur)), approx + 1500);
   }
 
   useEffect(() => {
@@ -154,16 +149,19 @@ function TopikExamInner() {
       </div>
 
       <Card className="p-5 lg:p-6">
-        {isListening && q.audio && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3">
-            <Button
-              size="sm"
-              onClick={() => playAudio(q.audio, q.id)}
-              className={playingId === q.id ? "bg-emerald-600 hover:bg-emerald-700" : "bg-[#0f1b3d] hover:bg-[#1a2a5a]"}
-            >
-              {playingId === q.id ? <><Pause className="h-4 w-4 mr-1"/> To'xtatish</> : <><Volume2 className="h-4 w-4 mr-1"/> Eshitish</>}
-            </Button>
-            <span className="text-xs text-emerald-700">Koreyscha matnni tinglang, so‘ng javobni tanlang</span>
+        {isListening && (
+          <div className="mb-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => playAudio(speakText, q.id)}
+                className={`flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold shadow-md active:scale-95 transition ${playingId === q.id ? "bg-emerald-600 text-white" : "bg-[#0f1b3d] text-white hover:bg-[#1a2a5a]"}`}
+              >
+                {playingId === q.id
+                  ? <><span className="flex gap-0.5 items-end h-4"><i className="block w-1 h-2 bg-white animate-pulse"/><i className="block w-1 h-4 bg-white animate-pulse"/><i className="block w-1 h-3 bg-white animate-pulse"/></span> To‘xtatish</>
+                  : <><Volume2 className="h-5 w-5"/> 🔊 Eshitish</>}
+              </button>
+              <span className="text-xs text-emerald-700 leading-snug max-w-[280px]">Koreyscha gapni tinglang, so‘ng javobni tanlang. Qayta-qayta bosib eshita olasiz.</span>
+            </div>
           </div>
         )}
         <div className="text-[15px] font-medium text-slate-900 leading-relaxed whitespace-pre-wrap">{q.text}</div>
