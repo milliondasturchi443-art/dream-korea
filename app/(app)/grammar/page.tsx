@@ -1,11 +1,15 @@
 "use client";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { grammarFolders, type GrammarExercise, type GrammarTopic } from "@/lib/grammar-data";
+import {
+  XP, DAILY_TASK, levels, levelOf, achievements, checkAchievements, comboBonus,
+  emptyProfile, loadProfile, saveProfile, today, type Profile,
+} from "@/lib/grammar-gamify";
 import { speak, stopSpeak } from "@/lib/tts";
 import { toast } from "sonner";
 import {
@@ -14,7 +18,8 @@ import {
   Check, Sparkles, AlertTriangle, Shuffle,
 } from "lucide-react";
 
-type Mode = "lesson" | "test" | "cards";
+type Mode = "lesson" | "test" | "cards" | "profile";
+type Floater = { id: number; text: string };
 type Level = "all" | "A1" | "A2" | "B1";
 
 const LS = {
@@ -63,11 +68,19 @@ export default function GrammarPage() {
   const [flipped, setFlipped] = useState(false);
   const [knownCards, setKnownCards] = useState<Record<number, boolean>>({});
 
+  // O'yinlashgan tizim: ball, daraja, seriya, yutuqlar
+  const [profile, setProfile] = useState<Profile>(emptyProfile);
+  const [combo, setCombo] = useState(0);
+  const [floaters, setFloaters] = useState<Floater[]>([]);
+  const [retried, setRetried] = useState<Record<string, boolean>>({});
+  const floaterId = useRef(0);
+
   useEffect(() => {
     setLearned(load(LS.learned, {}));
     setFav(load<string[]>(LS.fav, []));
     setPicked(load<Record<string, number | null>>(LS.picked, {}));
     setBest(load<Record<string, number>>(LS.best, {}));
+    setProfile(loadProfile());
     setHydrated(true);
   }, []);
 
@@ -121,19 +134,77 @@ export default function GrammarPage() {
   function resetTest() { setTIdx(0); setTPick({}); setTDone(false); }
   function resetCards() { setCIdx(0); setFlipped(false); setKnownCards({}); }
 
+  function float(text: string) {
+    const id = ++floaterId.current;
+    setFloaters(f => [...f, { id, text }]);
+    setTimeout(() => setFloaters(f => f.filter(x => x.id !== id)), 1200);
+  }
+
+  /** Profilni saqlaydi va yangi yutuqlarni ochadi */
+  function commit(p: Profile, L?: Record<string, boolean>, B?: Record<string, number>) {
+    const learnedMap = L ?? learned;
+    const bestMap = B ?? best;
+    const folderDone = grammarFolders.filter(f => f.topics.every(t => learnedMap[t.id])).map(f => f.id);
+    const newly = checkAchievements({ profile: p, learned: learnedMap, best: bestMap, folderDone, folderId });
+    const final = newly.length ? { ...p, achievements: [...p.achievements, ...newly.map(a => a.id)] } : p;
+    saveProfile(final);
+    setProfile(final);
+    newly.forEach((a, i) => setTimeout(() =>
+      toast.success(`🏅 Yutuq ochildi — ${a.title}`, { description: a.desc, duration: 4000 }), i * 450));
+    return final;
+  }
+
+  /** To'g'ri/noto'g'ri javob uchun ball beradi */
+  function award(correct: boolean, firstTry = true) {
+    const p: Profile = { ...profile, answered: profile.answered + 1 };
+    let gain = 0;
+    if (correct) {
+      p.correct = profile.correct + 1;
+      const c = combo + 1;
+      setCombo(c);
+      p.bestCombo = Math.max(profile.bestCombo, c);
+      gain = (firstTry ? XP.correct : XP.correctRetry) + comboBonus(c);
+      if (c === 3 || c === 5 || c === 10 || c === 15) toast.success(`🔥 Combo x${c} — bonus +${comboBonus(c)} XP`);
+    } else {
+      if (combo >= 3) toast.info(`Combo uzildi (${combo}) — qayta urinib ko'ring`);
+      setCombo(0);
+    }
+
+    // kunlik vazifa
+    const t = today();
+    const d = profile.daily.day === t ? profile.daily : { day: t, count: 0, claimed: false };
+    const count = d.count + 1;
+    p.daily = { day: t, count, claimed: d.claimed };
+    if (count >= DAILY_TASK && !d.claimed) {
+      p.daily.claimed = true;
+      gain += XP.daily;
+      toast.success(`📅 Kunlik vazifa bajarildi! +${XP.daily} XP`, { duration: 4000 });
+    }
+
+    if (gain > 0) { p.xp = profile.xp + gain; float(`+${gain}`); }
+    commit(p);
+  }
+
   function toggleLearn(id: string) {
     if (!hydrated) return;
-    setLearned(prev => {
-      const next = { ...prev, [id]: !prev[id] };
-      save(LS.learned, next);
+    const was = !!learned[id];
+    const next = { ...learned, [id]: !was };
+    setLearned(next);
+    save(LS.learned, next);
+
+    const learnedNext = Object.values(next).filter(Boolean).length;
+    const p: Profile = { ...profile, topicsLearned: learnedNext };
+    if (!was) {
+      p.xp = profile.xp + XP.learn;
+      float(`+${XP.learn}`);
       const f = grammarFolders.find(x => x.topics.some(t => t.id === id));
-      if (f && f.topics.every(t => next[t.id]) && !prev[id]) {
-        toast.success(`🎉 "${f.title}" papkasi to'liq o'zlashtirildi!`, { duration: 4000 });
-      } else if (!prev[id]) {
-        toast.success("Mavzu o'zlashtirildi ✓");
+      if (f && f.topics.every(t => next[t.id])) {
+        toast.success(`🎉 "${f.title}" papkasini to'liq o'zlashtirdingiz!`, { description: `+${XP.learn} XP`, duration: 4000 });
+      } else {
+        toast.success(`Mavzu o'zlashtirildi ✓ +${XP.learn} XP`);
       }
-      return next;
-    });
+    }
+    commit(p, next);
   }
 
   function toggleFav(id: string) {
@@ -145,15 +216,17 @@ export default function GrammarPage() {
     });
   }
 
-  function answerExercise(key: string, oi: number) {
+  function answerExercise(key: string, oi: number, correct: number) {
     if (picked[key] !== null && picked[key] !== undefined) return;
     setPicked(prev => {
       const next = { ...prev, [key]: oi };
       save(LS.picked, next);
       return next;
     });
+    award(oi === correct, !retried[key]);
   }
   function retryExercise(key: string) {
+    setRetried(r => ({ ...r, [key]: true }));
     setPicked(prev => { const n = { ...prev }; delete n[key]; save(LS.picked, n); return n; });
   }
 
@@ -187,28 +260,44 @@ export default function GrammarPage() {
     setTopicId(folder.topics[n].id);
   }
 
-  function startTest() { setMode("test"); resetTest(); }
   function finishTest() {
     const pct = testQs.length ? Math.round((testScore / testQs.length) * 100) : 0;
     setTDone(true);
+    let gain = Math.round(pct * 1.5) + (pct === 100 ? XP.testPerfect : 0);
+    gain = Math.min(300, gain);
+    const p: Profile = { ...profile, xp: profile.xp + gain };
+    let bestMap = best;
     if (folder) {
-      setBest(prev => {
-        const next = { ...prev, [folder.id]: Math.max(prev[folder.id] ?? 0, pct) };
-        save(LS.best, next);
-        return next;
-      });
+      bestMap = { ...best, [folder.id]: Math.max(best[folder.id] ?? 0, pct) };
+      setBest(bestMap);
+      save(LS.best, bestMap);
+      p.history = [{ at: Date.now(), pct, score: testScore, total: testQs.length, folderId: folder.id, folderTitle: folder.title }, ...profile.history].slice(0, 20);
     }
-    if (pct >= 80) toast.success(`🏆 Ajoyib! ${pct} ball`);
-    else if (pct >= 50) toast.info(`${pct} ball — yaxshi, biroz ko'proq mashq qiling`);
-    else toast.error(`${pct} ball — mavzuni qayta o'qing`);
+    if (gain > 0) float(`+${gain}`);
+    commit(p, learned, bestMap);
+    if (pct >= 80) toast.success(`🏆 Ajoyib! ${pct} ball  ·  +${gain} XP`);
+    else if (pct >= 50) toast.info(`${pct} ball — yaxshi, biroz ko'proq mashq qiling (+${gain} XP)`);
+    else toast.error(`${pct} ball — mavzuni qayta o'qing (+${gain} XP)`);
   }
 
-  function pickTest(i: number, oi: number) {
+  function pickTest(i: number, oi: number, correct: number) {
     if (tPick[i] !== null && tPick[i] !== undefined) return;
     setTPick(prev => ({ ...prev, [i]: oi }));
+    award(oi === correct, true);
+  }
+
+  function resetAll() {
+    if (!confirm("Barcha grammatika progressi (ball, mavzu, yutuqlar) o'chirilsinmi?")) return;
+    [LS.learned, LS.fav, LS.picked, LS.best, "dk_grammar_profile"].forEach(k => localStorage.removeItem(k));
+    setLearned({}); setFav([]); setPicked({}); setBest({});
+    setProfile(emptyProfile()); setCombo(0);
+    toast.success("Progress tozalandi");
   }
 
   const pctAll = totalTopics ? Math.round((learnedCount / totalTopics) * 100) : 0;
+  const lvl = levelOf(profile.xp);
+  const unlocked = profile.achievements.length;
+  const accuracy = profile.answered ? Math.round((profile.correct / profile.answered) * 100) : 0;
 
   return (
     <div className="mx-auto max-w-[1180px] p-4 lg:p-6 space-y-5">
@@ -222,8 +311,56 @@ export default function GrammarPage() {
             {grammarFolders.length} papka · {totalTopics} mavzu · {grammarFolders.reduce((n, f) => n + f.topics.reduce((m, t) => m + t.exercises.length, 0), 0)} mashq
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <StatChip icon={<Check className="h-3.5 w-3.5" />} label="O'zlashtirilgan" value={`${learnedCount}/${totalTopics}`} color="#059669" />
+        <div className="flex flex-wrap gap-2 items-start">
+          {/* Daraja + XP */}
+          <div className="relative">
+            <div className="rounded-xl border-2 px-3 py-2 bg-white flex items-center gap-2.5" style={{ borderColor: lvl.cur.color }}>
+              <span className="text-2xl leading-none">{lvl.cur.icon}</span>
+              <div className="min-w-[124px] leading-tight">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wide" style={{ color: lvl.cur.color }}>{lvl.cur.name}</span>
+                  <span className="text-[11px] font-bold text-slate-400">{profile.xp} XP</span>
+                </div>
+                <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">
+                  {lvl.next ? `${lvl.toNext} XP → ${lvl.next.icon} ${lvl.next.name}` : "Maksimal daraja 👑"}
+                </div>
+              </div>
+            </div>
+            {floaters.map(f => (
+              <span key={f.id}
+                className="xp-float absolute left-1/2 -top-1 z-30 pointer-events-none text-sm font-extrabold text-emerald-600 whitespace-nowrap"
+                style={{ textShadow: "0 1px 0 #fff, 0 0 8px #d1fae5" }}>
+                {f.text}
+              </span>
+            ))}
+          </div>
+
+          {/* Seriya (streak) */}
+          <button onClick={() => setMode("profile")}
+            className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 flex items-center gap-2 hover:bg-orange-100 transition">
+            <span className="text-xl leading-none streak-flame">🔥</span>
+            <div className="text-left leading-tight">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-orange-500">Seriya</div>
+              <div className="text-sm font-extrabold text-orange-700">{profile.streak} kun</div>
+            </div>
+          </button>
+
+          {/* Kunlik vazifa */}
+          <button onClick={() => setMode("profile")}
+            className={`rounded-xl border px-3 py-2 flex items-center gap-2 transition ${profile.daily.claimed ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white hover:border-slate-300"}`}>
+            <span className="text-lg leading-none">{profile.daily.claimed ? "✅" : "📅"}</span>
+            <div className="text-left leading-tight">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Kunlik</div>
+              <div className="text-sm font-extrabold text-slate-700">
+                {Math.min(profile.daily.count, DAILY_TASK)}/{DAILY_TASK}
+              </div>
+            </div>
+          </button>
+
+          <StatChip icon={<Check className="h-3.5 w-3.5" />} label="Mavzu" value={`${learnedCount}/${totalTopics}`} color="#059669" />
           <StatChip icon={<Star className="h-3.5 w-3.5" />} label="Sevimli" value={`${favCount}`} color="#d97706" />
           <StatChip icon={<Trophy className="h-3.5 w-3.5" />} label="Umumiy" value={`${pctAll}%`} color="#2563eb" />
         </div>
@@ -310,6 +447,7 @@ export default function GrammarPage() {
             { id: "lesson", label: "📖 Mavzu", icon: BookOpen },
             { id: "test", label: "🎯 Test", icon: Target },
             { id: "cards", label: "🃏 Kartalar", icon: Layers },
+            { id: "profile", label: `🏆 Yutuqlar${unlocked ? ` (${unlocked})` : ""}`, icon: Trophy },
           ] as { id: Mode; label: string; icon: typeof BookOpen }[]).map(m => (
             <button key={m.id} onClick={() => { setMode(m.id); if (m.id === "test") resetTest(); if (m.id === "cards") resetCards(); }}
               className={`px-4 h-9 text-xs font-bold flex items-center gap-1.5 transition ${mode === m.id ? "bg-[#0f1b3d] text-white" : "text-slate-600 hover:bg-slate-50"}`}>
@@ -321,6 +459,7 @@ export default function GrammarPage() {
           {mode === "lesson" && "Mavzu-qoida misollar bilan"}
           {mode === "test" && `${testQs.length} savollik test`}
           {mode === "cards" && `${cardQs.length} karta — tarjimani yashirib mashq qiling`}
+          {mode === "profile" && `${unlocked}/${achievements.length} yutuq ochildi`}
         </span>
         <Button size="sm" variant="ghost" className="h-9 ml-auto" onClick={() => setShowUz(v => !v)}>
           {showUz ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
@@ -442,7 +581,7 @@ export default function GrammarPage() {
                 {topic.mistake && (
                   <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
                     <div className="flex items-center gap-1.5 text-sm font-bold text-amber-800">
-                      <AlertTriangle className="h-4 w-4" /> Ko'p uchraydigan xato
+                      <AlertTriangle className="h-4 w-4" /> Ko&apos;p uchraydigan xato
                     </div>
                     <p className="text-sm text-amber-900/80 mt-1.5 leading-relaxed">{topic.mistake}</p>
                   </div>
@@ -453,7 +592,7 @@ export default function GrammarPage() {
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-sm text-[#0f1b3d]">Mashqlar ({topic.exercises.length})</span>
                     <span className="text-xs text-slate-400">
-                      {topic.exercises.filter((_, i) => picked[`${topic.id}:${i}`] === (topic.exercises[i].correct)).length} / {topic.exercises.length} to'g'ri
+                      {topic.exercises.filter((_, i) => picked[`${topic.id}:${i}`] === (topic.exercises[i].correct)).length} / {topic.exercises.length} to&apos;g&apos;ri
                     </span>
                   </div>
                   {topic.exercises.map((ex, ei) => {
@@ -486,7 +625,7 @@ export default function GrammarPage() {
                             }
                             return (
                               <Button key={oi} size="sm" variant="outline" className={cls}
-                                onClick={() => answerExercise(key, oi)}>
+                                onClick={() => answerExercise(key, oi, ex.correct)}>
                                 {opt}
                                 {answered && isCorrect && <CheckCircle2 className="h-4 w-4 ml-1" />}
                                 {answered && chosen && !isCorrect && <XCircle className="h-4 w-4 ml-1" />}
@@ -558,7 +697,7 @@ export default function GrammarPage() {
                       else cls = "bg-white border-slate-200 text-slate-400";
                     }
                     return (
-                      <button key={oi} onClick={() => pickTest(tIdx, oi)}
+                      <button key={oi} onClick={() => pickTest(tIdx, oi, currentTest.ex.correct)}
                         className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${cls}`}>
                         <span className="font-bold mr-2 text-slate-400">{String.fromCharCode(65 + oi)}.</span>
                         {opt}
@@ -592,11 +731,11 @@ export default function GrammarPage() {
               </div>
               <div>
                 <div className="text-4xl font-extrabold text-slate-900">{Math.round((testScore / testQs.length) * 100)}%</div>
-                <div className="text-sm text-slate-500 mt-1">{testScore} / {testQs.length} to'g'ri javob</div>
+                <div className="text-sm text-slate-500 mt-1">{testScore} / {testQs.length} to&apos;g&apos;ri javob</div>
               </div>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button onClick={() => { resetTest(); setMode("lesson"); }} variant="outline">
-                  <BookOpen className="h-4 w-4 mr-1" /> Mavzuni qayta o'qish
+                  <BookOpen className="h-4 w-4 mr-1" /> Mavzuni qayta o&apos;qish
                 </Button>
                 <Button onClick={resetTest}><Shuffle className="h-4 w-4 mr-1" /> Qayta test</Button>
               </div>
@@ -610,7 +749,7 @@ export default function GrammarPage() {
                       <div className="font-medium text-slate-900">{i + 1}. {t.ex.q}</div>
                       <div className="text-xs mt-1">
                         {answered && !ok && <span className="text-red-600">Siz: {t.ex.options[tPick[i] as number]} · </span>}
-                        <span className="text-emerald-700 font-semibold">To'g'ri: {t.ex.options[t.ex.correct]}</span>
+                        <span className="text-emerald-700 font-semibold">To&apos;g&apos;ri: {t.ex.options[t.ex.correct]}</span>
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5">{t.topicTitle}</div>
                     </div>
@@ -626,7 +765,7 @@ export default function GrammarPage() {
       {mode === "cards" && (
         <Card className="p-5 lg:p-7">
           {cardQs.length === 0 ? (
-            <div className="text-center text-sm text-slate-500 py-8">Kartalar yo'q</div>
+            <div className="text-center text-sm text-slate-500 py-8">Kartalar yo&apos;q</div>
           ) : (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
@@ -673,11 +812,17 @@ export default function GrammarPage() {
                     setFlipped(false);
                     if (cIdx < cardQs.length - 1) setCIdx(i => i + 1);
                   }}>
-                  <RotateCcw className="h-4 w-4 mr-1" /> Yana ko'rish
+                  <RotateCcw className="h-4 w-4 mr-1" /> Yana ko&apos;rish
                 </Button>
                 <Button size="sm" variant="outline" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50"
                   onClick={() => {
+                    const fresh = knownCards[cIdx] !== true;
                     setKnownCards(p => ({ ...p, [cIdx]: true }));
+                    if (fresh) {
+                      const p = { ...profile, cardsKnown: profile.cardsKnown + 1, xp: profile.xp + XP.card };
+                      float(`+${XP.card}`);
+                      commit(p);
+                    }
                     setFlipped(false);
                     if (cIdx < cardQs.length - 1) setCIdx(i => i + 1);
                   }}>
@@ -711,6 +856,133 @@ export default function GrammarPage() {
           )}
         </Card>
       )}
+      {/* ══ Yutuqlar / profil ══ */}
+      {mode === "profile" && (
+        <div className="space-y-4">
+          {/* Daraja kartasi */}
+          <Card className="p-5 overflow-hidden relative">
+            <div className="absolute inset-0 xp-shine opacity-30 pointer-events-none" />
+            <div className="relative flex flex-wrap items-center gap-4">
+              <div className="h-16 w-16 rounded-2xl flex items-center justify-center text-3xl shrink-0"
+                style={{ background: `${lvl.cur.color}1f` }}>{lvl.cur.icon}</div>
+              <div className="min-w-[200px] flex-1">
+                <div className="text-xs font-extrabold uppercase tracking-wider" style={{ color: lvl.cur.color }}>
+                  {lvl.cur.name} daraja
+                </div>
+                <div className="text-2xl font-extrabold text-slate-900 leading-tight">
+                  {profile.xp} <span className="text-sm font-bold text-slate-400">XP</span>
+                </div>
+                <div className="mt-2 h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {lvl.next
+                    ? <>Keyingi: {lvl.next.icon} {lvl.next.name} — yana <b className="text-slate-700">{lvl.toNext} XP</b></>
+                    : "Maksimal darajaga yetdingiz 👑"}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <StatTile icon="🔥" label="Seriya" value={`${profile.streak} kun`} color="#ea580c" />
+                <StatTile icon="🎯" label="Aniqlik" value={`${accuracy}%`} color="#059669" />
+                <StatTile icon="⚡" label="Combo" value={`x${profile.bestCombo}`} color="#7c3aed" />
+              </div>
+            </div>
+          </Card>
+
+          {/* Darajalar zinapoyasi */}
+          <Card className="p-4">
+            <div className="text-xs font-extrabold text-slate-400 uppercase tracking-wide mb-2.5">Darajalar</div>
+            <div className="flex flex-wrap gap-2">
+              {levels.map((l, i) => {
+                const reached = i <= lvl.idx;
+                return (
+                  <div key={l.name}
+                    className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 ${reached ? "" : "bg-white border-slate-200 opacity-45"}`}
+                    style={reached ? { borderColor: `${l.color}66`, background: `${l.color}14` } : undefined}>
+                    <span className="text-base leading-none">{l.icon}</span>
+                    <span className="text-xs font-extrabold" style={{ color: l.color }}>{l.name}</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">{l.min}+</span>
+                    {i === lvl.idx && <span className="text-[10px] font-extrabold text-slate-900">· siz</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* Statistika */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <StatTile icon="✅" label="To'g'ri javob" value={`${profile.correct}`} sub={`${profile.answered} urinish`} color="#059669" />
+            <StatTile icon="🎯" label="Aniqlik" value={`${accuracy}%`} color="#2563eb" />
+            <StatTile icon="⚡" label="Eng uzun combo" value={`x${profile.bestCombo}`} color="#7c3aed" />
+            <StatTile icon="🎓" label="Mavzu" value={`${learnedCount}/${totalTopics}`} color="#0f766e" />
+            <StatTile icon="🃏" label="Kartani bildim" value={`${profile.cardsKnown}`} color="#0891b2" />
+            <StatTile icon="🏅" label="Yutuq" value={`${unlocked}/${achievements.length}`} color="#d97706" />
+          </div>
+
+          {/* Yutuqlar */}
+          <div>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="font-extrabold text-slate-900">🏅 Yutuqlar</span>
+              <div className="w-40"><Progress value={achievements.length ? (unlocked / achievements.length) * 100 : 0} /></div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {achievements.map(a => {
+                const got = profile.achievements.includes(a.id);
+                return (
+                  <div key={a.id}
+                    className={`rounded-2xl border p-3 flex items-start gap-3 transition ${got ? "" : "bg-white border-slate-200 opacity-55"}`}
+                    style={got ? { borderColor: `${a.color}55`, background: `${a.color}0f` } : undefined}>
+                    <div className={`h-11 w-11 rounded-xl flex items-center justify-center text-xl shrink-0 ${got ? "medal-pop" : ""}`}
+                      style={{ background: got ? `${a.color}1f` : "#f1f5f9" }}>{got ? a.icon : "🔒"}</div>
+                    <div className="min-w-0">
+                      <div className={`font-bold text-sm ${got ? "text-slate-900" : "text-slate-500"}`}>{a.title}</div>
+                      <div className="text-xs text-slate-500 leading-snug mt-0.5">{a.desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Test tarixi */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-extrabold text-slate-900">📈 Oxirgi testlar</span>
+              {profile.history.length > 0 && (
+                <button onClick={() => setProfile(p => { const n = { ...p, history: [] }; saveProfile(n); return n; })}
+                  className="text-xs text-slate-400 hover:text-slate-600">Tarixni tozalash</button>
+              )}
+            </div>
+            {profile.history.length === 0 ? (
+              <p className="text-sm text-slate-400">Hozircha test topshirmagansiz — «🎯 Test» rejimini sinab ko&apos;ring.</p>
+            ) : (
+              <div className="space-y-2">
+                {profile.history.map(h => (
+                  <div key={h.at} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
+                    <span className="text-lg leading-none">{h.pct >= 80 ? "🏆" : h.pct >= 50 ? "👍" : "📚"}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-slate-800 truncate">{h.folderTitle}</div>
+                      <div className="text-[11px] text-slate-400">{new Date(h.at).toLocaleDateString()}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-extrabold" style={{ color: h.pct >= 80 ? "#059669" : h.pct >= 50 ? "#d97706" : "#dc2626" }}>{h.pct}%</div>
+                      <div className="text-[11px] text-slate-400">{h.score}/{h.total}</div>
+                    </div>
+                    <div className="w-24 hidden sm:block"><Progress value={h.pct} /></div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Xavfli zona */}
+          <div className="flex justify-end">
+            <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={resetAll}>
+              <RotateCcw className="h-4 w-4 mr-1" /> Progressni tozalash
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -723,6 +995,17 @@ function StatChip({ icon, label, value, color }: { icon: ReactNode; label: strin
         <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">{label}</div>
         <div className="text-sm font-extrabold text-slate-900">{value}</div>
       </div>
+    </div>
+  );
+}
+
+function StatTile({ icon, label, value, sub, color }: { icon: string; label: string; value: string; sub?: string; color: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+      <div className="h-8 w-8 rounded-lg flex items-center justify-center text-base mb-1.5" style={{ background: `${color}18` }}>{icon}</div>
+      <div className="text-lg font-extrabold text-slate-900 leading-tight">{value}</div>
+      <div className="text-[11px] font-semibold text-slate-500">{label}</div>
+      {sub && <div className="text-[10px] text-slate-400">{sub}</div>}
     </div>
   );
 }
