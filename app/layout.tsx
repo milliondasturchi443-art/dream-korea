@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegister } from "@/components/sw-register";
+import { TelegramHashBoot } from "@/components/telegram-hash-boot";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -12,6 +13,8 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover" as const,
+  colorScheme: "light" as const,
+  themeColor: "#ffffff",
 };
 
 export const metadata: Metadata = {
@@ -38,11 +41,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="uz" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+    <html lang="uz" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} style={{ colorScheme: "light" }}>
+      <body className="min-h-full flex flex-col bg-white text-slate-900" style={{ colorScheme: "light" }}>
         {children}
         <Toaster richColors position="top-center" />
         <ServiceWorkerRegister />
+        <TelegramHashBoot />
       </body>
     </html>
   );

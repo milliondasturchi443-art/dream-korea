@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { normalizeEmail } from "@/lib/auth";
 import { toast } from "sonner";
@@ -12,19 +12,57 @@ function TelegramIcon({ className }: { className?: string }) {
   );
 }
 
-// Telegram orqali kirish — custom tugma (oq, Telegram blu, ikonkali)
+// Telegram redirect-qaytishda hash (#id=..&hash=..) qayta ishlash — root layout'da ham ishlaydi
+export async function processTelegramHash(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const hash = window.location.hash.slice(1);
+  if (!hash || !hash.includes("auth_date")) return false;
+  const params = Object.fromEntries(new URLSearchParams(hash).entries());
+  if (!params.id || !params.hash || !params.auth_date) return false;
+  try {
+    const r = await fetch("/api/auth/telegram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    const d = await r.json().catch(() => ({}));
+    // hashni tozalash
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+    if (!r.ok) { toast.error(d.error || "Telegram orqali kirishda xato"); return false; }
+    localStorage.setItem("dk_role", d.role);
+    try { localStorage.setItem("dk_token", d.token ?? ""); sessionStorage.setItem("dk_token", d.token ?? ""); } catch {}
+    localStorage.setItem("dk_user", JSON.stringify({ email: normalizeEmail(d.email ?? ""), name: d.name ?? "Foydalanuvchi", role: d.role, id: d.id }));
+    toast.success(`Xush kelibsiz, ${d.name ?? ""}!`);
+    let next: string | null = null;
+    try { next = sessionStorage.getItem("dk_tg_next"); sessionStorage.removeItem("dk_tg_next"); } catch {}
+    if (!next) next = new URLSearchParams(window.location.search).get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) window.location.href = next;
+    else if (d.role === "ADMIN") window.location.href = "/adminstrationpanelofdreamkorea";
+    else if (d.role === "TEACHER") window.location.href = "/teacher";
+    else window.location.href = "/dashboard";
+    return true;
+  } catch {
+    toast.error("Server bilan bog'lanib bo'lmadi");
+    return false;
+  }
+}
+
+// Telegram orqali kirish — custom tugma: popup, bloklansa redirect fallback
 export function TelegramLoginButton({ next }: { next?: string | null }) {
   const [enabled, setEnabled] = useState(false);
   const [botId, setBotId] = useState<string | null>(null);
   const [nextHref, setNextHref] = useState<string | null>(next ?? null);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
+  const openedRef = useRef(false);
 
   useEffect(() => {
     if (next == null) {
       const n = new URLSearchParams(window.location.search).get("next");
       if (n && n.startsWith("/") && !n.startsWith("//")) setNextHref(n);
     }
+    // Redirect-oqib kelgan bo'lsa (hash bilan) — shu yerda yakunlaymiz
+    if (window.location.hash.includes("auth_date")) processTelegramHash();
     fetch("/api/auth/telegram").then(r => r.json()).then(d => {
       if (d.enabled && d.username) { setEnabled(true); setBotId(String(d.botId ?? "")); }
     }).catch(() => {});
@@ -53,24 +91,32 @@ export function TelegramLoginButton({ next }: { next?: string | null }) {
   }
 
   function onClick() {
-    if (!botId) return;
+    if (!botId || busy) return;
     setBusy(true);
     const origin = window.location.origin;
-    const url = `https://oauth.telegram.org/auth?bot_id=${botId}&origin=${encodeURIComponent(origin)}&embed=1`;
-    const w = window.open(url, "telegram_auth", "width=560,height=640,noopener");
-    if (!w) { toast.error("Popup yoki oynani bloklab qo'ydingiz"); setBusy(false); return; }
-    // Telegram popup xabar yuboradi
-    function onMsg(e: MessageEvent) {
-      if (e.origin !== "https://oauth.telegram.org") return;
-      const data = e.data as { event?: string; payload?: Record<string, unknown> } | null;
-      if (data?.event === "telegram_auth" && data.payload) {
-        window.removeEventListener("message", onMsg);
-        finishLogin(data.payload);
+    const base = `https://oauth.telegram.org/auth?bot_id=${botId}&origin=${encodeURIComponent(origin)}`;
+    // 1) Urinish: popup (postMessage orqali javob keladi)
+    const w = window.open(`${base}&embed=1`, "telegram_auth", "width=560,height=640");
+    if (w) {
+      const win = w;
+      function onMsg(e: MessageEvent) {
+        if (e.origin !== "https://oauth.telegram.org") return;
+        const data = e.data as { event?: string; payload?: Record<string, unknown> } | null;
+        if (data?.event === "telegram_auth" && data.payload) {
+          window.removeEventListener("message", onMsg);
+          try { win.close(); } catch {}
+          finishLogin(data.payload);
+        }
       }
+      window.addEventListener("message", onMsg);
+      const t = setInterval(() => {
+        if (win.closed) { clearInterval(t); window.removeEventListener("message", onMsg); setBusy(false); }
+      }, 800);
+      return;
     }
-    window.addEventListener("message", onMsg);
-    // Popup yopilsa — kutishni to'xtatish (poll)
-    const t = setInterval(() => { if (w.closed) { clearInterval(t); window.removeEventListener("message", onMsg); setBusy(false); } }, 800);
+    // 2) Popup bloklangan — to'liq redirect (Telegram sahifa ochib, xesh bilan qaytaradi)
+    if (nextHref) { try { sessionStorage.setItem("dk_tg_next", nextHref); } catch {} }
+    window.location.href = base;
   }
 
   if (!enabled) return null;
