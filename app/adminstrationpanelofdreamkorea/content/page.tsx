@@ -173,6 +173,7 @@ export default function AdminContentPage() {
     <div className="mx-auto max-w-[980px] p-4 lg:p-6 space-y-5">
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <h1 className="text-[22px] font-bold text-slate-900">Kontent</h1>
+        <a href="/adminstrationpanelofdreamkorea/dars" className="text-blue-600 underline">Darslar · Unit boshqaruvi →</a>
         <p className="text-sm text-slate-500">Barchasi <b>БД (MongoDB)</b> da — barcha talabalarda ko‘rinadi. Bepul, darslar ketma-ket ochiladi.</p>
       </motion.div>
 

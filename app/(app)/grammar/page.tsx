@@ -301,76 +301,72 @@ export default function GrammarPage() {
 
   return (
     <div className="mx-auto max-w-[1180px] p-4 lg:p-6 space-y-5">
-      {/* ── Sarlavha + statistika ── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      {/* ── Sarlavha — легко и чисто ── */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[24px] font-extrabold text-slate-900 flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-[#2563eb]" /> Grammatika
+          <h1 className="text-[26px] font-black tracking-tight text-slate-900 flex items-center gap-2.5">
+            <span className="h-9 w-9 rounded-xl bg-[#2563eb] text-white grid place-items-center text-[16px]">문</span>
+            Grammatika
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {grammarFolders.length} papka · {totalTopics} mavzu · {grammarFolders.reduce((n, f) => n + f.topics.reduce((m, t) => m + t.exercises.length, 0), 0)} mashq
+          <p className="text-[13px] text-slate-500 mt-1">
+            <span className="font-semibold text-slate-700">{grammarFolders.length} papka</span> · {totalTopics} mavzu · {grammarFolders.reduce((n, f) => n + f.topics.reduce((m, t) => m + t.exercises.length, 0), 0)} mashq
+            <span className="hidden sm:inline"> — har bir qoida formula + misol + xato</span>
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 items-start">
-          {/* Daraja + XP */}
-          <div className="relative">
-            <div className="rounded-xl border-2 px-3 py-2 bg-white flex items-center gap-2.5" style={{ borderColor: lvl.cur.color }}>
-              <span className="text-2xl leading-none">{lvl.cur.icon}</span>
-              <div className="min-w-[124px] leading-tight">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wide" style={{ color: lvl.cur.color }}>{lvl.cur.name}</span>
-                  <span className="text-[11px] font-bold text-slate-400">{profile.xp} XP</span>
-                </div>
-                <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
-                </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">
-                  {lvl.next ? `${lvl.toNext} XP → ${lvl.next.icon} ${lvl.next.name}` : "Maksimal daraja 👑"}
-                </div>
-              </div>
-            </div>
-            {floaters.map(f => (
-              <span key={f.id}
-                className="xp-float absolute left-1/2 -top-1 z-30 pointer-events-none text-sm font-extrabold text-emerald-600 whitespace-nowrap"
-                style={{ textShadow: "0 1px 0 #fff, 0 0 8px #d1fae5" }}>
-                {f.text}
-              </span>
-            ))}
-          </div>
-
-          {/* Seriya (streak) */}
-          <button onClick={() => setMode("profile")}
-            className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 flex items-center gap-2 hover:bg-orange-100 transition">
-            <span className="text-xl leading-none streak-flame">🔥</span>
-            <div className="text-left leading-tight">
-              <div className="text-[10px] font-bold uppercase tracking-wide text-orange-500">Seriya</div>
-              <div className="text-sm font-extrabold text-orange-700">{profile.streak} kun</div>
-            </div>
-          </button>
-
-          {/* Kunlik vazifa */}
-          <button onClick={() => setMode("profile")}
-            className={`rounded-xl border px-3 py-2 flex items-center gap-2 transition ${profile.daily.claimed ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white hover:border-slate-300"}`}>
-            <span className="text-lg leading-none">{profile.daily.claimed ? "✅" : "📅"}</span>
-            <div className="text-left leading-tight">
-              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Kunlik</div>
-              <div className="text-sm font-extrabold text-slate-700">
-                {Math.min(profile.daily.count, DAILY_TASK)}/{DAILY_TASK}
-              </div>
-            </div>
-          </button>
-
-          <StatChip icon={<Check className="h-3.5 w-3.5" />} label="Mavzu" value={`${learnedCount}/${totalTopics}`} color="#059669" />
-          <StatChip icon={<Star className="h-3.5 w-3.5" />} label="Sevimli" value={`${favCount}`} color="#d97706" />
-          <StatChip icon={<Trophy className="h-3.5 w-3.5" />} label="Umumiy" value={`${pctAll}%`} color="#2563eb" />
-        </div>
+        <button onClick={() => setMode("profile")}
+          className="text-xs font-semibold text-[#2563eb] hover:underline hidden sm:inline-flex items-center gap-1">
+          Yutuqlar va statistika <ChevronRight className="h-3.5 w-3.5" />
+        </button>
       </div>
 
-      {/* ── Umumiy progress ── */}
-      <div>
-        <Progress value={pctAll} className="h-2.5" />
-        <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-          <span>Boshlash</span><span className="font-semibold text-slate-600">{pctAll}% tugallandi</span><span>Mukammal</span>
+      {/* ── Герой: уровень + общий прогресс — всего 2 элемента ── */}
+      <div className="rounded-[20px] border border-slate-200 bg-white p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 shadow-sm">
+        {/* Level — компактно, с полётом XP */}
+        <div className="relative flex items-center gap-3 min-w-0 flex-1">
+          <div className="h-12 w-12 rounded-2xl grid place-items-center text-2xl shrink-0" style={{ background: `${lvl.cur.color}14`, border: `1px solid ${lvl.cur.color}22` }}>{lvl.cur.icon}</div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="text-sm font-black" style={{ color: lvl.cur.color }}>{lvl.cur.name}</span>
+              <span className="text-xs font-bold text-slate-400">{profile.xp} XP</span>
+              {combo >= 3 && <span className="text-[11px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">🔥 x{combo}</span>}
+            </div>
+            <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden max-w-[260px]">
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
+            </div>
+            <div className="text-[11px] text-slate-400 mt-1 leading-none">
+              {lvl.next ? <><span className="font-semibold text-slate-600">{lvl.toNext} XP</span> → {lvl.next.icon} {lvl.next.name}</> : "Maksimal daraja 👑"}
+              <span className="mx-1.5 text-slate-300">·</span>
+              <button onClick={() => setMode("profile")} className="font-semibold text-[#2563eb] hover:underline">batafsil →</button>
+            </div>
+          </div>
+          {/* XP вспышка */}
+          {floaters.map(f => (
+            <span key={f.id}
+              className="xp-float absolute left-14 -top-1 z-30 pointer-events-none text-sm font-black text-emerald-600 whitespace-nowrap"
+              style={{ textShadow: "0 1px 0 #fff, 0 0 10px #d1fae5" }}>
+              {f.text}
+            </span>
+          ))}
+        </div>
+
+        {/* Общий прогресс — круг + цифры */}
+        <div className="flex items-center gap-3 sm:border-l sm:border-slate-100 sm:pl-4 shrink-0">
+          <div className="relative h-14 w-14 shrink-0">
+            <svg className="h-14 w-14 -rotate-90" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15.5" fill="none" stroke="#f1f5f9" strokeWidth="4" />
+              <circle cx="18" cy="18" r="15.5" fill="none" stroke="#2563eb" strokeWidth="4" strokeLinecap="round"
+                strokeDasharray={`${pctAll} 100`} className="transition-all duration-700" />
+            </svg>
+            <span className="absolute inset-0 grid place-items-center text-[11px] font-black text-[#2563eb]">{pctAll}%</span>
+          </div>
+          <div className="leading-tight">
+            <div className="text-sm font-black text-slate-900">{learnedCount} / {totalTopics}</div>
+            <div className="text-[11px] font-semibold text-slate-400">mavzu o&apos;zlashtirildi</div>
+            <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+              <span className="inline-flex items-center gap-1"><Star className="h-3 w-3 text-amber-500" /> {favCount} sevimli</span>
+              {profile.streak > 0 && <span className="inline-flex items-center gap-1"><span className="streak-flame">🔥</span> {profile.streak} kun</span>}
+            </div>
+          </div>
         </div>
       </div>
 

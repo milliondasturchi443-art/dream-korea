@@ -12,6 +12,7 @@ import {
 export const studentNav = [
   { href: "/dashboard", label: "Bosh sahifa", icon: LayoutDashboard },
   { href: "/courses", label: "Kurslar", icon: BookOpen },
+  { href: "/dars", label: "Darslar", icon: GraduationCap },
   { href: "/ai", label: "Axrorbek AI", icon: Bot },
   { href: "/topik", label: "TOPIK testlar", icon: FileText },
   { href: "/vocabulary", label: "Lug‘at", icon: Library },
@@ -164,7 +165,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <nav className="md:hidden fixed bottom-0 inset-x-0 glass border-t border-t-white/70 flex items-center justify-around py-1 z-30 safe-bottom">
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
-          { href: "/courses", icon: BookOpen, label: "Darslar" },
+          { href: "/dars", icon: BookOpen, label: "Darslar" },
           { href: "/ai", icon: Bot, label: "AI" },
           { href: "/topik", icon: FileText, label: "TOPIK" },
           { href: "/vocabulary", icon: Library, label: "Lug‘at" },

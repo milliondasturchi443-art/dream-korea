@@ -32,6 +32,11 @@ model User {
   role      Role     @default(STUDENT)
   avatar    String?
   topikLevel String? @default("TOPIK I")
+  xp        Int       @default(0)
+  coins     Int       @default(0)
+  stars     Int       @default(0)
+  streak    Int       @default(0)
+  lastStreakAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -48,6 +53,8 @@ model User {
   attendances    Attendance[]
   homeworks      Homework[]
   homeworkDones  HomeworkDone[]
+  darsProgress   DarsProgress[]
+  writingAttempts WritingAttempt[]
 }
 
 model Course {
@@ -308,4 +315,112 @@ model ActivityLog {
   action    String
   meta      Json?
   createdAt DateTime @default(now())
+}
+
+// ── Darslar / Units ──────────────────────────────────────────────────────────
+model DarsUnit {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  order       Int      @unique
+  title       String
+  topic       String
+  level       String   @default("A1")
+  cover       String?
+  description String?
+  vocab       DarsVocab[]
+  videos      DarsVideo[]
+  grammars    DarsGrammar[]
+  listenings  DarsListening[]
+  writings    DarsWriting[]
+  progress    DarsProgress[]
+  createdAt   DateTime @default(now())
+}
+
+model DarsVocab {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  unitId    String   @db.ObjectId
+  unit      DarsUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  ko        String
+  uz        String
+  tr        String?
+  exampleKo String?
+  exampleUz String?
+  order     Int      @default(0)
+}
+
+model DarsVideo {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  unitId    String   @db.ObjectId
+  unit      DarsUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title     String
+  videoUrl  String
+  duration  String?
+  order     Int      @default(0)
+}
+
+model DarsGrammar {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  unitId    String   @db.ObjectId
+  unit      DarsUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title     String
+  pattern   String?
+  explain   String
+  examples  Json     // [{ko, uz}]
+  exercises Json     // [{q, options, correct, hint}]
+  order     Int      @default(0)
+}
+
+model DarsListening {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  unitId      String   @db.ObjectId
+  unit        DarsUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title       String
+  audioUrl    String?
+  audioText   String?
+  transcript  String?
+  imageUrl    String?
+  questions   Json     // [{text, options:[{key,text}], correct, explanation}]
+  order       Int      @default(0)
+}
+
+model DarsWriting {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  unitId      String   @db.ObjectId
+  unit        DarsUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title       String
+  prompt      String
+  criteria    String?
+  sampleAnswer String?
+  order       Int      @default(0)
+  attempts    WritingAttempt[]
+}
+
+model WritingAttempt {
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  writingId  String      @db.ObjectId
+  writing    DarsWriting @relation(fields: [writingId], references: [id], onDelete: Cascade)
+  userId     String      @db.ObjectId
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text       String
+  score      Int?
+  feedback   String?
+  createdAt  DateTime    @default(now())
+}
+
+model DarsProgress {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId     String   @db.ObjectId
+  unit       DarsUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  vocabDone     Boolean @default(false)
+  videoDone     Boolean @default(false)
+  homeworkDone  Boolean @default(false)
+  grammarDone   Boolean @default(false)
+  listeningDone Boolean @default(false)
+  writingDone   Boolean @default(false)
+  stars      Int      @default(0) // 0-3
+  xpAwarded  Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  @@unique([userId, unitId])
 }
