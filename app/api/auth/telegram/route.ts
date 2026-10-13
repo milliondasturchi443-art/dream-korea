@@ -7,11 +7,13 @@ export const dynamic = "force-dynamic";
 
 const DAY30 = 30 * 24 * 3600;
 
-// GET /api/auth/telegram — widget uchun bot username (ochiq ma'lumot)
+// GET /api/auth/telegram — widget uchun bot username + bot id (ochiq ma'lumot)
 export async function GET() {
   const username = telegramBotUsername();
-  if (!username || !telegramBotToken()) return Response.json({ enabled: false });
-  return Response.json({ enabled: true, username });
+  const token = telegramBotToken();
+  if (!username || !token) return Response.json({ enabled: false });
+  const botId = token.split(":")[0] || "";
+  return Response.json({ enabled: true, username, botId });
 }
 
 // POST /api/auth/telegram — widget'dan kelgan ma'lumotni tekshirib, session beradi
