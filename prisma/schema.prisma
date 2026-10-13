@@ -68,6 +68,8 @@ model Reception {
   time      String   // e.g. "15:00"
   teacherId String?  @db.ObjectId
   teacher   User?    @relation(fields: [teacherId], references: [id])
+  groupId   String?  @db.ObjectId
+  group     Group?   @relation(fields: [groupId], references: [id])
   note      String?
   status    String   @default("new") // new | contacted | enrolled
   createdAt DateTime @default(now())
@@ -224,6 +226,7 @@ model Group {
   members   GroupMember[]
   attendances Attendance[]
   homeworks Homework[]
+  receptions Reception[]
 }
 
 model GroupMember {

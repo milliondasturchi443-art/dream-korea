@@ -4,12 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { darsRequest } from "@/lib/dars-client";
-import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2 } from "lucide-react";
+import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users } from "lucide-react";
 
 type Teacher = { id: string; name: string; role: string };
+type Group = { id: string; name: string; teacherId?: string | null; teacher?: { name: string } | null };
 type Item = {
   id: string; name: string; phone: string; days: string; time: string; note?: string | null; status: string; createdAt: string;
   teacher?: { name: string } | null;
+  group?: { name: string } | null;
 };
 
 const ALL_DAYS = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"];
@@ -19,11 +21,18 @@ const PRESETS: { label: string; days: string[] }[] = [
 ];
 const STATUS_LABEL: Record<string, string> = { new: "Yangi", contacted: "Aloqa qilindi", enrolled: "Yozildi" };
 
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || "";
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+}
+
 export default function ReceptionPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [name, setName] = useState("");
@@ -31,6 +40,7 @@ export default function ReceptionPage() {
   const [days, setDays] = useState<string[]>([]);
   const [time, setTime] = useState("");
   const [teacherId, setTeacherId] = useState("");
+  const [groupId, setGroupId] = useState("");
   const [note, setNote] = useState("");
 
   async function load() {
@@ -44,25 +54,42 @@ export default function ReceptionPage() {
   useEffect(() => {
     load();
     darsRequest<{ users: Teacher[] }>("/api/users").then(d => setTeachers(d.users.filter(u => u.role === "TEACHER"))).catch(() => {});
+    darsRequest<{ groups: Group[] }>("/api/groups").then(d => setGroups(d.groups)).catch(() => {});
   }, []);
+
+  const teacherGroups = groups.filter(g => !teacherId || g.teacherId === teacherId);
 
   function toggleDay(day: string) {
     setDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   }
 
   async function submit() {
-    setBusy(true); setError("");
+    setBusy(true); setError(""); setNotice(null);
     try {
-      await darsRequest("/api/reception", { name, phone, days, time, teacherId: teacherId || undefined, note: note || undefined });
-      setName(""); setPhone(""); setDays([]); setTime(""); setTeacherId(""); setNote("");
+      await darsRequest("/api/reception", { name, phone, days, time, teacherId: teacherId || null, groupId: groupId || null, note: note || undefined });
+      setName(""); setPhone(""); setDays([]); setTime(""); setTeacherId(""); setGroupId(""); setNote("");
+      setNotice({ ok: true, text: "Ro'yxatga olindi" });
       await load();
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
 
   async function setStatus(id: string, status: string) {
-    try { await fetch("/api/reception", { method: "PATCH", headers: { "Content-Type": "application/json", ...(await authHeaders()) }, body: JSON.stringify({ id, status }) }); await load(); } catch {}
+    setNotice(null);
+    try {
+      const r = await fetch("/api/reception", { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ id, status }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setNotice({ ok: false, text: d.error || "Xato" }); return; }
+      if (d.enrolled) {
+        const e = d.enrolled;
+        setNotice({ ok: true, text: `O'quvchi guruhga qo'shildi${e.added === false ? " (allaqachon a'zo edi)" : ""}. Login: ${e.email}${e.tempPassword ? ` · Vaqtinchalik parol: ${e.tempPassword} (talabaga bering)` : ""}` });
+      } else if (d.warn) {
+        setNotice({ ok: false, text: d.warn + (d.created?.email ? ` · Login: ${d.created.email}` : "") });
+      }
+      await load();
+    } catch { setNotice({ ok: false, text: "Xatolik yuz berdi" }); }
   }
+
   async function remove(id: string) {
     if (!confirm("O'chirilsinmi?")) return;
     try { await fetch(`/api/reception?id=${id}`, { method: "DELETE", headers: await authHeaders() }); await load(); } catch {}
@@ -74,13 +101,15 @@ export default function ReceptionPage() {
     <div className="mx-auto max-w-[1200px] p-4 lg:p-6 space-y-5">
       <div>
         <h1 className="flex items-center gap-2 text-[22px] font-bold text-slate-900"><UserPlus className="h-6 w-6 text-[#2563eb]" /> O'quvchi qo'shish (Reception)</h1>
-        <p className="text-sm text-slate-500">Qabulga kelgan o'quvchini yozing: F.I.Sh., telefon, dars kunlari va vaqti, o'qituvchi.</p>
+        <p className="text-sm text-slate-500">Qabulga kelgan o'quvchini yozing: F.I.Sh., telefon, dars kunlari va vaqti, o'qituvchi va guruh. «Yozildi» tugmasi — o'quvchi avtomatik guruhga qo'shiladi.</p>
       </div>
+
+      {notice && <Card className={`p-4 text-sm ${notice.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`} role="status">{notice.text}</Card>}
 
       <Card className="p-5 space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="space-y-1 text-sm font-medium text-slate-700">F.I.Sh. (Ism familiya)
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Karimova Nigora" />
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Qudratillayev Bekzod" />
           </label>
           <label className="space-y-1 text-sm font-medium text-slate-700">Telefon raqam
             <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 90 123 45 67" inputMode="tel" />
@@ -107,15 +136,22 @@ export default function ReceptionPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <label className="space-y-1 text-sm font-medium text-slate-700">Dars vaqti
             <Input type="time" value={time} onChange={e => setTime(e.target.value)} />
           </label>
           <label className="space-y-1 text-sm font-medium text-slate-700">O'qituvchi
-            <select value={teacherId} onChange={e => setTeacherId(e.target.value)}
+            <select value={teacherId} onChange={e => { setTeacherId(e.target.value); setGroupId(""); }}
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
               <option value="">— Tanlanmagan —</option>
               {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </label>
+          <label className="space-y-1 text-sm font-medium text-slate-700">Guruh
+            <select value={groupId} onChange={e => setGroupId(e.target.value)}
+              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+              <option value="">— Avtomatik (o'qituvchining birinchi guruhi) —</option>
+              {teacherGroups.map(g => <option key={g.id} value={g.id}>{g.name}{g.teacher ? ` · ${g.teacher.name}` : ""}</option>)}
             </select>
           </label>
         </div>
@@ -145,7 +181,10 @@ export default function ReceptionPage() {
                   <a href={`tel:${it.phone.replace(/\s/g, "")}`} className="flex items-center gap-1 hover:text-[#2563eb]"><Phone className="h-3 w-3" />{it.phone}</a>
                   <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{it.days}</span>
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{it.time}</span>
-                  <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" />{it.teacher?.name ?? "—"}</span>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-3 text-xs font-medium text-slate-700">
+                  <span className="flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5 text-[#2563eb]" />{it.teacher?.name ?? "O'qituvchi tanlanmagan"}</span>
+                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5 text-emerald-600" />{it.group?.name ?? "Guruh tanlanmagan"}</span>
                 </div>
                 {it.note && <p className="mt-1 text-xs text-slate-400">{it.note}</p>}
               </div>
@@ -160,9 +199,4 @@ export default function ReceptionPage() {
       </section>
     </div>
   );
-}
-
-async function authHeaders(): Promise<Record<string, string>> {
-  const token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || "";
-  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
