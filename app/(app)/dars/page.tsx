@@ -24,7 +24,7 @@ export default function DarsPage() {
   const completed = data.units.filter(u => data.progress.some(p => p.unitId === u.id && p.stars > 0)).length;
   return <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
     <header className="flex items-center justify-between"><h1 className="text-3xl font-bold">Darslar</h1><Link href="/profile" className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm"><Star className="h-4 w-4 text-amber-500" /> {data.user?.stars ?? 0} · <Coins className="h-4 w-4 text-amber-600" /> {data.user?.coins ?? 0}</Link></header>
-    <Card className="p-5"><p className="mb-3">Har kuni bir qadam — Koreyaga yaqinroq</p><Progress value={data.units.length ? completed / data.units.length * 100 : 0} /><p className="mt-2 text-sm text-slate-500">{completed}/{data.units.length} unit yakunlandi</p></Card>
+    <Card className="p-5"><p className="mb-3">Har kuni bir qadam — Koreyaga yaqinroq 🇰🇷</p><Progress value={data.units.length ? completed / data.units.length * 100 : 0} /><p className="mt-2 text-sm text-slate-500">{completed}/{data.units.length} unit yakunlandi</p></Card>
     {!data.units.length && <Card className="p-8 text-center">Darslar hali nashr qilinmagan. <Link className="text-blue-600" href="/courses">Mavjud kurslarni ochish →</Link></Card>}
     <ol className="relative space-y-8 py-6">
       {data.units.map((unit, index) => {

@@ -56,6 +56,21 @@ model User {
   darsProgress   DarsProgress[]
   writingAttempts WritingAttempt[]
   topikWritingAttempts TopikWritingAttempt[]
+  receptions      Reception[]
+}
+
+// Reception: front-desk student intake (name, phone, schedule, teacher)
+model Reception {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  phone     String
+  days      String   // e.g. "Dushanba,Chorshanba,Juma"
+  time      String   // e.g. "15:00"
+  teacherId String?  @db.ObjectId
+  teacher   User?    @relation(fields: [teacherId], references: [id])
+  note      String?
+  status    String   @default("new") // new | contacted | enrolled
+  createdAt DateTime @default(now())
 }
 
 model Course {
