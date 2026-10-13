@@ -9,6 +9,7 @@ import { Logo } from "@/components/logo";
 import { normalizeEmail } from "@/lib/auth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { TelegramLoginButton } from "@/components/telegram-login-button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -81,6 +82,7 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full mt-2" disabled={loading}>{loading ? "Kirilmoqda…" : "Kirish"}</Button>
           </form>
+          <TelegramLoginButton />
           <div className="mt-4 flex justify-between text-xs">
             <Link href={regHref} className="text-[#2563eb] hover:underline">Ro‘yxatdan o‘tish</Link>
             <Link href="/forgot-password" className="text-slate-500 hover:text-slate-700">Parolni unutdingizmi?</Link>

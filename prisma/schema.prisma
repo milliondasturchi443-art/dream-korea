@@ -31,6 +31,8 @@ model User {
   verifyCodeExp DateTime?
   role      Role     @default(STUDENT)
   avatar    String?
+  telegramId       String?
+  telegramUsername String?
   topikLevel String? @default("TOPIK I")
   xp        Int       @default(0)
   coins     Int       @default(0)
