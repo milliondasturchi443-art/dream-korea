@@ -1,152 +1,203 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { booksData } from "@/lib/books-data";
-import { BookMarked, FileText, X, Download, Eye } from "lucide-react";
-import jsPDF from "jspdf";
+import { Input } from "@/components/ui/input";
+import { BOOK_CATEGORIES, booksData, type Book, type BookCategory } from "@/lib/books-data";
+import { BookMarked, Download, Search, Star, Timer, X } from "lucide-react";
 
-function downloadPdf(bookId: string) {
-  const b = booksData.find(x => x.id === bookId);
-  if (!b) return;
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const W = 210, H = 297, M = 14;
-  const maxW = W - M*2;
+type BookStat = { sec: number; done: boolean };
+type BookState = Record<string, BookStat>;
 
-  // Cover
-  doc.setFillColor(15,27,61);
-  doc.rect(0,0,W,54,"F");
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(22); doc.setFont("helvetica","bold");
-  doc.text(b.title, M, 20, { maxWidth: maxW });
-  doc.setFontSize(10); doc.setFont("helvetica","normal");
-  doc.text(`${b.level}  ·  ${b.pages} sahifa  ·  DREAM KOREA`, M, 32);
-  doc.setFontSize(8); doc.setTextColor(147,197,253);
-  doc.text("Koreys tili — o'quv materiali (sample). To'liq kitob admin tomonidan PDF sifatida yuklanadi.", M, 40, { maxWidth: maxW });
-  doc.text("© 2026 DREAM KOREA · Namangan", M, 46);
+const STORE = "dk_books_v1";
+const XP_PER_MINUTE = 1;
+const XP_MINUTE_CAP = 20;
+const XP_FINISH = 50;
+const TIPS = [
+  "O'qish paytida yangi so'zlarni daftaringizga yozing.",
+  "Bir daqiqada 1 XP — 20 XP gacha bir kitobdan oling.",
+  "Kitobni tugagach «O'qib bo'ldim»ni bosing — +50 XP.",
+  "Har kuni 15 daqiqa o'qish — odat va streak uchun zo'r.",
+  "Ovoz chiqarib o'qish — talaffuzni ham yaxshilaydi.",
+];
 
-  // Body
-  doc.setTextColor(15,23,42);
-  let y = 64;
-  function addPageIfNeeded(need: number) {
-    if (y + need > H - 14) { doc.addPage(); y = 16; }
-  }
-  for (const ch of b.chapters) {
-    addPageIfNeeded(18);
-    doc.setFontSize(13); doc.setFont("helvetica","bold");
-    doc.setTextColor(15,27,61);
-    const titleLines = doc.splitTextToSize(ch.title, maxW);
-    doc.text(titleLines, M, y); y += titleLines.length*6 + 4;
-    doc.setDrawColor(226,232,240); doc.line(M, y, W-M, y); y += 6;
-    doc.setFontSize(10); doc.setFont("helvetica","normal"); doc.setTextColor(51,65,85);
-    for (const line of ch.body) {
-      const lines = doc.splitTextToSize(line, maxW);
-      addPageIfNeeded(lines.length*5 + 4);
-      doc.text(lines, M, y); y += lines.length*5 + 4;
-    }
-    y += 6;
-  }
-  // Footer on each page
-  const n = doc.getNumberOfPages();
-  for (let i=1;i<=n;i++) {
-    doc.setPage(i);
-    doc.setFontSize(7); doc.setTextColor(148,163,184);
-    doc.text(`DREAM KOREA · ${b.title} · ${i}/${n}`, M, H-8);
-  }
-  doc.save(`${b.title.replace(/\s+/g,"_")}.pdf`);
+function loadState(): BookState {
+  try { return JSON.parse(localStorage.getItem(STORE) || "{}") as BookState; } catch { return {}; }
+}
+function saveState(s: BookState) { localStorage.setItem(STORE, JSON.stringify(s)); }
+function bookXp(st?: BookStat) {
+  if (!st) return 0;
+  return Math.min(Math.floor(st.sec / 60), XP_MINUTE_CAP) * XP_PER_MINUTE + (st.done ? XP_FINISH : 0);
+}
+function fmtTime(sec: number) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 export default function BooksPage() {
+  const [state, setState] = useState<BookState>({});
+  const [mounted, setMounted] = useState(false);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<BookCategory | "Barchasi">("Barchasi");
   const [openId, setOpenId] = useState<string | null>(null);
-  const book = booksData.find(b => b.id === openId);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
+  const [tip, setTip] = useState(0);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  function openPreview(bid: string) {
-    const b = booksData.find(x=>x.id===bid);
-    if (!b) return;
-    if (b.pdfUrl) { setPreviewUrl(b.pdfUrl); setOpenId(bid); return; }
-    // generate blob url from jsPDF for preview
-    const doc = new jsPDF({ unit:"mm", format:"a4" });
-    const W=210,H=297,M=14,maxW=W-M*2;
-    doc.setFillColor(15,27,61); doc.rect(0,0,W,54,"F");
-    doc.setTextColor(255,255,255); doc.setFontSize(22); doc.setFont("helvetica","bold");
-    doc.text(b.title, M, 20, { maxWidth:maxW });
-    doc.setFontSize(10); doc.setFont("helvetica","normal"); doc.text(`${b.level} · ${b.pages} sahifa · DREAM KOREA`, M, 32);
-    doc.setFontSize(8); doc.setTextColor(147,197,253); doc.text("Sample PDF — to'liq kitob admin tomonidan yuklanadi.", M, 40, { maxWidth:maxW });
-    doc.setTextColor(15,23,42); let y=64;
-    function need(n:number){ if(y+n>H-14){ doc.addPage(); y=16; } }
-    for (const ch of b.chapters) {
-      need(18);
-      doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(15,27,61);
-      const tl=doc.splitTextToSize(ch.title, maxW); doc.text(tl, M, y); y+=tl.length*6+4;
-      doc.setDrawColor(226,232,240); doc.line(M,y,W-M,y); y+=6;
-      doc.setFontSize(10); doc.setFont("helvetica","normal"); doc.setTextColor(51,65,85);
-      for (const line of ch.body) { const ll=doc.splitTextToSize(line, maxW); need(ll.length*5+4); doc.text(ll, M, y); y+=ll.length*5+4; }
-      y+=6;
-    }
-    const blob = doc.output("blob");
-    const url = URL.createObjectURL(blob);
-    setPreviewUrl(url); setOpenId(bid);
+  useEffect(() => { setState(loadState()); setMounted(true); }, []);
+
+  const filtered = useMemo(() => booksData.filter(b =>
+    (category === "Barchasi" || b.category === category) &&
+    (!query.trim() || `${b.title} ${b.subtitle} ${b.description} ${b.level}`.toLowerCase().includes(query.trim().toLowerCase()))
+  ), [query, category]);
+
+  const totalXp = useMemo(() => booksData.reduce((sum, b) => sum + bookXp(state[b.id]), 0), [state]);
+  const doneCount = useMemo(() => booksData.filter(b => state[b.id]?.done).length, [state]);
+
+  const openBook = booksData.find(b => b.id === openId);
+
+  useEffect(() => {
+    if (!openId) return;
+    setTip(Math.floor(Math.random() * TIPS.length));
+    tickRef.current = setInterval(() => {
+      setState(prev => {
+        const cur = prev[openId] || { sec: 0, done: false };
+        const next = { ...prev, [openId]: { ...cur, sec: cur.sec + 1 } };
+        saveState(next);
+        return next;
+      });
+    }, 1000);
+    return () => { if (tickRef.current) clearInterval(tickRef.current); };
+  }, [openId]);
+
+  function finishBook(id: string) {
+    setState(prev => {
+      const cur = prev[id] || { sec: 0, done: false };
+      if (cur.done) return prev;
+      const next = { ...prev, [id]: { ...cur, done: true } };
+      saveState(next);
+      return next;
+    });
+    setCelebrate(true);
+    setTimeout(() => setCelebrate(false), 2200);
   }
+
+  const currentStat = openId ? (state[openId] || { sec: 0, done: false }) : null;
+  const currentXp = openId ? bookXp(currentStat ?? undefined) : 0;
 
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
-      <div>
-        <h1 className="text-[22px] font-bold text-slate-900">Kitoblar</h1>
-        <p className="text-sm text-slate-500">Haqiqiy materiallar — oching va PDF yuklab oling. Keyin admin haqiqiy PDF larni qo‘shadi.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-bold text-slate-900">Kitoblar</h1>
+          <p className="text-sm text-slate-500">Haqiqiy darsliklar va imtihon kitoblari — onlayn o‘qing, XP to‘plang.</p>
+        </div>
+        {mounted && (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="rounded-full bg-white px-3 py-1.5 font-semibold text-emerald-700">+{totalXp} XP</span>
+            <span className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 font-semibold text-amber-600">
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {doneCount}/{booksData.length}
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {booksData.map(b => (
-          <Card key={b.id} className="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-            <div className={`h-36 bg-gradient-to-br ${b.color} p-4 text-white flex flex-col`}>
-              <BookMarked className="h-6 w-6 opacity-80" />
-              <div className="mt-auto font-semibold leading-tight line-clamp-2">{b.title}</div>
-              <div className="text-xs text-white/80">{b.pages} sahifa</div>
-            </div>
-            <div className="p-4 flex-1 flex flex-col gap-2">
-              <Badge className="bg-slate-100 text-slate-700 border border-slate-200 w-fit text-[11px]">{b.level}</Badge>
-              <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{b.description}</p>
-              <div className="mt-auto grid grid-cols-2 gap-2">
-                <Button size="sm" variant="outline" onClick={() => openPreview(b.id)}><Eye className="h-4 w-4 mr-1"/> Ko'rish</Button>
-                <Button size="sm" onClick={() => downloadPdf(b.id)}><Download className="h-4 w-4 mr-1"/> PDF</Button>
-              </div>
-            </div>
-          </Card>
-        ))}
+      <div className="space-y-3">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Kitob qidirish…" className="pl-9 bg-white" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(["Barchasi", ...BOOK_CATEGORIES] as const).map(c => (
+            <button key={c} onClick={() => setCategory(c)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${category === c ? "bg-blue-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}>
+              {c}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {book && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black/50 p-0 sm:p-4" onClick={() => { setOpenId(null); if(previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }}>
-          <div className="bg-white w-full h-full sm:rounded-2xl overflow-hidden flex flex-col sm:max-w-4xl sm:mx-auto sm:max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <div className={`bg-gradient-to-br ${book.color} text-white p-4 flex items-start justify-between shrink-0`}>
-              <div>
-                <div className="font-bold text-lg leading-tight">{book.title}</div>
-                <div className="text-xs text-white/80 mt-1">{book.level} · {book.pages} sahifa</div>
+      {!filtered.length && <Card className="p-10 text-center text-slate-500">Bunday kitob topilmadi.</Card>}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {filtered.map(b => {
+          const st = mounted ? state[b.id] : undefined;
+          const progress = st ? Math.min(100, Math.round((st.sec / 3600) * 100)) : 0;
+          return (
+            <Card key={b.id} className="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+              <div className={`relative h-36 bg-gradient-to-br ${b.color} p-4 text-white flex flex-col`}>
+                <div className="flex items-start justify-between">
+                  <BookMarked className="h-6 w-6 opacity-80" />
+                  <span className="text-3xl" aria-hidden>{b.emoji}</span>
+                </div>
+                <div className="mt-auto font-semibold leading-tight line-clamp-2">{b.title}</div>
+                <div className="text-xs text-white/80">{b.subtitle}</div>
+                {st?.done && <span className="absolute top-3 left-10 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-amber-600">⭐ Tugatilgan</span>}
               </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" className="bg-white text-slate-900 hover:bg-slate-50" onClick={()=>downloadPdf(book.id)}><Download className="h-4 w-4 mr-1"/> Yuklab olish</Button>
-                <button onClick={() => { setOpenId(null); if(previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }} className="p-2 rounded-full hover:bg-white/15" aria-label="Yopish"><X className="h-5 w-5" /></button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-hidden flex flex-col lg:flex-row min-h-0">
-              <div className="flex-1 min-h-[260px] bg-slate-100">
-                {previewUrl ? (
-                  <iframe src={previewUrl} title={book.title} className="w-full h-full border-0" />
-                ) : (
-                  <div className="grid place-items-center h-full text-sm text-slate-500 p-8"><FileText className="h-8 w-8 mb-2 opacity-40"/> PDF tayyorlanmoqda…</div>
-                )}
-              </div>
-              <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-slate-200 overflow-y-auto p-4 space-y-4 bg-white">
-                {book.chapters.map((ch, i) => (
-                  <div key={i} className="rounded-xl border border-slate-200 p-4">
-                    <div className="font-semibold text-slate-900 text-sm">{ch.title}</div>
-                    <div className="mt-2 space-y-2">
-                      {ch.body.map((line, j) => (<p key={j} className="text-sm text-slate-600 leading-relaxed">{line}</p>))}
+              <div className="p-4 flex-1 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-slate-100 text-slate-700 border border-slate-200 text-[11px]">{b.category}</Badge>
+                  <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">{b.level}</Badge>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{b.description}</p>
+                <p className="text-[11px] text-slate-400">{b.pages} sahifa · {b.sizeMb} MB</p>
+                {mounted && st && st.sec > 0 && (
+                  <div>
+                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} />
                     </div>
+                    <p className="mt-1 text-[11px] text-slate-400">{Math.floor(st.sec / 60)} daqiqa o‘qilgan · {bookXp(st)} XP</p>
                   </div>
-                ))}
+                )}
+                <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
+                  <Button size="sm" onClick={() => setOpenId(b.id)}>{st?.sec ? "Davom etish" : "O‘qish"}</Button>
+                  <a href={b.file} download className="inline-flex items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50">
+                    <Download className="h-4 w-4" /> PDF
+                  </a>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {openBook && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/60 p-0 sm:p-4">
+          <div className="bg-white w-full h-full sm:rounded-2xl overflow-hidden flex flex-col sm:max-w-5xl sm:mx-auto sm:max-h-[92vh]">
+            <div className={`relative bg-gradient-to-br ${openBook.color} text-white p-4 flex items-center justify-between shrink-0`}>
+              <div className="min-w-0">
+                <div className="font-bold text-lg leading-tight truncate">{openBook.emoji} {openBook.title}</div>
+                <div className="text-xs text-white/80 mt-0.5">{openBook.level} · {openBook.pages} sahifa</div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {currentStat && (
+                  <span className="hidden sm:flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-sm font-semibold">
+                    <Timer className="h-4 w-4" /> {fmtTime(currentStat.sec)} · +{currentXp} XP
+                  </span>
+                )}
+                <button onClick={() => setOpenId(null)} className="p-2 rounded-full hover:bg-white/15" aria-label="Yopish">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              {celebrate && (
+                <div className="medal-pop absolute inset-0 grid place-items-center bg-black/40 text-2xl font-black">
+                  🎉 O‘qib bo‘ldingiz! +{XP_FINISH} XP
+                </div>
+              )}
+            </div>
+            <iframe src={openBook.file} title={openBook.title} className="flex-1 w-full border-0 min-h-0" />
+            <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-slate-500">💡 {TIPS[tip]}</p>
+              <div className="flex items-center gap-2">
+                {currentStat?.sec ? (
+                  <span className="text-xs text-slate-500 sm:hidden">{fmtTime(currentStat.sec)} · +{currentXp} XP</span>
+                ) : null}
+                {currentStat?.done ? (
+                  <Badge className="bg-amber-50 text-amber-700 border border-amber-200">⭐ Tugatilgan</Badge>
+                ) : (
+                  <Button size="sm" onClick={() => finishBook(openBook.id)}>O‘qib bo‘ldim · +{XP_FINISH} XP</Button>
+                )}
               </div>
             </div>
           </div>

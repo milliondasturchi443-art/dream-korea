@@ -1,70 +1,119 @@
-// Kitoblar — hozircha lokal kontent + PDF download. Keyin real PDF url qo'shilsa, <iframe>da ochiladi.
-export type BookDef = { id: string; title: string; level: string; pages: number; color: string; description: string; pdfUrl?: string; chapters: { title: string; body: string[] }[] };
+// Haqiqiy kitoblar — public/books ichidagi siqilgan PDF'lar.
+export type BookCategory = "TOPIK" | "Darslik" | "Ishchi daftar" | "O'qish";
 
-export const booksData: BookDef[] = [
+export type Book = {
+  id: string;
+  title: string;
+  subtitle: string;
+  category: BookCategory;
+  level: string;
+  pages: number;
+  sizeMb: number;
+  color: string;
+  emoji: string;
+  description: string;
+  file: string;
+};
+
+export const BOOK_CATEGORIES: BookCategory[] = ["TOPIK", "Darslik", "Ishchi daftar", "O'qish"];
+
+export const booksData: Book[] = [
   {
-    id: "1", title: "TOPIK I — Reading & Listening", level: "TOPIK I", pages: 320, color: "from-blue-600 to-indigo-600",
-    description: "TOPIK I rasmiy imtihonga yaqin savollar, o'qish va tinglash.",
-    chapters: [
-      { title: "1-dars: O'qish — asosiy strategiya", body: ["Matnni avval savol bilan o'qing, keyin javob izlang.", "Misol: 도서관 개방시간 09:00~18:00 — savol 'qachon yopiq?' → 토·일.", "Mashq: quyidagi e'londan savol tuzing."] },
-      { title: "2-dars: Listening — kalit so'zlar", body: ["Eshiting, yozib olmang — kalit so'zni ushlang: 시간, 장소, 사람.", "Misol: 공장에서 일하고 싶어요 → 이력서.", "Mashq: audio '오후 세 시'를 tinglab yozing."] },
-    ],
+    id: "esp-topik", title: "EPS-TOPIK imtihonga tayyorgarlik", subtitle: "esp topik · ishchi uchun to'liq kurs",
+    category: "TOPIK", level: "TOPIK I (EPS)", pages: 388, sizeMb: 21.9,
+    color: "from-blue-700 to-indigo-800", emoji: "🏭",
+    description: "EPS-TOPIK imtihonining barcha bo'limlari: o'qish, tinglash, lug'at va amaliy mashqlar.",
+    file: "/books/esp-topik-tayyorgarlik.pdf",
   },
   {
-    id: "2", title: "Korean Grammar in Use — Beginner", level: "A1-A2", pages: 408, color: "from-emerald-600 to-teal-600",
-    description: "Boshlang'ich grammatika: zarralar, fe'llar, bog'lovchilar — misollar bilan.",
-    chapters: [
-      { title: "입니다 / 입니까 — rasmiy bo'lish", body: ["입니다 — tasdiq, 입니까 — savol. 학생입니다 / 학생입니까?", "Mashq: 저는 의사___ (to'g'risini tanlang)."] },
-      { title: "은/는, 이/가 — farqi nima?", body: ["은/는 mavzu, 이/가 yangi axborot. 저는 학생입니다 vs 민수가 왔어요.", "Mashq: 5 gapda yuklamani toping."] },
-    ],
+    id: "all-about-writing", title: "All about Writing — F-TOPIK", subtitle: "yozish bo'yicha to'liq qo'llanma",
+    category: "TOPIK", level: "TOPIK I", pages: 301, sizeMb: 41.4,
+    color: "from-rose-600 to-pink-700", emoji: "✍️",
+    description: "F-TOPIK yozish bo'limi: namunalar, shablonlar va mashq savollari bilan.",
+    file: "/books/all-about-writing-topik.pdf",
   },
   {
-    id: "3", title: "EPS-TOPIK Standard Textbook", level: "EPS", pages: 280, color: "from-violet-600 to-purple-600",
-    description: "Zavod, ish joyi, xavfsizlik — EPS imtihoni uchun majburiy lug'at va grammatika.",
-    chapters: [
-      { title: "Ish joyi — xavfsizlik", body: ["안전모를 써야 합니다 — kaska kiyish kerak.", "비상벨을 누르세요 — favqulodda tugmani bosing.", "Mashq: 10 ta xavfsizlik so'zini yodlang."] },
-      { title: "Ish vaqti, maosh", body: ["월급은 매달 25일에 입금됩니다.", "하루 8시간 일합니다.", "Mashq: ish jadvalini koreyschaga yozing."] },
-    ],
+    id: "haggyeok-recipe", title: "합격 레시피 · Imtihon retsepti", subtitle: "TOPIK uchun sinalgan strategiya",
+    category: "TOPIK", level: "TOPIK I-II", pages: 289, sizeMb: 39.9,
+    color: "from-amber-600 to-orange-700", emoji: "🎯",
+    description: "Imtihonda o'tish «retsepti»: vaqt boshqaruvi, xatolar tahlili va top strategiyalar.",
+    file: "/books/haggyeok-recipe.pdf",
   },
   {
-    id: "4", title: "Vocabulary 2000 — Essential Words", level: "A1-B1", pages: 360, color: "from-rose-600 to-pink-600",
-    description: "Eng kerak 2000 so'z — kundalik, ish, imtihon.",
-    chapters: [
-      { title: "1-qism: Kundalik 500", body: ["가다, 오다, 먹다, 마시다, 자다 — har kuni 10 tadan.", "Har so'zga gap tuzing: 학교에 가요.", "Mashq: 20 so'zdan dialog tuzing."] },
-    ],
+    id: "seoul-2a", title: "Seoul Darsligi · Student's Book 2A", subtitle: "서울대 한국어 2A",
+    category: "Darslik", level: "TOPIK I-III", pages: 227, sizeMb: 28.7,
+    color: "from-emerald-600 to-teal-700", emoji: "📗",
+    description: "Seoul National University darsligi — 2A daraja, dialoglar, grammatika va mashqlar.",
+    file: "/books/seoul-student-2a.pdf",
   },
   {
-    id: "5", title: "TOPIK II — Reading (O'rta)", level: "TOPIK II", pages: 340, color: "from-slate-700 to-slate-900",
-    description: "TOPIK II o'rta daraja — maqola, grafik, uzun matnlar.",
-    chapters: [
-      { title: "Maqola o'qish", body: ["정부는 외국인 근로자의 안전교육을 강화하기로 했다 — nima kuchayadi? 안전교육.", "Mashq: gazetadan 1 maqola topib, 2 savol tuzing."] },
-      { title: "Grafik va jadval", body: ["Grafik: 10만→25만 = 증가했다.", "Mashq: o'zingiz grafik chizing va tushuntiring."] },
-    ],
+    id: "seoul-2b", title: "Seoul Darsligi · Student's Book 2B", subtitle: "서울대 한국어 2B",
+    category: "Darslik", level: "TOPIK I-III", pages: 228, sizeMb: 28.4,
+    color: "from-teal-600 to-cyan-700", emoji: "📘",
+    description: "2B davomi: kundalik mavzular, tinglash mashqlari va suhbatlar.",
+    file: "/books/seoul-student-2b.pdf",
   },
   {
-    id: "6", title: "Listening Mastery — TOPIK I·II", level: "TOPIK I-II", pages: 260, color: "from-teal-600 to-cyan-600",
-    description: "Joy, vaqt, narx, odam — eshitib tushunish mashqlari.",
-    chapters: [
-      { title: "Joy va vaqt eshitish", body: ["어디에서 일해요? — 병원에서.", "몇 시에 만나요? — 오후 세 시.", "Mashq: 5 dialogni tinglab yozing."] },
-    ],
+    id: "seoul-3a", title: "Seoul Darsligi · Student's Book 3A", subtitle: "서울대 한국어 3A",
+    category: "Darslik", level: "TOPIK II", pages: 232, sizeMb: 29.8,
+    color: "from-violet-600 to-purple-700", emoji: "📙",
+    description: "O'rta daraja: murakkab grammatika, maqolalar va fikr bildirish mashqlari.",
+    file: "/books/seoul-student-3a.pdf",
   },
   {
-    id: "7", title: "Hangeul — Alifbodan boshlab", level: "A0-A1", pages: 140, color: "from-amber-600 to-orange-600",
-    description: "Hangeul harflari, bo'g'in, o'qish qoidalari — 0 dan boshlovchilar uchun.",
-    chapters: [
-      { title: "Undosh va unlilar", body: ["ㄱ[g], ㄴ[n], ㅏ[a], ㅓ[eo] — harfni yozing va ayting.", "Mashq: 한글 yozuvini ko'chirib yozing."] },
-    ],
+    id: "seoul-3b", title: "Seoul Darsligi · Student's Book 3B", subtitle: "서울대 한국어 3B",
+    category: "Darslik", level: "TOPIK II", pages: 228, sizeMb: 29.0,
+    color: "from-fuchsia-600 to-pink-700", emoji: "📔",
+    description: "3B davomi: akademik matnlar, munozara va yuqori daraja lug'ati.",
+    file: "/books/seoul-student-3b.pdf",
   },
   {
-    id: "8", title: "Koreys tili — Kundalik dialoglar", level: "A1-A2", pages: 200, color: "from-pink-600 to-rose-600",
-    description: "Do'kon, kasalxona, ish joyi — hayotda kerak bo'ladigan dialoglar.",
-    chapters: [
-      { title: "Do'konda", body: ["이거 얼마예요? — 만 오천 원이에요.", "Mashq: do'konda dialog tuzing."] },
-      { title: "Kasalxonada", body: ["어디가 아파요? — 머리가 아파요.", "Mashq: shifokor bilan dialog."] },
-    ],
+    id: "workbook-2a", title: "Seoul Ishchi Daftari 2A", subtitle: "서울대 연습장 2A",
+    category: "Ishchi daftar", level: "TOPIK I-III", pages: 204, sizeMb: 24.6,
+    color: "from-lime-600 to-green-700", emoji: "✏️",
+    description: "2A darsligiga mos yozma mashqlar, so'z biriktirish va grammatika drill.",
+    file: "/books/seoul-workbook-2a.pdf",
+  },
+  {
+    id: "workbook-2b", title: "Seoul Ishchi Daftari 2B", subtitle: "서울대 연습장 2B",
+    category: "Ishchi daftar", level: "TOPIK I-III", pages: 207, sizeMb: 25.7,
+    color: "from-green-600 to-emerald-700", emoji: "🖊️",
+    description: "2B konsolidatsiya: gap tuzish, matn yozish va takrorlash mashqlari.",
+    file: "/books/seoul-workbook-2b.pdf",
+  },
+  {
+    id: "workbook-3a", title: "Seoul Ishchi Daftari 3A", subtitle: "서울대 연습장 3A",
+    category: "Ishchi daftar", level: "TOPIK II", pages: 198, sizeMb: 24.1,
+    color: "from-cyan-600 to-blue-700", emoji: "📐",
+    description: "3A daraja mashqlari: murakkab gaplar, xatolar tahlili va yozma ishlar.",
+    file: "/books/seoul-workbook-3a.pdf",
+  },
+  {
+    id: "workbook-3b", title: "Seoul Ishchi Daftari 3B", subtitle: "서울대 연습장 3B",
+    category: "Ishchi daftar", level: "TOPIK II", pages: 193, sizeMb: 24.2,
+    color: "from-blue-600 to-indigo-700", emoji: "🧮",
+    description: "3B yakuniy mustahkamlash: imtihon uslubidagi qo'shimcha savollar.",
+    file: "/books/seoul-workbook-3b.pdf",
+  },
+  {
+    id: "culture-reading-1", title: "Madaniyat bilan o'qish 1", subtitle: "문화가 있는 한국어 읽기 1",
+    category: "O'qish", level: "TOPIK I-II", pages: 185, sizeMb: 12.4,
+    color: "from-orange-500 to-rose-600", emoji: "🏮",
+    description: "Qisqa hikoyalar va maqolalar orqali koreys madaniyati bilan birga o'qish mahorati.",
+    file: "/books/culture-reading-1.pdf",
+  },
+  {
+    id: "culture-reading-2", title: "Madaniyat bilan o'qish 2", subtitle: "문화가 있는 한국어 읽기 2",
+    category: "O'qish", level: "TOPIK I-II", pages: 198, sizeMb: 14.4,
+    color: "from-rose-500 to-red-600", emoji: "🎑",
+    description: "Ikkilamchi daraja matnlari: an'analar, hayot va zamonaviy Koreya.",
+    file: "/books/culture-reading-2.pdf",
+  },
+  {
+    id: "culture-reading-3", title: "Madaniyat bilan o'qish 3", subtitle: "문화가 있는 한국어 읽기 3",
+    category: "O'qish", level: "TOPIK II", pages: 189, sizeMb: 13.9,
+    color: "from-purple-600 to-indigo-700", emoji: "🎎",
+    description: "Yuqori o'rta matnlar: tafakkur, munozara va chuqur tushunish uchun o'qishlar.",
+    file: "/books/culture-reading-3.pdf",
   },
 ];
-
-// PDF generatsiya — jsPDF bilan, koreys matni UNICODE (latin transliteratsiyasi bilan)
-// Koreys tili jsPDF'ning default fontida to'g'ri chiqmaydi, shuning uchun PDF uzbek + transliteratsiya bilan beriladi.
-// Keyin real PDF (serverda /public/books/...) paydo bo'lsa, booksData.pdfUrl ni to'ldirib <iframe>da ochamiz.
