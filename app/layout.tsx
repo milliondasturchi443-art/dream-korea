@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegister } from "@/components/sw-register";
-import { TelegramHashBoot } from "@/components/telegram-hash-boot";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -46,7 +45,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Toaster richColors position="top-center" />
         <ServiceWorkerRegister />
-        <TelegramHashBoot />
       </body>
     </html>
   );

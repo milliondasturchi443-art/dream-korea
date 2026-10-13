@@ -9,7 +9,6 @@ import { Logo } from "@/components/logo";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidUZ } from "@/lib/phone";
 import { motion } from "framer-motion";
-import { TelegramLoginButton } from "@/components/telegram-login-button";
 import { toast } from "sonner";
 
 export default function RegisterPage() {
@@ -74,7 +73,6 @@ export default function RegisterPage() {
           <div><label className="text-xs font-medium">Parolni tasdiqlang</label><Input type="password" autoComplete="new-password" value={password2} onChange={e=>setPassword2(e.target.value)} placeholder="••••••••" className="mt-1 text-base sm:text-sm" /></div>
           <Button type="submit" className="w-full mt-2 h-11" disabled={loading}>{loading ? "Yuborilmoqda…" : "Ro‘yxatdan o‘tish"}</Button>
         </form>
-        <TelegramLoginButton />
         <p className="mt-4 text-center text-xs text-slate-500">Akkauntingiz bormi? <Link href="/login" className="text-[#2563eb] font-medium">Kirish</Link></p>
       </Card>
       </motion.div>
