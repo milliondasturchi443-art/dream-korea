@@ -45,7 +45,10 @@ export async function POST(req: Request) {
 const patchSchema = z.object({ id: z.string().regex(/^[a-f\d]{24}$/i), status: z.enum(["new", "contacted", "enrolled"]) });
 
 // Enroll: find-or-create student by phone, add to teacher's group.
-async function enroll(item: { id: string; name: string; phone: string; teacherId: string | null; groupId: string | null }) {
+async function enroll(item: { id: string; name: string; phone: string; days: string; teacherId: string | null; groupId: string | null }) {
+  type EnrollResult =
+    | { ok: true; student: { id: string; email: string }; tempPassword: string | null; groupId: string; groupName: string | null; added: boolean }
+    | { ok: false; error: string; student?: { id: string; email: string }; tempPassword?: string | null };
   const digits = item.phone.replace(/\D/g, "");
   // 1. Existing account by phone?
   let student = await prisma.user.findFirst({
@@ -65,23 +68,37 @@ async function enroll(item: { id: string; name: string; phone: string; teacherId
     } catch {
       // email already taken (race) — try lookup once more
       student = await prisma.user.findFirst({ where: { email }, select: { id: true, email: true } });
-      if (!student) return { error: "Hisob yaratib bo'lmadi" };
+      if (!student) return { ok: false, error: "Hisob yaratib bo'lmadi" } as EnrollResult;
       tempPassword = null;
     }
   }
-  // 3. Resolve group: chosen group → teacher's first group
+  // 3. Resolve group: chosen → teacher's first → auto-create with generated name
   let groupId = item.groupId;
+  let groupName: string | null = null;
   if (!groupId && item.teacherId) {
-    const g = await prisma.group.findFirst({ where: { teacherId: item.teacherId }, select: { id: true }, orderBy: { createdAt: "asc" } });
-    groupId = g?.id ?? null;
+    const g = await prisma.group.findFirst({ where: { teacherId: item.teacherId }, select: { id: true, name: true }, orderBy: { createdAt: "asc" } });
+    if (g) { groupId = g.id; groupName = g.name; }
   }
-  if (!groupId) return { error: "Guruh aniqlanmadi — o'qituvchi va guruhni tanlang", student };
+  if (!groupId) {
+    // Auto-create group with generated name: "<teacher> guruh N" (or "<days> guruh N")
+    const count = item.teacherId
+      ? await prisma.group.count({ where: { teacherId: item.teacherId } })
+      : await prisma.group.count();
+    const label = item.teacherId
+      ? ((await prisma.user.findUnique({ where: { id: item.teacherId }, select: { name: true } }))?.name ?? "Yangi")
+      : item.days.split(",")[0];
+    const name = `${label} guruh ${count + 1}`;
+    const created = await prisma.group.create({ data: { name, teacherId: item.teacherId } });
+    groupId = created.id;
+    groupName = created.name;
+    await prisma.reception.update({ where: { id: item.id }, data: { groupId } }).catch(() => {});
+  }
   let added = false;
   try {
     await prisma.groupMember.create({ data: { groupId, userId: student.id } });
     added = true;
   } catch { added = false; } // already a member
-  return { student, tempPassword, groupId, added };
+  return { ok: true, student, tempPassword, groupId, groupName, added } as EnrollResult;
 }
 
 export async function PATCH(req: Request) {
@@ -94,9 +111,10 @@ export async function PATCH(req: Request) {
     if (!before) return Response.json({ error: "Topilmadi" }, { status: 404 });
     const item = await prisma.reception.update({ where: { id: before.id }, data: { status: parsed.data.status }, include });
     if (parsed.data.status === "enrolled" && before.status !== "enrolled") {
-      const r = await enroll({ id: before.id, name: before.name, phone: before.phone, teacherId: before.teacherId, groupId: before.groupId });
-      if (r.error) return Response.json({ ok: true, item, warn: r.error, created: r.student ? { email: r.student.email, tempPassword: r.tempPassword } : undefined });
-      return Response.json({ ok: true, item, enrolled: { email: r.student!.email, tempPassword: r.tempPassword, added: r.added } });
+      const r = await enroll({ id: before.id, name: before.name, phone: before.phone, days: before.days, teacherId: before.teacherId, groupId: before.groupId });
+      const item2 = await prisma.reception.findUnique({ where: { id: before.id }, include });
+      if (!r.ok) return Response.json({ ok: true, item: item2, warn: r.error, created: r.student ? { email: r.student.email, tempPassword: r.tempPassword } : undefined });
+      return Response.json({ ok: true, item: item2, enrolled: { email: r.student.email, tempPassword: r.tempPassword, added: r.added, groupName: r.groupName } });
     }
     return Response.json({ ok: true, item });
   } catch { return Response.json({ error: "Saqlab bo'lmadi" }, { status: 503 }); }

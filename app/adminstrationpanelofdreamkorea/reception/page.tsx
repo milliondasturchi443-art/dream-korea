@@ -82,7 +82,7 @@ export default function ReceptionPage() {
       if (!r.ok) { setNotice({ ok: false, text: d.error || "Xato" }); return; }
       if (d.enrolled) {
         const e = d.enrolled;
-        setNotice({ ok: true, text: `O'quvchi guruhga qo'shildi${e.added === false ? " (allaqachon a'zo edi)" : ""}. Login: ${e.email}${e.tempPassword ? ` · Vaqtinchalik parol: ${e.tempPassword} (talabaga bering)` : ""}` });
+        setNotice({ ok: true, text: `O'quvchi «${e.groupName ?? "guruh"}» guruhiga qo'shildi${e.added === false ? " (allaqachon a'zo edi)" : ""}. Login: ${e.email}${e.tempPassword ? ` · Vaqtinchalik parol: ${e.tempPassword} (talabaga bering)` : ""}` });
       } else if (d.warn) {
         setNotice({ ok: false, text: d.warn + (d.created?.email ? ` · Login: ${d.created.email}` : "") });
       }
@@ -177,14 +177,14 @@ export default function ReceptionPage() {
                 <div className="flex items-center gap-2 font-semibold text-slate-900">{it.name}
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${it.status === "enrolled" ? "bg-emerald-50 text-emerald-700" : it.status === "contacted" ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{STATUS_LABEL[it.status] ?? it.status}</span>
                 </div>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-slate-700">
+                  <span className="flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5 text-[#2563eb]" />{it.teacher?.name ?? "O'qituvchi tanlanmagan"}</span>
+                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5 text-emerald-600" />{it.group?.name ?? "Guruh avtomatik yaratiladi"}</span>
+                </div>
                 <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
                   <a href={`tel:${it.phone.replace(/\s/g, "")}`} className="flex items-center gap-1 hover:text-[#2563eb]"><Phone className="h-3 w-3" />{it.phone}</a>
                   <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{it.days}</span>
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{it.time}</span>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-3 text-xs font-medium text-slate-700">
-                  <span className="flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5 text-[#2563eb]" />{it.teacher?.name ?? "O'qituvchi tanlanmagan"}</span>
-                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5 text-emerald-600" />{it.group?.name ?? "Guruh tanlanmagan"}</span>
                 </div>
                 {it.note && <p className="mt-1 text-xs text-slate-400">{it.note}</p>}
               </div>
