@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Reveal } from "@/components/reveal";
-import { GraduationCap, Cpu, Users, Trophy, BookOpen, Building2, ChevronDown } from "lucide-react";
+import { GraduationCap, Cpu, Users, Trophy, BookOpen, Building2, ChevronDown, Newspaper } from "lucide-react";
 import { useEffect, useState } from "react";
 import { universities } from "@/lib/mock-data";
 
@@ -17,15 +17,18 @@ const features = [
 ];
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; teacher: string; lessons: number; color: string };
+type NewsItem = { id: string; title: string; body: string; image?: string | null; pinned: boolean; createdAt: string };
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [stats, setStats] = useState<{ db: boolean; students: number; courses: number; lessons: number; tests: number } | null>(null);
+  const [news, setNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
     fetch("/api/courses").then(r => r.json()).then(d => { if (Array.isArray(d.courses)) setCourses(d.courses.slice(0, 3)); }).catch(() => {});
     fetch("/api/stats").then(r => r.json()).then(d => setStats(d)).catch(() => {});
+    fetch("/api/news").then(r => r.json()).then(d => { if (Array.isArray(d.items)) setNews(d.items.slice(0, 5)); }).catch(() => {});
   }, []);
 
   return (
@@ -125,6 +128,36 @@ export default function LandingPage() {
         )}
       </section>
       </Reveal>
+
+      {/* YANGILIKLAR */}
+      {news.length > 0 && (
+      <Reveal>
+      <section className="mx-auto max-w-[1200px] px-4 py-8">
+        <div className="flex items-end justify-between">
+          <h2 className="flex items-center gap-2 text-2xl font-bold text-[#0f1b3d]"><Newspaper className="h-6 w-6 text-[#2563eb]" /> Yangiliklar</h2>
+        </div>
+        <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {news.map(n => (
+            <Card key={n.id} className={`overflow-hidden hover:shadow-md transition-shadow ${n.pinned ? "border-amber-300 bg-amber-50/40 md:col-span-2 lg:col-span-3" : ""}`}>
+              {n.image && (
+                <div className={n.pinned ? "max-h-80 overflow-hidden" : "h-40 overflow-hidden"}>
+                  <img src={n.image} alt={n.title} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="p-4">
+                <div className="flex items-center gap-2">
+                  {n.pinned && <span className="rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-bold">E'LON</span>}
+                  <div className={`font-bold text-slate-900 ${n.pinned ? "text-lg" : ""}`}>{n.title}</div>
+                </div>
+                <p className="mt-1 text-sm text-slate-600 leading-relaxed whitespace-pre-line">{n.body}</p>
+                <div className="mt-2 text-[11px] text-slate-400">{new Date(n.createdAt).toLocaleDateString("uz-UZ")}</div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </section>
+      </Reveal>
+      )}
 
       {/* TOPIK */}
       <Reveal>

@@ -303,6 +303,15 @@ model Payment {
   createdAt DateTime      @default(now())
 }
 
+model News {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  body      String
+  image     String? // data URL (base64) — admin yuklagan rasm
+  pinned    Boolean  @default(false) // e'lon: bosh sahifada yuqorida katta ko'rinadi
+  createdAt DateTime @default(now())
+}
+
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
