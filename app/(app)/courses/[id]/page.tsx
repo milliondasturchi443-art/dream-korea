@@ -100,7 +100,7 @@ export default function CourseDetailPage() {
                         <div className="text-sm font-medium text-slate-900">{idx+1}-dars · {l.title}</div>
                         <div className="text-xs text-slate-500 flex items-center gap-1"><Clock className="h-3 w-3"/>{l.duration} {done ? "· Yakunlandi" : !unlocked ? "· Yopiq — oldingisini tugating" : ""}</div>
                       </div>
-                      <span className="text-xs font-medium hidden sm:block" style={{ color: !unlocked ? "#94a3b8" : "#2563eb" }}>{!unlocked ? "🔒 Yopiq" : done ? "Takrorlash →" : "Ochish →"}</span>
+                      <span className="text-xs font-medium hidden sm:block" style={{ color: !unlocked ? "#94a3b8" : "#2563eb" }}>{!unlocked ? "Yopiq" : done ? "Takrorlash →" : "Ochish →"}</span>
                     </Link>
                   </motion.div>
                 );

@@ -33,7 +33,7 @@ export default function LandingPage() {
       {/* HERO */}
       <section className="mx-auto max-w-[1200px] px-4 py-10 lg:py-14 grid lg:grid-cols-2 gap-8 items-center">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <Badge className="bg-[#eff6ff] text-[#2563eb] border border-blue-100 mb-4">🇰🇷 Koreys tili platformasi</Badge>
+          <Badge className="bg-[#eff6ff] text-[#2563eb] border border-blue-100 mb-4"> Koreys tili platformasi</Badge>
           <h1 className="text-[32px] lg:text-[44px] font-extrabold leading-[1.05] tracking-tight text-[#0f1b3d]">
             Koreys tilini o‘rganing,<br />
             <span className="text-[#2563eb]">orzuingizga yaqinlashing!</span>

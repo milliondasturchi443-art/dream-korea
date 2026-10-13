@@ -150,7 +150,7 @@ export default function GrammarPage() {
     saveProfile(final);
     setProfile(final);
     newly.forEach((a, i) => setTimeout(() =>
-      toast.success(`🏅 Yutuq ochildi — ${a.title}`, { description: a.desc, duration: 4000 }), i * 450));
+      toast.success(`Yutuq ochildi — ${a.title}`, { description: a.desc, duration: 4000 }), i * 450));
     return final;
   }
 
@@ -164,7 +164,7 @@ export default function GrammarPage() {
       setCombo(c);
       p.bestCombo = Math.max(profile.bestCombo, c);
       gain = (firstTry ? XP.correct : XP.correctRetry) + comboBonus(c);
-      if (c === 3 || c === 5 || c === 10 || c === 15) toast.success(`🔥 Combo x${c} — bonus +${comboBonus(c)} XP`);
+      if (c === 3 || c === 5 || c === 10 || c === 15) toast.success(`Combo x${c} — bonus +${comboBonus(c)} XP`);
     } else {
       if (combo >= 3) toast.info(`Combo uzildi (${combo}) — qayta urinib ko'ring`);
       setCombo(0);
@@ -178,7 +178,7 @@ export default function GrammarPage() {
     if (count >= DAILY_TASK && !d.claimed) {
       p.daily.claimed = true;
       gain += XP.daily;
-      toast.success(`📅 Kunlik vazifa bajarildi! +${XP.daily} XP`, { duration: 4000 });
+      toast.success(`Kunlik vazifa bajarildi! +${XP.daily} XP`, { duration: 4000 });
     }
 
     if (gain > 0) { p.xp = profile.xp + gain; float(`+${gain}`); }
@@ -199,7 +199,7 @@ export default function GrammarPage() {
       float(`+${XP.learn}`);
       const f = grammarFolders.find(x => x.topics.some(t => t.id === id));
       if (f && f.topics.every(t => next[t.id])) {
-        toast.success(`🎉 "${f.title}" papkasini to'liq o'zlashtirdingiz!`, { description: `+${XP.learn} XP`, duration: 4000 });
+        toast.success(`Ajoyib! "${f.title}" papkasini to'liq o'zlashtirdingiz!`, { description: `+${XP.learn} XP`, duration: 4000 });
       } else {
         toast.success(`Mavzu o'zlashtirildi ✓ +${XP.learn} XP`);
       }
@@ -275,7 +275,7 @@ export default function GrammarPage() {
     }
     if (gain > 0) float(`+${gain}`);
     commit(p, learned, bestMap);
-    if (pct >= 80) toast.success(`🏆 Ajoyib! ${pct} ball  ·  +${gain} XP`);
+    if (pct >= 80) toast.success(`Ajoyib! ${pct} ball  ·  +${gain} XP`);
     else if (pct >= 50) toast.info(`${pct} ball — yaxshi, biroz ko'proq mashq qiling (+${gain} XP)`);
     else toast.error(`${pct} ball — mavzuni qayta o'qing (+${gain} XP)`);
   }
@@ -328,7 +328,7 @@ export default function GrammarPage() {
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className="text-sm font-black" style={{ color: lvl.cur.color }}>{lvl.cur.name}</span>
               <span className="text-xs font-bold text-slate-400">{profile.xp} XP</span>
-              {combo >= 3 && <span className="text-[11px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">🔥 x{combo}</span>}
+              {combo >= 3 && <span className="text-[11px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700"> x{combo}</span>}
             </div>
             <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden max-w-[260px]">
               <div className="h-full rounded-full transition-all duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
@@ -440,10 +440,10 @@ export default function GrammarPage() {
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex rounded-xl border border-slate-200 overflow-hidden bg-white">
           {([
-            { id: "lesson", label: "📖 Mavzu", icon: BookOpen },
-            { id: "test", label: "🎯 Test", icon: Target },
-            { id: "cards", label: "🃏 Kartalar", icon: Layers },
-            { id: "profile", label: `🏆 Yutuqlar${unlocked ? ` (${unlocked})` : ""}`, icon: Trophy },
+            { id: "lesson", label: "Mavzu", icon: BookOpen },
+            { id: "test", label: "Test", icon: Target },
+            { id: "cards", label: "Kartalar", icon: Layers },
+            { id: "profile", label: `Yutuqlar${unlocked ? ` (${unlocked})` : ""}`, icon: Trophy },
           ] as { id: Mode; label: string; icon: typeof BookOpen }[]).map(m => (
             <button key={m.id} onClick={() => { setMode(m.id); if (m.id === "test") resetTest(); if (m.id === "cards") resetCards(); }}
               className={`px-4 h-9 text-xs font-bold flex items-center gap-1.5 transition ${mode === m.id ? "bg-[#0f1b3d] text-white" : "text-slate-600 hover:bg-slate-50"}`}>
@@ -878,9 +878,9 @@ export default function GrammarPage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <StatTile icon="🔥" label="Seriya" value={`${profile.streak} kun`} color="#ea580c" />
-                <StatTile icon="🎯" label="Aniqlik" value={`${accuracy}%`} color="#059669" />
-                <StatTile icon="⚡" label="Combo" value={`x${profile.bestCombo}`} color="#7c3aed" />
+                <StatTile icon="S" label="Seriya" value={`${profile.streak} kun`} color="#ea580c" />
+                <StatTile icon="%" label="Aniqlik" value={`${accuracy}%`} color="#059669" />
+                <StatTile icon="x" label="Combo" value={`x${profile.bestCombo}`} color="#7c3aed" />
               </div>
             </div>
           </Card>
@@ -907,18 +907,18 @@ export default function GrammarPage() {
 
           {/* Statistika */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <StatTile icon="✅" label="To'g'ri javob" value={`${profile.correct}`} sub={`${profile.answered} urinish`} color="#059669" />
-            <StatTile icon="🎯" label="Aniqlik" value={`${accuracy}%`} color="#2563eb" />
-            <StatTile icon="⚡" label="Eng uzun combo" value={`x${profile.bestCombo}`} color="#7c3aed" />
-            <StatTile icon="🎓" label="Mavzu" value={`${learnedCount}/${totalTopics}`} color="#0f766e" />
-            <StatTile icon="🃏" label="Kartani bildim" value={`${profile.cardsKnown}`} color="#0891b2" />
-            <StatTile icon="🏅" label="Yutuq" value={`${unlocked}/${achievements.length}`} color="#d97706" />
+            <StatTile icon="+" label="To'g'ri javob" value={`${profile.correct}`} sub={`${profile.answered} urinish`} color="#059669" />
+            <StatTile icon="%" label="Aniqlik" value={`${accuracy}%`} color="#2563eb" />
+            <StatTile icon="x" label="Eng uzun combo" value={`x${profile.bestCombo}`} color="#7c3aed" />
+            <StatTile icon="M" label="Mavzu" value={`${learnedCount}/${totalTopics}`} color="#0f766e" />
+            <StatTile icon="K" label="Kartani bildim" value={`${profile.cardsKnown}`} color="#0891b2" />
+            <StatTile icon="Y" label="Yutuq" value={`${unlocked}/${achievements.length}`} color="#d97706" />
           </div>
 
           {/* Yutuqlar */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <span className="font-extrabold text-slate-900">🏅 Yutuqlar</span>
+              <span className="font-extrabold text-slate-900">Yutuqlar</span>
               <div className="w-40"><Progress value={achievements.length ? (unlocked / achievements.length) * 100 : 0} /></div>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -929,7 +929,7 @@ export default function GrammarPage() {
                     className={`rounded-2xl border p-3 flex items-start gap-3 transition ${got ? "" : "bg-white border-slate-200 opacity-55"}`}
                     style={got ? { borderColor: `${a.color}55`, background: `${a.color}0f` } : undefined}>
                     <div className={`h-11 w-11 rounded-xl flex items-center justify-center text-xl shrink-0 ${got ? "medal-pop" : ""}`}
-                      style={{ background: got ? `${a.color}1f` : "#f1f5f9" }}>{got ? a.icon : "🔒"}</div>
+                      style={{ background: got ? `${a.color}1f` : "#f1f5f9" }}>{got ? a.icon : "×"}</div>
                     <div className="min-w-0">
                       <div className={`font-bold text-sm ${got ? "text-slate-900" : "text-slate-500"}`}>{a.title}</div>
                       <div className="text-xs text-slate-500 leading-snug mt-0.5">{a.desc}</div>
@@ -950,12 +950,12 @@ export default function GrammarPage() {
               )}
             </div>
             {profile.history.length === 0 ? (
-              <p className="text-sm text-slate-400">Hozircha test topshirmagansiz — «🎯 Test» rejimini sinab ko&apos;ring.</p>
+              <p className="text-sm text-slate-400">Hozircha test topshirmagansiz — «Test» rejimini sinab ko&apos;ring.</p>
             ) : (
               <div className="space-y-2">
                 {profile.history.map(h => (
                   <div key={h.at} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
-                    <span className="text-lg leading-none">{h.pct >= 80 ? "🏆" : h.pct >= 50 ? "👍" : "📚"}</span>
+                    <span className="text-lg leading-none">{h.pct >= 80 ? "A" : h.pct >= 50 ? "Y" : "K"}</span>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-slate-800 truncate">{h.folderTitle}</div>
                       <div className="text-[11px] text-slate-400">{new Date(h.at).toLocaleDateString()}</div>

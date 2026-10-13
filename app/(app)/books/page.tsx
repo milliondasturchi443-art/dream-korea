@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BOOK_CATEGORIES, booksData, type Book, type BookCategory } from "@/lib/books-data";
-import { BookMarked, Download, Search, Star, Timer, X } from "lucide-react";
+import { BookMarked, Download, Search, Star, Timer, X, Check, Lightbulb } from "lucide-react";
 
 type BookStat = { sec: number; done: boolean };
 type BookState = Record<string, BookStat>;
@@ -129,11 +129,11 @@ export default function BooksPage() {
               <div className={`relative h-36 bg-gradient-to-br ${b.color} p-4 text-white flex flex-col`}>
                 <div className="flex items-start justify-between">
                   <BookMarked className="h-6 w-6 opacity-80" />
-                  <span className="text-3xl" aria-hidden>{b.emoji}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-white/70">{b.code}</span>
                 </div>
                 <div className="mt-auto font-semibold leading-tight line-clamp-2">{b.title}</div>
                 <div className="text-xs text-white/80">{b.subtitle}</div>
-                {st?.done && <span className="absolute top-3 left-10 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-amber-600">⭐ Tugatilgan</span>}
+                {st?.done && <span className="absolute top-3 left-10 flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-amber-600"><Check className="h-3 w-3" /> Tugatilgan</span>}
               </div>
               <div className="p-4 flex-1 flex flex-col gap-2">
                 <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ export default function BooksPage() {
           <div className="bg-white w-full h-full sm:rounded-2xl overflow-hidden flex flex-col sm:max-w-5xl sm:mx-auto sm:max-h-[92vh]">
             <div className={`relative bg-gradient-to-br ${openBook.color} text-white p-4 flex items-center justify-between shrink-0`}>
               <div className="min-w-0">
-                <div className="font-bold text-lg leading-tight truncate">{openBook.emoji} {openBook.title}</div>
+                <div className="font-bold text-lg leading-tight truncate">{openBook.title}</div>
                 <div className="text-xs text-white/80 mt-0.5">{openBook.level} · {openBook.pages} sahifa</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -182,19 +182,19 @@ export default function BooksPage() {
               </div>
               {celebrate && (
                 <div className="medal-pop absolute inset-0 grid place-items-center bg-black/40 text-2xl font-black">
-                  🎉 O‘qib bo‘ldingiz! +{XP_FINISH} XP
+                  O‘qib bo‘ldingiz! +{XP_FINISH} XP
                 </div>
               )}
             </div>
             <iframe src={openBook.file} title={openBook.title} className="flex-1 w-full border-0 min-h-0" />
             <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-slate-500">💡 {TIPS[tip]}</p>
+              <p className="flex items-center gap-1.5 text-xs text-slate-500"><Lightbulb className="h-3.5 w-3.5" /> {TIPS[tip]}</p>
               <div className="flex items-center gap-2">
                 {currentStat?.sec ? (
                   <span className="text-xs text-slate-500 sm:hidden">{fmtTime(currentStat.sec)} · +{currentXp} XP</span>
                 ) : null}
                 {currentStat?.done ? (
-                  <Badge className="bg-amber-50 text-amber-700 border border-amber-200">⭐ Tugatilgan</Badge>
+                  <Badge className="flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200"><Check className="h-3 w-3" /> Tugatilgan</Badge>
                 ) : (
                   <Button size="sm" onClick={() => finishBook(openBook.id)}>O‘qib bo‘ldim · +{XP_FINISH} XP</Button>
                 )}

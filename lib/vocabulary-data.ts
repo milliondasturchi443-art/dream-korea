@@ -7,7 +7,7 @@ export const categories: Cat[] = [
   { id: "number", title: "Raqamlar", icon: "🔢", desc: "1-100 va hisob" },
   { id: "family", title: "Oila", icon: "👨‍👩‍👧", desc: "Qarindoshlar" },
   { id: "food", title: "Ovqat", icon: "🍚", desc: "Restoran va taom" },
-  { id: "work", title: "Ish", icon: "🏭", desc: "Ish joyi, EPS" },
+  { id: "work", title: "Ish", icon: "E", desc: "Ish joyi, EPS" },
   { id: "school", title: "Maktab", icon: "🏫", desc: "Dars va talaba" },
   { id: "travel", title: "Sayohat", icon: "✈️", desc: "Vokzal, metro, aviatsiya" },
   { id: "place", title: "Joylar", icon: "📍", desc: "Shahar ichidagi joylar" },
@@ -17,7 +17,7 @@ export const categories: Cat[] = [
   { id: "clothes", title: "Kiyim", icon: "👕", desc: "Kiyim-kechak" },
   { id: "weather", title: "Havo", icon: "🌤️", desc: "Ob-havo" },
   { id: "feeling", title: "Hissiyot", icon: "😊", desc: "Kayfiyat" },
-  { id: "verb", title: "Fe'llar", icon: "▶️", desc: "Harakat" },
+  { id: "verb", title: "Fe'llar", icon: "F", desc: "Harakat" },
   { id: "market", title: "Do'kon", icon: "🛒", desc: "Xarid qilish" },
 ];
 

@@ -30,7 +30,7 @@ export const grammarFolders: GrammarFolder[] = [
   {
     id: "particles",
     title: "Yuklamalar",
-    icon: "▫️",
+    icon: "Y",
     desc: "Gapning suyagi — 6 ta asosiy yuklama",
     accent: "#2563eb",
     soft: "#eff6ff",
@@ -136,7 +136,7 @@ export const grammarFolders: GrammarFolder[] = [
   {
     id: "verbs",
     title: "Fe'llar",
-    icon: "▶️",
+    icon: "F",
     desc: "Zamon, xohlash, iltimos — har kuni kerak",
     accent: "#7c3aed",
     soft: "#f5f3ff",
@@ -338,7 +338,7 @@ export const grammarFolders: GrammarFolder[] = [
   {
     id: "eps",
     title: "EPS uchun",
-    icon: "🏭",
+    icon: "E",
     desc: "Zavod, xavfsizlik, buyruq — EPS-TOPIK majburiy",
     accent: "#dc2626",
     soft: "#fef2f2",
@@ -602,7 +602,7 @@ export const grammarFolders: GrammarFolder[] = [
   {
     id: "sentence",
     title: "Gap tuzilishi",
-    icon: "✏️",
+    icon: "M",
     desc: "Fe'l oxirida — koreys tilining asosiy qoidasi",
     accent: "#0f766e",
     soft: "#f0fdfa",
