@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { doLogout } from "@/lib/logout";
+import { AiFab } from "@/components/ai-fab";
 import Image from "next/image";
 import {
-  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut, Bot, GraduationCap, CreditCard, ClipboardList, CalendarCheck
+  LayoutDashboard, BookOpen, FileText, Library, SpellCheck, BookMarked, Video, Film, Building2, User, Bell, Search, LogOut, GraduationCap, CreditCard, ClipboardList, CalendarCheck
 } from "lucide-react";
 
 export const studentNav = [
   { href: "/dashboard", label: "Bosh sahifa", icon: LayoutDashboard },
   { href: "/courses", label: "Kurslar", icon: BookOpen },
   { href: "/dars", label: "Darslar", icon: GraduationCap },
-  { href: "/ai", label: "Axrorbek AI", icon: Bot },
   { href: "/topik", label: "TOPIK testlar", icon: FileText },
   { href: "/vocabulary", label: "Lug‘at", icon: Library },
   { href: "/grammar", label: "Grammatika", icon: SpellCheck },
@@ -166,7 +166,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
           { href: "/dars", icon: BookOpen, label: "Darslar" },
-          { href: "/ai", icon: Bot, label: "AI" },
           { href: "/topik", icon: FileText, label: "TOPIK" },
           { href: "/vocabulary", icon: Library, label: "Lug‘at" },
           // Ustoz kabineti — faqat TEACHER (Lug'at va Profil orasida)
@@ -184,6 +183,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <LogOut className="h-5 w-5" /> Chiqish
         </button>
       </nav>
+      <AiFab />
     </div>
   );
 }
