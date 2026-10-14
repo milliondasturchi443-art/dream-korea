@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { TOPIC_SEED_TESTS } from "@/lib/topik-seed";
 export const dynamic = "force-dynamic";
 
 // GET /api/topik — список TOPIK тестов
@@ -8,28 +9,19 @@ export async function GET() {
       include: { _count: { select: { questions: true } } },
       orderBy: { createdAt: "desc" },
     });
-    if (tests.length === 0) {
-      return Response.json({
-        tests: [
-          { id: "seed_topik1_reading", title: "TOPIK I — Reading", level: "TOPIK I", type: "Reading", questions: 15, time: "40 daq" },
-          { id: "seed_topik1_listening", title: "TOPIK I — Listening", level: "TOPIK I", type: "Listening", questions: 15, time: "35 daq" },
-          { id: "seed_topik1_full", title: "TOPIK I — Full Mock", level: "TOPIK I", type: "Full", questions: 30, time: "80 daq" },
-          { id: "seed_topik2_reading", title: "TOPIK II — Reading", level: "TOPIK II", type: "Reading", questions: 5, time: "50 daq" },
-          { id: "seed_eps_reading", title: "EPS-TOPIK — Mehnat", level: "EPS", type: "Reading", questions: 5, time: "20 daq" },
-        ],
-        seeded: true,
-        note: "Seed-testlar (original savollar, rasmiyga o'xshash).",
-      });
-    }
+    const seed = TOPIC_SEED_TESTS.map(t => ({
+      id: t.id, title: t.title, level: t.level, type: t.type,
+      questions: t.questions.length, time: t.time,
+    }));
+    const db = tests.map(t => ({
+      id: t.id, title: t.title, level: t.level, type: t.type,
+      questions: t._count.questions,
+      time: t.type === "Reading" ? "40 daq" : t.type === "Listening" ? "35 daq" : "80 daq",
+    }));
     return Response.json({
-      tests: tests.map(t => ({
-        id: t.id,
-        title: t.title,
-        level: t.level,
-        type: t.type,
-        questions: t._count.questions,
-        time: t.type === "Reading" ? "40 daq" : t.type === "Listening" ? "35 daq" : "80 daq",
-      })),
+      tests: [...seed, ...db],
+      seeded: true,
+      note: "Seed-testlar (original savollar, rasmiy imtihon uslubida).",
     });
   } catch (e) {
     console.error("GET /api/topik", e);
