@@ -55,7 +55,7 @@ export function SiteHeader() {
   const cabHref = me?.role === "ADMIN" ? "/adminstrationpanelofdreamkorea" : me?.role === "TEACHER" ? "/teacher" : "/dashboard";
   const initials = me?.name ? me.name.split(/\s+/).map((w: string) => w[0]).slice(0,2).join("").toUpperCase() : "";
   return (
-    <header className="sticky top-0 z-40 glass border-b border-b-white/70">
+    <header className="sticky top-0 z-40 glass border-b border-b-white/70 safe-top">
       <div className="mx-auto max-w-[1200px] px-4 h-[64px] flex items-center justify-between gap-4">
         <Link href="/"><Logo /></Link>
         <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-700">

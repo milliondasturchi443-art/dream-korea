@@ -53,7 +53,7 @@ export default function AiPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[800px] p-4 lg:p-6 flex flex-col h-[calc(100vh-56px-48px)] lg:h-[calc(100vh-56px-24px)]">
+    <div className="mx-auto max-w-[800px] p-4 lg:p-6 flex flex-col" style={{ height: "calc(100dvh - var(--dk-bottom-nav) - 72px)" }}>
       <div>
         <h1 className="text-[22px] font-bold text-slate-900 flex items-center gap-2"><Sparkles className="h-5 w-5 text-[#2563eb]"/> Axrorbek AI</h1>
         <p className="text-sm text-slate-500">Koreys tili bo‘yicha AI yordamchi: grammatika, lug‘at, tarjima, TOPIK — savolni yozing.</p>
@@ -61,7 +61,7 @@ export default function AiPage() {
 
       <div className="mt-3 flex gap-1.5 flex-wrap">
         {prompts.map(p => (
-          <button key={p} onClick={() => send(p)} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs hover:bg-slate-50">{p}</button>
+          <button key={p} onClick={() => send(p)} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs min-h-[32px] hover:bg-slate-50">{p}</button>
         ))}
       </div>
 

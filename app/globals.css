@@ -127,6 +127,26 @@ input, textarea, select { font-size: 16px; }
 a, button { -webkit-tap-highlight-color: transparent; }
 /* safe-area for iPhone notch / bottom nav */
 .safe-bottom { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+.safe-top { padding-top: env(safe-area-inset-top, 0px); }
+/* unified bottom-nav metrics — used by nav, content padding, FAB */
+:root {
+  --dk-nav-h: 56px;
+  --dk-safe-b: env(safe-area-inset-bottom, 0px);
+  --dk-safe-t: env(safe-area-inset-top, 0px);
+  --dk-bottom-nav: calc(var(--dk-nav-h) + var(--dk-safe-b));
+  /* FAB/chat offsets — mobile: above bottom-nav; desktop: no bottom nav */
+  --dk-fab-bottom: calc(var(--dk-bottom-nav) + 12px);
+  --dk-chat-bottom: calc(var(--dk-bottom-nav) + 76px);
+}
+@media (min-width: 768px) {
+  :root {
+    --dk-fab-bottom: 24px;
+    --dk-chat-bottom: 96px;
+  }
+}
+/* main content padding for mobile bottom nav */
+.dk-main { padding-bottom: var(--dk-bottom-nav); }
+@media (min-width: 768px) { .dk-main { padding-bottom: 0; } }
 
 /* custom scrollbar for sidebar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

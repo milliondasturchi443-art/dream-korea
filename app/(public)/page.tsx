@@ -253,10 +253,10 @@ export default function LandingPage() {
       {/* CTA */}
       <Reveal>
       <section className="mx-auto max-w-[1200px] px-4 pb-10">
-        <Card className="p-8 bg-[#2563eb] text-white border-0 text-center">
-          <h3 className="text-2xl font-bold">Orzuingizdagi Koreyaga bir qadam yaqin</h3>
+        <Card className="p-6 sm:p-8 bg-[#2563eb] text-white border-0 text-center">
+          <h3 className="text-xl sm:text-2xl font-bold">Orzuingizdagi Koreyaga bir qadam yaqin</h3>
           <p className="text-blue-100 text-sm mt-2">Hoziroq ro‘yxatdan o‘ting va birinchi darsni bepul sinab ko‘ring.</p>
-          <div className="mt-5 flex justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link href="/register"><Button variant="outline" className="bg-white text-[#2563eb] border-white hover:bg-slate-100">Ro‘yxatdan o‘tish</Button></Link>
             <Link href="/admission"><Button variant="ghost" className="text-white hover:bg-white/10 border border-white/20">Qabulga ariza</Button></Link>
           </div>

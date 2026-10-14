@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Send, Sparkles, X, BookOpen, Bot } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; text: string; source?: "openrouter" | "openai" | "reference" | "none" };
@@ -11,6 +12,7 @@ const prompts = [
 
 // Axrorbek AI — o'ng pastki burchakdagi tugma, bosilganda chat ochiladi
 export function AiFab() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([
     { role: "assistant", text: "Assalomu alaykum! Men Axrorbek AI — koreys tili yordamchisiman. Grammatika, lug'at, tarjima yoki TOPIK bo'yicha savol bering.", source: "openrouter" },
@@ -19,6 +21,9 @@ export function AiFab() {
   const [loading, setLoading] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // /ai sahifasida FAB kerak emas (o'z chati bor) — ikkita tugma ustma-ust kelmasin
+  const hide = pathname === "/ai" || pathname?.startsWith("/ai?");
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
@@ -54,20 +59,29 @@ export function AiFab() {
     } finally { setLoading(false); }
   }
 
+  if (hide) return null;
+
   return (
     <>
-      {/* FAB — o'ng pastki burchak (mobil nav ustida) */}
+      {/* FAB — o'ng pastki burchak (mobil nav ustida, safe-area bilan) */}
       <button
         onClick={() => setOpen(v => !v)}
         aria-label={open ? "AI yopish" : "Axrorbek AI ochish"}
-        className="fixed right-4 bottom-[84px] md:bottom-6 z-40 h-14 w-14 rounded-full bg-[#2563eb] text-white shadow-[0_8px_24px_-6px_rgba(37,99,235,.55)] grid place-items-center active:scale-90 transition-transform hover:bg-[#1d4ed8]"
+        className="fixed right-4 z-40 h-14 w-14 rounded-full bg-[#2563eb] text-white shadow-[0_8px_24px_-6px_rgba(37,99,235,.55)] grid place-items-center active:scale-90 transition-transform hover:bg-[#1d4ed8]"
+        style={{ bottom: "var(--dk-fab-bottom)" }}
       >
         {open ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
       </button>
 
-      {/* Chat panel */}
+      {/* Chat panel — keyboard-aware via dvh */}
       {open && (
-        <div className="fixed right-3 bottom-[148px] md:bottom-24 z-40 w-[calc(100vw-24px)] max-w-[400px] h-[min(520px,calc(100vh-200px))] rounded-2xl bg-white border border-slate-200 shadow-[0_16px_48px_-12px_rgba(15,27,61,.35)] flex flex-col overflow-hidden animate-in">
+        <div
+          className="fixed right-3 z-40 w-[calc(100vw-24px)] max-w-[400px] rounded-2xl bg-white border border-slate-200 shadow-[0_16px_48px_-12px_rgba(15,27,61,.35)] flex flex-col overflow-hidden animate-in"
+          style={{
+            bottom: "var(--dk-chat-bottom)",
+            height: "min(520px, calc(100dvh - 220px))",
+          }}
+        >
           <div className="flex items-center justify-between gap-2 px-4 py-3 bg-[#0f1b3d] text-white shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <Sparkles className="h-4 w-4 text-blue-300 shrink-0" />
@@ -76,14 +90,14 @@ export function AiFab() {
                 <div className="text-[10px] text-slate-300 leading-tight">Koreys tili yordamchisi</div>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Yopish" className="rounded-lg p-1.5 hover:bg-white/10 transition-colors">
+            <button onClick={() => setOpen(false)} aria-label="Yopish" className="rounded-lg p-2 hover:bg-white/10 transition-colors min-h-[40px] min-w-[40px] grid place-items-center">
               <X className="h-4 w-4" />
             </button>
           </div>
 
           <div className="px-3 pt-2 flex gap-1.5 flex-wrap shrink-0">
             {prompts.map(p => (
-              <button key={p} onClick={() => send(p)} disabled={loading} className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] hover:bg-slate-50 disabled:opacity-50">{p}</button>
+              <button key={p} onClick={() => send(p)} disabled={loading} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] min-h-[32px] hover:bg-slate-50 disabled:opacity-50">{p}</button>
             ))}
           </div>
 
@@ -111,7 +125,7 @@ export function AiFab() {
               onChange={e => setInput(e.target.value)}
               placeholder="Savol yozing…"
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2 text-[13px] focus:border-blue-500 focus:outline-none max-h-24"
+              className="flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2 text-base sm:text-[13px] focus:border-blue-500 focus:outline-none max-h-24"
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             />
             <button onClick={() => send()} disabled={loading || !input.trim()} aria-label="Yuborish" className="shrink-0 h-10 w-10 rounded-xl bg-[#2563eb] text-white grid place-items-center hover:bg-[#1d4ed8] disabled:opacity-40 transition-colors">

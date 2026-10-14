@@ -112,14 +112,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* mobile top */}
-      <div className="md:hidden h-[56px] glass-dark text-white flex items-center justify-between px-4 sticky top-0 z-30">
+      <div className="md:hidden glass-dark text-white flex items-center justify-between px-4 sticky top-0 z-30 safe-top" style={{ height: "var(--dk-nav-h)" }}>
         <Link href="/dashboard" className="flex items-center gap-2 font-bold">
           <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
           DREAM KOREA
         </Link>
-        <div className="flex items-center gap-2">
-          <Link href="/notifications" className="p-2"><Bell className="h-5 w-5" /></Link>
-          <Link href="/profile" className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">{initials}</Link>
+        <div className="flex items-center gap-1">
+          <Link href="/notifications" className="p-2.5 min-h-[44px] min-w-[44px] grid place-items-center"><Bell className="h-5 w-5" /></Link>
+          <Link href="/profile" className="h-9 w-9 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm shrink-0">{initials}</Link>
         </div>
       </div>
 
@@ -150,11 +150,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <LogOut className="h-[18px] w-[18px] shrink-0" /> Chiqish
           </button>
         </aside>
-        <main className="flex-1 min-w-0 pb-[72px] md:pb-0">
+        <main className="flex-1 min-w-0 dk-main">
           {viewAsStudent && (
-            <div className="sticky top-[56px] z-20 flex items-center justify-between gap-3 bg-amber-100 border-b border-amber-300 px-4 py-2 text-sm text-amber-900">
-              <span className="font-medium">Talaba ko‘rinishi — siz talaba sifatida ko‘ryapsiz</span>
-              <button onClick={() => { try { sessionStorage.removeItem("dk_viewas_student"); } catch {} setViewAsStudent(false); router.push("/adminstrationpanelofdreamkorea"); }} className="shrink-0 rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 text-xs font-semibold transition-colors">Admin rejimga qaytish</button>
+            <div className="sticky top-[56px] z-20 flex flex-wrap items-center justify-between gap-2 bg-amber-100 border-b border-amber-300 px-4 py-2 text-sm text-amber-900">
+              <span className="font-medium min-w-0">Talaba ko‘rinishi — siz talaba sifatida ko‘ryapsiz</span>
+              <button onClick={() => { try { sessionStorage.removeItem("dk_viewas_student"); } catch {} setViewAsStudent(false); router.push("/adminstrationpanelofdreamkorea"); }} className="shrink-0 rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 text-xs font-semibold transition-colors min-h-[36px]">Admin rejimga qaytish</button>
             </div>
           )}
           {children}
@@ -162,26 +162,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* mobile bottom nav — safe-area + 44px min tap */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 glass border-t border-t-white/70 flex items-center justify-around py-1 z-30 safe-bottom">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 glass border-t border-t-white/70 flex items-center justify-around py-1 z-30 safe-bottom" style={{ minHeight: "var(--dk-nav-h)" }}>
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
           { href: "/dars", icon: BookOpen, label: "Darslar" },
           { href: "/topik", icon: FileText, label: "TOPIK" },
-          { href: "/vocabulary", icon: Library, label: "Lug‘at" },
+          { href: "/vocabulary", icon: Library, label: "Lug'at" },
           // Ustoz kabineti — faqat TEACHER (Lug'at va Profil orasida)
           ...(role === "TEACHER" && !viewAsStudent ? [{ href: "/teacher", icon: GraduationCap, label: "Ustoz" }] : []),
           { href: "/profile", icon: User, label: "Profil" },
         ].map(i => {
           const active = pathname === i.href;
           return (
-            <Link key={i.label} href={i.href} className={cn("flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-medium min-h-[44px] min-w-[44px] active:scale-90 transition-transform", active ? "text-[#2563eb] bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.35)] nav-pop" : "text-slate-500")}>
+            <Link key={i.label} href={i.href} className={cn("flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 rounded-xl text-[10px] font-medium min-h-[44px] min-w-[44px] whitespace-nowrap active:scale-90 transition-transform", active ? "text-[#2563eb] bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.35)] nav-pop" : "text-slate-500")}>
               <i.icon className="h-5 w-5" /> {i.label}
             </Link>
           );
         })}
-        <button onClick={onLogout} className="flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-medium min-h-[44px] min-w-[44px] text-slate-500 active:scale-90 transition-transform">
-          <LogOut className="h-5 w-5" /> Chiqish
-        </button>
       </nav>
       <AiFab />
     </div>

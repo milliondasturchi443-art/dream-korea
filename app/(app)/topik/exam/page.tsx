@@ -192,7 +192,7 @@ function TopikExamInner() {
         </div>
         <button
           onClick={() => setTimerOn(t => !t)}
-          className={`shrink-0 h-7 px-2.5 rounded-full text-[11px] font-semibold border ${timerOn ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : "bg-white text-slate-500 border-slate-200"}`}
+          className={`shrink-0 h-9 px-3 rounded-full text-[11px] font-semibold border ${timerOn ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : "bg-white text-slate-500 border-slate-200"}`}
           title="Savol taymerini to'xtatish / qayta ishga tushirish"
         >
           {timerOn ? "⏸ Pauza" : "▶ Davom"}
@@ -205,7 +205,7 @@ function TopikExamInner() {
           const answered = !!answers[qid];
           const active = i === idx;
           return (
-            <button key={qid} onClick={() => setIdx(i)} className={`h-8 w-8 rounded-lg text-xs font-bold border ${active ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : answered ? "bg-[#eff6ff] text-[#2563eb] border-blue-200" : "bg-white text-slate-500 border-slate-200"}`}>{i + 1}</button>
+            <button key={qid} onClick={() => setIdx(i)} className={`h-10 w-10 rounded-lg text-xs font-bold border ${active ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : answered ? "bg-[#eff6ff] text-[#2563eb] border-blue-200" : "bg-white text-slate-500 border-slate-200"}`}>{i + 1}</button>
           );
         })}
         {allAnswered && <span className="ml-2 text-xs text-emerald-600 self-center font-medium">✓ barchasi belgilandi</span>}
@@ -246,9 +246,9 @@ function TopikExamInner() {
         <p className="text-xs text-slate-500 mt-3">Javob belgilang va keyingi savolga o‘ting. Yakunlagach natija ekrani ochiladi.</p>
       </Card>
 
-      <div className="flex justify-between">
+      <div className="flex flex-wrap justify-between gap-2">
         <Button variant="ghost" onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0}>Oldingi</Button>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => { if (confirm("Testni yakunlab, natijani ko‘rasizmi?")) void finish(); }} disabled={finishing}>{finishing ? "Yakunlanmoqda…" : "Yakunlash"}</Button>
           {idx < questions.length - 1 ? <Button onClick={next} disabled={finishing}>Keyingi <ChevronRight className="h-4 w-4 ml-1" /></Button> : <Button onClick={() => void finish()} disabled={finishing}>Natijani ko‘rish →</Button>}
         </div>

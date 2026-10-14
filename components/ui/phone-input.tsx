@@ -43,7 +43,7 @@ export function PhoneInput({ value, onValueChange, className, placeholder = "+99
           onBlur={() => setTouched(true)}
           placeholder={placeholder}
           className={cn(
-            "flex h-10 w-full rounded-xl border bg-white pl-[76px] pr-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+            "flex h-10 w-full rounded-xl border bg-white pl-[76px] pr-3 py-2 text-base sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
             showError ? "border-red-300 focus:ring-red-400" : "border-slate-200",
             className
           )}

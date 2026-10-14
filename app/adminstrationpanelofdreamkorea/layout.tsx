@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { doLogout } from "@/lib/logout";
-import { LayoutDashboard, Users, Bell, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff, UserPlus, Newspaper } from "lucide-react";
+import { LayoutDashboard, Users, Bell, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff, UserPlus, Newspaper, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminBase } from "@/lib/admin-base";
 import Image from "next/image";
@@ -94,6 +94,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [state, setState] = useState<"loading" | "authed" | "keygate">("loading");
   const [name, setName] = useState("Admin");
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   // Admin himoyasi: PC ham, telefon ham — faqat kalit (ADMIN_PASSWORD).
   // Email-login bilan kirsam ham kalit so'raymiz; kalit to'g'ri bo'lsa
@@ -138,31 +140,48 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen">
-      <div className="h-[56px] glass-dark text-white flex items-center px-4 lg:px-6 justify-between sticky top-0 z-30 gap-4">
-        <Link href={base} className="flex items-center gap-2 font-bold tracking-tight">
-          <Image src="/adminapklogo.png" alt="" width={30} height={30} className="rounded-lg bg-white p-0.5" />
-          <span className="hidden sm:inline">DREAM KOREA — Admin</span>
-          <span className="sm:hidden">Admin</span>
-        </Link>
+      <div className="h-[56px] glass-dark text-white flex items-center px-4 lg:px-6 justify-between sticky top-0 z-30 gap-4 safe-top">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label="Menyu"
+            className="md:hidden p-2 -ml-2 rounded-xl hover:bg-white/10 min-h-[44px] min-w-[44px] grid place-items-center shrink-0"
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+          <Link href={base} className="flex items-center gap-2 font-bold tracking-tight truncate">
+            <Image src="/adminapklogo.png" alt="" width={30} height={30} className="rounded-lg bg-white p-0.5 shrink-0" />
+            <span className="hidden sm:inline">DREAM KOREA — Admin</span>
+            <span className="sm:hidden">Admin</span>
+          </Link>
+        </div>
         <div className="flex items-center gap-2">
-          <Link href="/notifications" className="p-2 rounded-full hover:bg-white/10"><Bell className="h-5 w-5" /></Link>
-          <div className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">{initials}</div>
-          <button onClick={onLogout} aria-label="Chiqish" className="p-2 rounded-full hover:bg-white/10"><LogOut className="h-5 w-5" /></button>
+          <Link href="/notifications" className="p-2 rounded-full hover:bg-white/10 min-h-[40px] min-w-[40px] grid place-items-center"><Bell className="h-5 w-5" /></Link>
+          <div className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm shrink-0">{initials}</div>
+          <button onClick={onLogout} aria-label="Chiqish" className="p-2 rounded-full hover:bg-white/10 min-h-[40px] min-w-[40px] grid place-items-center"><LogOut className="h-5 w-5" /></button>
         </div>
       </div>
       <div className="flex">
-        <aside className="hidden md:block w-[240px] shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col">
+        <aside className={cn(
+          "md:block w-[240px] shrink-0 md:sticky md:top-[56px] md:h-[calc(100vh-56px)] overflow-auto glass border-r border-r-white/70 p-3 flex flex-col",
+          menuOpen ? "fixed inset-y-0 left-0 z-40 h-full" : "hidden"
+        )}>
+          <div className="md:hidden flex items-center justify-between mb-3 pb-2 border-b border-white/50">
+            <span className="font-bold text-sm">Menyu</span>
+            <button onClick={() => setMenuOpen(false)} aria-label="Yopish" className="p-2 -mr-2"><X className="h-5 w-5" /></button>
+          </div>
           <nav className="space-y-1 flex-1">
             {nav(base).map(([label, href, Icon]) => (
-              <Link key={label} href={href} onClick={label === "Talaba ko‘rinishi" ? enterStudentView : undefined} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2 text-sm font-medium transition-colors",
+              <Link key={label} href={href} onClick={label === "Talaba ko‘rinishi" ? enterStudentView : undefined} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
                 pathname === href ? "bg-white/90 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.4)]" : "text-slate-600 hover:bg-white/60")}>
                 <Icon className="h-4 w-4 shrink-0" /> {label}
               </Link>
             ))}
           </nav>
-          <button onClick={onLogout} className="mt-3 flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 w-full"><LogOut className="h-4 w-4"/> Chiqish</button>
+          <button onClick={onLogout} className="mt-3 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 w-full min-h-[44px]"><LogOut className="h-4 w-4"/> Chiqish</button>
         </aside>
-        <main className="flex-1 min-w-0">{children}</main>
+        {menuOpen && <div className="md:hidden fixed inset-0 bg-black/30 z-30" onClick={() => setMenuOpen(false)} />}
+        <main className="flex-1 min-w-0 dk-main">{children}</main>
       </div>
     </div>
   );

@@ -92,7 +92,7 @@ export default function TopikWritingPage() {
         </div>
         <textarea value={text} onChange={e => setText(e.target.value)} rows={10}
           placeholder="여기에 한국어로 답안을 쓰십시오…"
-          className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-blue-500 focus:outline-none" />
+          className="w-full rounded-xl border border-slate-200 p-3 text-base sm:text-sm focus:border-blue-500 focus:outline-none" />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className={`text-xs ${text.length < prompt.minChars ? "text-slate-500" : "text-emerald-600 font-semibold"}`}>
             {text.length} / {prompt.minChars}+ 자

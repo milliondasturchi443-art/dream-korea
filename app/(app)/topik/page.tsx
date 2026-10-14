@@ -136,7 +136,7 @@ export default function TopikPage() {
       <div className="flex gap-2 overflow-auto pb-1 -mx-1 px-1">
         {["Barchasi", "TOPIK I", "TOPIK II", "Reading", "Listening", "Full"].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${filter === f ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"}`}>{f}</button>
+            className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-medium border transition-colors min-h-[36px] ${filter === f ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"}`}>{f}</button>
         ))}
       </div>
 
