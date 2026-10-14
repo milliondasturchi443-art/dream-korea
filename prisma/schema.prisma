@@ -178,11 +178,20 @@ model Grammar {
 }
 
 model Book {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  level     String
-  pages     Int
-  cover     String?
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  subtitle    String   @default("")
+  category    String   @default("Darslik")
+  level       String   @default("Boshlang'ich")
+  pages       Int      @default(0)
+  sizeMb      Float    @default(0)
+  color       String   @default("from-blue-700 to-indigo-800")
+  code        String   @default("")
+  description String   @default("")
+  cover       String?
+  file        String?
+  fileId      String?
+  createdAt   DateTime @default(now())
 }
 
 model Video {

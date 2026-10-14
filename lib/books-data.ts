@@ -17,6 +17,24 @@ export type Book = {
 
 export const BOOK_CATEGORIES: BookCategory[] = ["TOPIK", "Darslik", "Ishchi daftar", "O'qish"];
 
+// Kitob kartochkasining gradient ranglari (admin tanlaydi, server tekshiradi)
+export const BOOK_COLORS: string[] = [
+  "from-blue-700 to-indigo-800",
+  "from-blue-600 to-indigo-700",
+  "from-rose-600 to-pink-700",
+  "from-rose-500 to-red-600",
+  "from-amber-600 to-orange-700",
+  "from-orange-500 to-rose-600",
+  "from-emerald-600 to-teal-700",
+  "from-green-600 to-emerald-700",
+  "from-lime-600 to-green-700",
+  "from-teal-600 to-cyan-700",
+  "from-cyan-600 to-blue-700",
+  "from-violet-600 to-purple-700",
+  "from-purple-600 to-indigo-700",
+  "from-fuchsia-600 to-pink-700",
+];
+
 export const booksData: Book[] = [
   {
     id: "esp-topik", title: "EPS-TOPIK imtihonga tayyorgarlik", subtitle: "esp topik · ishchi uchun to'liq kurs",

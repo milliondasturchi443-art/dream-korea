@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { doLogout } from "@/lib/logout";
-import { LayoutDashboard, Users, Bell, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff, UserPlus, Newspaper, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Bell, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff, UserPlus, Newspaper, Menu, X, BookMarked } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminBase } from "@/lib/admin-base";
 import Image from "next/image";
@@ -13,6 +13,7 @@ const nav = (base: string) => [
   ["Dashboard", base, LayoutDashboard],
   ["O‘quvchi qo‘shish", `${base}/reception`, UserPlus],
   ["Yangiliklar", `${base}/news`, Newspaper],
+  ["Kitoblar", `${base}/books`, BookMarked],
   ["O‘quvchilar", `${base}/users`, Users],
   ["Qabul arizalari", `${base}/admissions`, FileText],
   ["Guruhlar", `${base}/groups`, Users],

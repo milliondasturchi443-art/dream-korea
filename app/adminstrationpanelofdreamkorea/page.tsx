@@ -77,6 +77,7 @@ export default function AdminPage() {
           ["Qabul arizalari", "Arizalar ro‘yxati", `${base}/admissions`],
           ["Kontent", "Kurslar va darslar", `${base}/content`],
           ["TOPIK testlar", "Testlar", "/topik"],
+          ["Kitoblar", "PDF qo'shish va boshqarish", `${base}/books`],
           ["Universitetlar", "Ro‘yxat", "/universities"],
         ].map(([title, sub, href]) => (
           <Link key={title} href={href}><Card className="p-4 hover:shadow-md hover:border-blue-200 transition-all flex items-center justify-between"><div><div className="font-medium text-sm text-slate-900">{title}</div><div className="text-xs text-slate-500">{sub}</div></div><span className="text-[#2563eb] text-xs font-medium">Ochish →</span></Card></Link>

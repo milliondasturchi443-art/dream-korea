@@ -43,19 +43,28 @@ export default function BooksPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [tip, setTip] = useState(0);
+  const [books, setBooks] = useState<Book[]>(booksData);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => { setState(loadState()); setMounted(true); }, []);
 
-  const filtered = useMemo(() => booksData.filter(b =>
+  // Admin qo'shgan kitoblar (API) + ichki kitoblar; API ishlamasa — ichki kitoblar qoladi
+  useEffect(() => {
+    fetch("/api/books")
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(d => { if (Array.isArray(d.items) && d.items.length) setBooks(d.items as Book[]); })
+      .catch(() => {});
+  }, []);
+
+  const filtered = useMemo(() => books.filter(b =>
     (category === "Barchasi" || b.category === category) &&
     (!query.trim() || `${b.title} ${b.subtitle} ${b.description} ${b.level}`.toLowerCase().includes(query.trim().toLowerCase()))
-  ), [query, category]);
+  ), [query, category, books]);
 
-  const totalXp = useMemo(() => booksData.reduce((sum, b) => sum + bookXp(state[b.id]), 0), [state]);
-  const doneCount = useMemo(() => booksData.filter(b => state[b.id]?.done).length, [state]);
+  const totalXp = useMemo(() => books.reduce((sum, b) => sum + bookXp(state[b.id]), 0), [state, books]);
+  const doneCount = useMemo(() => books.filter(b => state[b.id]?.done).length, [state, books]);
 
-  const openBook = booksData.find(b => b.id === openId);
+  const openBook = books.find(b => b.id === openId);
 
   useEffect(() => {
     if (!openId) return;
@@ -97,7 +106,7 @@ export default function BooksPage() {
           <div className="flex items-center gap-3 text-sm">
             <span className="rounded-full bg-white px-3 py-1.5 font-semibold text-emerald-700">+{totalXp} XP</span>
             <span className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 font-semibold text-amber-600">
-              <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {doneCount}/{booksData.length}
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {doneCount}/{books.length}
             </span>
           </div>
         )}
