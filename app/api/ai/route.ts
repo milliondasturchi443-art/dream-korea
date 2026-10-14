@@ -46,36 +46,51 @@ export async function POST(req: Request) {
   const lastUser = [...messages].reverse().find(m => m.role === "user")?.text?.trim() ?? "";
 
   // 1) OpenRouter (Axrorbek AI) — OPENROUTER_API_KEY bo'lsa
+  // Bepul tez modellar zaxirasi: biri rate-limit bo'lsa keyingisiga o'tamiz
   const orKey = process.env.OPENROUTER_API_KEY;
+  const orModels = (
+    process.env.OPENROUTER_MODEL?.split(",").map(s => s.trim()).filter(Boolean) ?? []
+  );
+  const FREE_MODELS = [
+    "google/gemma-4-26b-a4b-it:free",
+    "qwen/qwen3.8-27b:free",
+    "nvidia/nemotron-3.5-lightning:free",
+    "thinkingmachines/inkling-small:free",
+  ];
+  const modelsToTry = orModels.length ? orModels : FREE_MODELS;
   if (orKey && lastUser) {
-    try {
-      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${orKey}`,
-          "HTTP-Referer": "https://dream-korea.onrender.com",
-          "X-Title": "DREAM KOREA - Axrorbek AI",
-        },
-        body: JSON.stringify({
-          model: process.env.OPENROUTER_MODEL || "xiaomi/mimo-v2.6-flash",
-          messages: [
-            { role: "system", content: AXRORBEK_SYSTEM },
-            ...messages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text })),
-          ],
-          max_tokens: 600,
-        }),
-      });
-      if (r.ok) {
-        const d = await r.json();
-        const reply = d?.choices?.[0]?.message?.content?.trim();
-        if (reply) return Response.json({ reply, source: "openrouter" });
-      } else {
-        const err = await r.text().catch(() => "");
-        console.error("openrouter http", r.status, err.slice(0, 300));
+    for (const model of modelsToTry) {
+      try {
+        const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${orKey}`,
+            "HTTP-Referer": "https://dream-korea.onrender.com",
+            "X-Title": "DREAM KOREA - Axrorbek AI",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: AXRORBEK_SYSTEM },
+              ...messages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text })),
+            ],
+            max_tokens: 600,
+          }),
+        });
+        if (r.ok) {
+          const d = await r.json();
+          const reply = d?.choices?.[0]?.message?.content?.trim();
+          if (reply) return Response.json({ reply, source: "openrouter" });
+        } else {
+          const err = await r.text().catch(() => "");
+          console.error("openrouter http", model, r.status, err.slice(0, 200));
+          // 429/5xx — keyingi modelga o'tamiz; 4xx boshqa xato — shu modelda davom
+          if (r.status === 429 || r.status >= 500) continue;
+        }
+      } catch (e) {
+        console.error("openrouter error", model, e);
       }
-    } catch (e) {
-      console.error("openrouter error", e);
     }
   }
 
