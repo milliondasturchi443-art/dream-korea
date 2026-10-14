@@ -46,9 +46,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "«저는» va «한국은» — bitta harfni unutib qoldirmang: 저는 / 한국은.",
         exercises: [
-          { q: "저 __ 학생입니다.", options: ["는", "가", "를"], correct: 0, hint: "저 (unli) → 는" },
-          { q: "이 책__ 재미있어요.", options: ["은", "는", "가"], correct: 0, hint: "책 (undosh) → 은" },
-          { q: "오늘__ 비가 와요.", options: ["는", "을", "에"], correct: 0 },
+          { q: "저 __ 학생입니다.", options: ["가", "는", "를"], correct: 1, hint: "저 (unli) → 는" },
+          { q: "이 책__ 재미있어요.", options: ["은", "가", "는"], correct: 0, hint: "책 (undosh) → 은" },
+          { q: "오늘__ 비가 와요.", options: ["에", "을", "는"], correct: 2 },
         ],
       },
       {
@@ -62,9 +62,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Mavzu (은/는) — eski gap, ega (이/가) — yangi gap. «민수가 왔어요» to'g'ri, «민수는 왔어요» faqat solishtirishda.",
         exercises: [
-          { q: "누가 왔어요? — 민수__ 왔어요.", options: ["는", "가", "를"], correct: 1, hint: "Yangi axborot → 가" },
-          { q: "고양이__ 귀여워요.", options: ["는", "가", "을"], correct: 1, hint: "고양이 (unli) → 가" },
-          { q: "어디__ 우산이 있어요?", options: ["가", "은", "를"], correct: 0 },
+          { q: "누가 왔어요? — 민수__ 왔어요.", options: ["가", "는", "를"], correct: 0, hint: "Yangi axborot → 가" },
+          { q: "고양이__ 귀여워요.", options: ["을", "가", "는"], correct: 1, hint: "고양이 (unli) → 가" },
+          { q: "어디__ 우산이 있어요?", options: ["가", "를", "은"], correct: 0 },
         ],
       },
       {
@@ -78,9 +78,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Yuklamani OXIRIDA qo'ymang: 「밥을 먹어요」 to'g'ri, 「먹어요 밥을」 emas.",
         exercises: [
-          { q: "물__ 마셔요.", options: ["을", "가", "은"], correct: 0 },
-          { q: "사과__ 먹어요.", options: ["를", "가", "는"], correct: 0, hint: "사과 (unli) → 를" },
-          { q: "한국어__ 공부해요.", options: ["를", "이", "에"], correct: 0 },
+          { q: "물__ 마셔요.", options: ["을", "은", "가"], correct: 0 },
+          { q: "사과__ 먹어요.", options: ["를", "는", "가"], correct: 0, hint: "사과 (unli) → 를" },
+          { q: "한국어__ 공부해요.", options: ["를", "에", "이"], correct: 0 },
         ],
       },
       {
@@ -94,9 +94,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "에 = qayerga (maqsad), 에서 = qayerda (harakat joyi). 「학교에서 공부해요」 — maktabda o'qiyman.",
         exercises: [
-          { q: "학교__ 가요.", options: ["에", "에서", "를"], correct: 0, hint: "Bormoqchi → maqsad → 에" },
-          { q: "아침 7시__ 일어나요.", options: ["에", "에서", "를"], correct: 0 },
-          { q: "집__ 있어요.", options: ["에", "에서", "도"], correct: 0 },
+          { q: "학교__ 가요.", options: ["에서", "에", "를"], correct: 1, hint: "Bormoqchi → maqsad → 에" },
+          { q: "아침 7시__ 일어나요.", options: ["를", "에서", "에"], correct: 2 },
+          { q: "집__ 있어요.", options: ["에서", "도", "에"], correct: 2 },
         ],
       },
       {
@@ -110,9 +110,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Faol joy uchun 에서, tinch joy (maqsad) uchun 에: 「집에 가요」 (uyga boraman), «집에서 쉬어요» (uyda dam olaman).",
         exercises: [
-          { q: "도서관__ 공부해요.", options: ["에서", "에", "를"], correct: 0, hint: "O'qish harakati → 에서" },
-          { q: "부산__ 왔어요.", options: ["에서", "에", "를"], correct: 0 },
-          { q: "지금 회사__ 있어요.", options: ["에서", "을", "도"], correct: 0 },
+          { q: "도서관__ 공부해요.", options: ["에", "에서", "를"], correct: 1, hint: "O'qish harakati → 에서" },
+          { q: "부산__ 왔어요.", options: ["를", "에서", "에"], correct: 1 },
+          { q: "지금 회사__ 있어요.", options: ["에서", "도", "을"], correct: 0 },
         ],
       },
       {
@@ -126,9 +126,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Bitta yuklama joyiga ikkitasini qo'ymang: 「저도는」 emas, «저도».",
         exercises: [
-          { q: "저__ 가고 싶어요.", options: ["도", "는", "를"], correct: 0 },
+          { q: "저__ 가고 싶어요.", options: ["를", "도", "는"], correct: 1 },
           { q: "저는 학생입니다. 민수__ 학생입니다.", options: ["도", "는", "을"], correct: 0, hint: "Qo'shish → 도" },
-          { q: "물__ 마셔요. 커피__ 마셔요.", options: ["도", "에", "가"], correct: 0 },
+          { q: "물__ 마셔요. 커피__ 마셔요.", options: ["가", "에", "도"], correct: 2 },
         ],
       },
     ],
@@ -152,9 +152,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Rasmiy savolni «입니까?» bilan so'rang — «입니다?» emas.",
         exercises: [
-          { q: "저는 의사__.", options: ["입니다", "입니까", "이에요"], correct: 0 },
-          { q: "이것은 책__?", options: ["입니다", "입니까", "이예요"], correct: 1 },
-          { q: "민수는 학생이에요 = rasmiy: 민수는 학생__.", options: ["입니다", "니까", "어요"], correct: 0 },
+          { q: "저는 의사__.", options: ["이에요", "입니까", "입니다"], correct: 2 },
+          { q: "이것은 책__?", options: ["입니까", "이예요", "입니다"], correct: 0 },
+          { q: "민수는 학생이에요 = rasmiy: 민수는 학생__.", options: ["어요", "니까", "입니다"], correct: 2 },
         ],
       },
       {
@@ -169,8 +169,8 @@ export const grammarFolders: GrammarFolder[] = [
         mistake: "하다 qisqa shakli — 해요 (ha + eyo emas).",
         exercises: [
           { q: "가다 → __.", options: ["가요", "가어요", "갑니다"], correct: 0, hint: "ㅏ → 아요" },
-          { q: "먹다 → __.", options: ["먹어요", "먹아요", "먹습니다"], correct: 0, hint: "ㅗ dan boshqa → 어요" },
-          { q: "하다 → __.", options: ["해요", "하아요", "합니다"], correct: 0 },
+          { q: "먹다 → __.", options: ["먹습니다", "먹어요", "먹아요"], correct: 1, hint: "ㅗ dan boshqa → 어요" },
+          { q: "하다 → __.", options: ["합니다", "하아요", "해요"], correct: 2 },
         ],
       },
       {
@@ -185,8 +185,8 @@ export const grammarFolders: GrammarFolder[] = [
         mistake: "가다 → 갔습니다 (ㅆ paydo bo'ladi), «가았습니다» emas.",
         exercises: [
           { q: "가다 (o'tgan, rasmiy) → __.", options: ["갔습니다", "가요", "갑니다"], correct: 0 },
-          { q: "어제 영화를 ___ .", options: ["봤습니다", "봐요", "봅니다"], correct: 0, hint: "보다 → 봤습니다" },
-          { q: "먹다 (norasmiy o'tgan) → __.", options: ["먹었어요", "먹어요", "먹습니다"], correct: 0 },
+          { q: "어제 영화를 ___ .", options: ["봤습니다", "봅니다", "봐요"], correct: 0, hint: "보다 → 봤습니다" },
+          { q: "먹다 (norasmiy o'tgan) → __.", options: ["먹어요", "먹습니다", "먹었어요"], correct: 2 },
         ],
       },
       {
@@ -200,9 +200,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Otdan keyin emas — FE'L + 고 싶다: 「카페고 싶다」 emas, 「가고 싶다」.",
         exercises: [
-          { q: "공장에서 일__ .", options: ["하고 싶어요", "하고 있어요", "할 거예요"], correct: 0 },
-          { q: "한국에 __ .", options: ["가고 싶어요", "가서 싶어요", "가고 있습니다"], correct: 0 },
-          { q: "물을 __ .", options: ["마시고 싶어요", "마셔요", "마십니다"], correct: 0 },
+          { q: "공장에서 일__ .", options: ["하고 있어요", "하고 싶어요", "할 거예요"], correct: 1 },
+          { q: "한국에 __ .", options: ["가고 싶어요", "가고 있습니다", "가서 싶어요"], correct: 0 },
+          { q: "물을 __ .", options: ["마셔요", "마시고 싶어요", "마십니다"], correct: 1 },
         ],
       },
       {
@@ -216,8 +216,8 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Unli: 앉으세요 (으 kesilmaydi), «앉세요» emas.",
         exercises: [
-          { q: "앉다 → __.", options: ["앉으세요", "앉아요", "앉습니다"], correct: 0 },
-          { q: "먹다 (hurmat) → __.", options: ["드세요", "먹어요", "먹습니다"], correct: 0 },
+          { q: "앉다 → __.", options: ["앉습니다", "앉아요", "앉으세요"], correct: 2 },
+          { q: "먹다 (hurmat) → __.", options: ["드세요", "먹습니다", "먹어요"], correct: 0 },
           { q: "오다 → __.", options: ["오세요", "오으세요", "옵니다"], correct: 0 },
         ],
       },
@@ -241,9 +241,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Bir gap ichida «va» = -고 ham bo'ladi: 「빵을 먹고 우유를 마셔요».",
         exercises: [
-          { q: "그리고 nimani bildiradi?", options: ["Va (qo'shish)", "Lekin", "Shuning uchun"], correct: 0 },
-          { q: "나는 학생이다. __ 한국어를 배운다.", options: ["그리고", "하지만", "그래서"], correct: 0 },
-          { q: "「Va» = ?", options: ["그리고", "그래서", "하지만"], correct: 0 },
+          { q: "그리고 nimani bildiradi?", options: ["Lekin", "Shuning uchun", "Va (qo'shish)"], correct: 2 },
+          { q: "나는 학생이다. __ 한국어를 배운다.", options: ["하지만", "그래서", "그리고"], correct: 2 },
+          { q: "「Va» = ?", options: ["하지만", "그리고", "그래서"], correct: 1 },
         ],
       },
       {
@@ -256,9 +256,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Natijani sababdan keyin qo'ymang: 「그래서 비가 와요» emas (bu notog'ri sabab-natija).",
         exercises: [
-          { q: "비가 와요. __ 우산을 가져가요.", options: ["그래서", "그리고", "하지만"], correct: 0 },
+          { q: "비가 와요. __ 우산을 가져가요.", options: ["그래서", "하지만", "그리고"], correct: 0 },
           { q: "「Shuning uchun» = ?", options: ["그래서", "하지만", "그리고"], correct: 0 },
-          { q: "시험을 못 봤어요. __ 집에서 공부해요.", options: ["그래서", "그런데", "그리고"], correct: 0 },
+          { q: "시험을 못 봤어요. __ 집에서 공부해요.", options: ["그리고", "그래서", "그런데"], correct: 1 },
         ],
       },
       {
@@ -271,9 +271,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "하지만 — gap boshida, -지만 — fe'l orasida. Bir xil ma'no, boshqacha shakl.",
         exercises: [
-          { q: "어렵다 __ 재미있다.", options: ["하지만", "그래서", "그리고"], correct: 0 },
-          { q: "「Lekin» = ?", options: ["하지만", "그래서", "때문에"], correct: 0 },
-          { q: "돈이 있어요. __ 못 사요.", options: ["하지만", "그리고", "그래서"], correct: 0 },
+          { q: "어렵다 __ 재미있다.", options: ["그리고", "하지만", "그래서"], correct: 1 },
+          { q: "「Lekin» = ?", options: ["때문에", "하지만", "그래서"], correct: 1 },
+          { q: "돈이 있어요. __ 못 사요.", options: ["하지만", "그래서", "그리고"], correct: 0 },
         ],
       },
       {
@@ -286,9 +286,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Otdan keyin (으)니까 emas: 「비 때문에」 to'g'ri, «비이니까» emas.",
         exercises: [
-          { q: "비 __ 행사가 취소됐어요.", options: ["때문에", "그리고", "하지만"], correct: 0, hint: "Otdan keyin → 때문에" },
-          { q: "피곤하__ 일찍 자요.", options: ["니까", "지만", "고"], correct: 0 },
-          { q: "「Chunki» = ?", options: ["때문에", "그래서", "하지만"], correct: 0 },
+          { q: "비 __ 행사가 취소됐어요.", options: ["그리고", "때문에", "하지만"], correct: 1, hint: "Otdan keyin → 때문에" },
+          { q: "피곤하__ 일찍 자요.", options: ["고", "니까", "지만"], correct: 1 },
+          { q: "「Chunki» = ?", options: ["하지만", "때문에", "그래서"], correct: 1 },
         ],
       },
     ],
@@ -312,9 +312,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Kichik do'stingizga 시 qo'ymang — quruq bo'lib tuyuladi.",
         exercises: [
-          { q: "선생님이 ___ . (hurmat)", options: ["가십니다", "가요", "갑니다"], correct: 0 },
-          { q: "할머니가 밥을 ___ .", options: ["드세요", "먹어요", "먹습니다"], correct: 0 },
-          { q: "가다 + hurmat → __.", options: ["가시다", "가니다", "가지다"], correct: 0 },
+          { q: "선생님이 ___ . (hurmat)", options: ["갑니다", "가요", "가십니다"], correct: 2 },
+          { q: "할머니가 밥을 ___ .", options: ["먹어요", "드세요", "먹습니다"], correct: 1 },
+          { q: "가다 + hurmat → __.", options: ["가지다", "가니다", "가시다"], correct: 2 },
         ],
       },
       {
@@ -328,7 +328,7 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Do'stingizga 「드렸어요» demang — ko'pincha kulgili eshitiladi.",
         exercises: [
-          { q: "선생님께 책을 ___ .", options: ["드렸어요", "줬어요", "받았어요"], correct: 0 },
+          { q: "선생님께 책을 ___ .", options: ["줬어요", "드렸어요", "받았어요"], correct: 1 },
           { q: "친구에게 사과를 ___ .", options: ["줬어요", "드렸어요", "왔어요"], correct: 0 },
           { q: "「Beraman (hurmat)» = ?", options: ["드립니다", "줍니다", "받습니다"], correct: 0 },
         ],
@@ -354,9 +354,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Otdan keyin emas — FE'L + 아야: 「안전모는 써야 합니다」 to'g'ri, «안전모야» emas.",
         exercises: [
-          { q: "안전모를 ___ .", options: ["써야 합니다", "벗어야 합니다", "버려야 합니다"], correct: 0 },
-          { q: "먼저 손을 ___ .", options: ["씻어야 해요", "씻어요", "씁니다"], correct: 0 },
-          { q: "「Qilish kerak» = ?", options: ["해야 합니다", "하고 싶습니다", "하고 있습니다"], correct: 0 },
+          { q: "안전모를 ___ .", options: ["벗어야 합니다", "버려야 합니다", "써야 합니다"], correct: 2 },
+          { q: "먼저 손을 ___ .", options: ["씁니다", "씻어야 해요", "씻어요"], correct: 1 },
+          { q: "「Qilish kerak» = ?", options: ["하고 있습니다", "해야 합니다", "하고 싶습니다"], correct: 1 },
         ],
       },
       {
@@ -370,9 +370,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "안 돼요 — ogohlantirish; 안 됩니다 — rasmiy taqiq. Imtihonda 안 됩니다 variantini tanlang.",
         exercises: [
-          { q: "여기서 사진을 찍__ .", options: ["으면 안 됩니다", "어야 합니다", "고 싶습니다"], correct: 0 },
-          { q: "기계를 만지면 ___ .", options: ["안 됩니다", "됩니다", "싶습니다"], correct: 0 },
-          { q: "「Mumkin emas» = ?", options: ["안 됩니다", "됩니다", "합니다"], correct: 0 },
+          { q: "여기서 사진을 찍__ .", options: ["으면 안 됩니다", "고 싶습니다", "어야 합니다"], correct: 0 },
+          { q: "기계를 만지면 ___ .", options: ["싶습니다", "됩니다", "안 됩니다"], correct: 2 },
+          { q: "「Mumkin emas» = ?", options: ["합니다", "됩니다", "안 됩니다"], correct: 2 },
         ],
       },
     ],
@@ -396,8 +396,8 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Raqamli yozuv (1개) faqat hujjatda. Kundalikda 한/두/세 bilan hisoblang.",
         exercises: [
-          { q: "«Ikki» = ?", options: ["두", "한", "세"], correct: 0 },
-          { q: "«Uch» = ?", options: ["세", "두", "네"], correct: 0 },
+          { q: "«Ikki» = ?", options: ["두", "세", "한"], correct: 0 },
+          { q: "«Uch» = ?", options: ["네", "세", "두"], correct: 1 },
           { q: "«O'n» = ?", options: ["열", "한", "네"], correct: 0 },
         ],
       },
@@ -412,8 +412,8 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Odamlarga 개 ishlatmang: 「사람 다섯 개」 emas — «사람 다섯 명».",
         exercises: [
-          { q: "사과 다섯 ___ .", options: ["개", "명", "분"], correct: 0 },
-          { q: "사람 세 ___ .", options: ["명", "개", "병"], correct: 0 },
+          { q: "사과 다섯 ___ .", options: ["분", "개", "명"], correct: 1 },
+          { q: "사람 세 ___ .", options: ["명", "병", "개"], correct: 0 },
           { q: "물 한 ___ .", options: ["병", "명", "개"], correct: 0 },
         ],
       },
@@ -428,7 +428,7 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Vaqt uchun 언제, SOAT uchun 몇 시 — aralashtirmang.",
         exercises: [
-          { q: "Mol-hol narxi? → ___ 예요?", options: ["얼마", "몇", "무엇"], correct: 0 },
+          { q: "Mol-hol narxi? → ___ 예요?", options: ["얼마", "무엇", "몇"], correct: 0 },
           { q: "Soat qachon? → ___ 시?", options: ["몇", "얼마", "무엇"], correct: 0 },
           { q: "«Nechta» = ?", options: ["몇", "얼마", "언제"], correct: 0 },
         ],
@@ -444,8 +444,8 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "«이십» (sino-koreyscha 20) kundalik emas — 스물 deyiladi.",
         exercises: [
-          { q: "20 = ?", options: ["스물", "열", "서른"], correct: 0 },
-          { q: "30 = ?", options: ["서른", "스물", "쉰"], correct: 0 },
+          { q: "20 = ?", options: ["서른", "스물", "열"], correct: 1 },
+          { q: "30 = ?", options: ["스물", "쉰", "서른"], correct: 2 },
           { q: "100 = ?", options: ["백", "천", "열"], correct: 0 },
         ],
       },
@@ -470,9 +470,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Hafta kuni -일 (월요일), oy -월 (3월) — oxiridagi harfni adashtirmang.",
         exercises: [
-          { q: "Mart = ?", options: ["3월", "5월", "12월"], correct: 0 },
-          { q: "12월 = ?", options: ["Dekabr", "Yanvar", "Noyabr"], correct: 0 },
-          { q: "「Mart oyida» = ?", options: ["3월에", "3일에", "3시에"], correct: 0 },
+          { q: "Mart = ?", options: ["5월", "3월", "12월"], correct: 1 },
+          { q: "12월 = ?", options: ["Dekabr", "Noyabr", "Yanvar"], correct: 0 },
+          { q: "「Mart oyida» = ?", options: ["3시에", "3월에", "3일에"], correct: 1 },
         ],
       },
       {
@@ -486,9 +486,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "«요일» qo'shilmaydigan kunlar uchun — 오는 화요일 kabi qo'shimcha kerak bo'ladi.",
         exercises: [
-          { q: "Juma = ?", options: ["금요일", "목요일", "토요일"], correct: 0 },
-          { q: "Shanba = ?", options: ["토요일", "일요일", "금요일"], correct: 0 },
-          { q: "Yakshanba = ?", options: ["일요일", "월요일", "수요일"], correct: 0 },
+          { q: "Juma = ?", options: ["토요일", "목요일", "금요일"], correct: 2 },
+          { q: "Shanba = ?", options: ["금요일", "일요일", "토요일"], correct: 2 },
+          { q: "Yakshanba = ?", options: ["월요일", "수요일", "일요일"], correct: 2 },
         ],
       },
       {
@@ -502,9 +502,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "내일 = ertaga, 모레 = indigan («indigan» bilan adashtirmang).",
         exercises: [
-          { q: "Ertaga = ?", options: ["내일", "어제", "오늘"], correct: 0 },
-          { q: "Kecha = ?", options: ["어제", "오늘", "내일"], correct: 0 },
-          { q: "「Bugun» = ?", options: ["오늘", "어제", "모레"], correct: 0 },
+          { q: "Ertaga = ?", options: ["오늘", "어제", "내일"], correct: 2 },
+          { q: "Kecha = ?", options: ["내일", "어제", "오늘"], correct: 1 },
+          { q: "「Bugun» = ?", options: ["어제", "모레", "오늘"], correct: 2 },
         ],
       },
       {
@@ -518,9 +518,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "시 (soat nuqtasi) va 시간 (davomiylik) — farq: 3시 (3 da) / 3시간 (3 soat davom).",
         exercises: [
-          { q: "5 daqiqa = ?", options: ["5분", "5시", "5초"], correct: 0 },
-          { q: "Ikki soat (davom) = ?", options: ["두 시간", "두 시", "두 분"], correct: 0 },
-          { q: "«Soat nechada?» = ?", options: ["몇 시예요?", "몇 분예요?", "몇 개예요?"], correct: 0 },
+          { q: "5 daqiqa = ?", options: ["5분", "5초", "5시"], correct: 0 },
+          { q: "Ikki soat (davom) = ?", options: ["두 분", "두 시간", "두 시"], correct: 1 },
+          { q: "«Soat nechada?» = ?", options: ["몇 개예요?", "몇 분예요?", "몇 시예요?"], correct: 2 },
         ],
       },
     ],
@@ -544,9 +544,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Kundalikda 대부분 «뭐» ishlatiladi — «무엇» biroz mantiqan tarang eshitiladi.",
         exercises: [
-          { q: "Norasmiy «Nima» = ?", options: ["뭐", "무엇", "누구"], correct: 0 },
-          { q: "«Nimani» = ?", options: ["무엇을", "어디에", "언제"], correct: 0 },
-          { q: "이거 ___ 예요?", options: ["뭐", "누구", "언제"], correct: 0 },
+          { q: "Norasmiy «Nima» = ?", options: ["누구", "무엇", "뭐"], correct: 2 },
+          { q: "«Nimani» = ?", options: ["언제", "어디에", "무엇을"], correct: 2 },
+          { q: "이거 ___ 예요?", options: ["뭐", "언제", "누구"], correct: 0 },
         ],
       },
       {
@@ -560,9 +560,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "어디서 (qayerda) ≠ 어디에 (qayerga). «집에서» = uyda, «집에» = uyga.",
         exercises: [
-          { q: "Harakat joyi «qayerda» = ?", options: ["어디서", "어디에", "언제"], correct: 0 },
-          { q: "«Qayerga» (maqsad) = ?", options: ["어디에", "어디서", "무엇을"], correct: 0 },
-          { q: "어디__ 살아요?", options: ["에", "에서", "를"], correct: 0 },
+          { q: "Harakat joyi «qayerda» = ?", options: ["어디에", "언제", "어디서"], correct: 2 },
+          { q: "«Qayerga» (maqsad) = ?", options: ["어디서", "무엇을", "어디에"], correct: 2 },
+          { q: "어디__ 살아요?", options: ["에서", "를", "에"], correct: 2 },
         ],
       },
       {
@@ -576,9 +576,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "«Qachon kelasan?» → 언제, lekin «soat nechada?» → 몇 시.",
         exercises: [
-          { q: "Soat qachon? = ?", options: ["몇 시", "언제", "어디"], correct: 0 },
-          { q: "Umumiy «qachon» = ?", options: ["언제", "몇 시", "무엇"], correct: 0 },
-          { q: "9시___ 5시까지 일해요.", options: ["부터", "에서", "까지"], correct: 0 },
+          { q: "Soat qachon? = ?", options: ["몇 시", "어디", "언제"], correct: 0 },
+          { q: "Umumiy «qachon» = ?", options: ["몇 시", "언제", "무엇"], correct: 1 },
+          { q: "9시___ 5시까지 일해요.", options: ["까지", "부터", "에서"], correct: 1 },
         ],
       },
       {
@@ -593,8 +593,8 @@ export const grammarFolders: GrammarFolder[] = [
         mistake: "왜 — sabab so'raydi, 어떻게 — usul. «왜 이렇게?» = nega bunday (ikkalasi aralash).",
         exercises: [
           { q: "«Nega» = ?", options: ["왜", "어떻게", "무엇"], correct: 0 },
-          { q: "«Qanday» (usul) = ?", options: ["어떻게", "왜", "누가"], correct: 0 },
-          { q: "누가 ___ ?", options: ["왔어요", "먹어요", "갑니다"], correct: 0 },
+          { q: "«Qanday» (usul) = ?", options: ["어떻게", "누가", "왜"], correct: 0 },
+          { q: "누가 ___ ?", options: ["먹어요", "왔어요", "갑니다"], correct: 1 },
         ],
       },
     ],
@@ -618,9 +618,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "Inglizcha tartibda yozmang: 「I go school」 emas — 「저는 학교에 가요».",
         exercises: [
-          { q: "Fe'l qayerda turadi?", options: ["Oxirida", "Boshida", "Ortasida"], correct: 0 },
+          { q: "Fe'l qayerda turadi?", options: ["Oxirida", "Ortasida", "Boshida"], correct: 0 },
           { q: "«Men yeyman» qaysi?", options: ["저는 먹어요", "먹어요 저는", "먹는 저는"], correct: 0 },
-          { q: "Koreyscha asosiy qoida = ?", options: ["Fe'l oxirida", "Fe'l boshida", "Yuklamasiz gap"], correct: 0 },
+          { q: "Koreyscha asosiy qoida = ?", options: ["Fe'l boshida", "Yuklamasiz gap", "Fe'l oxirida"], correct: 2 },
         ],
       },
       {
@@ -634,9 +634,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "안 vs 못: «안 먹어요» = yemayman (rad), «못 먹어요» = yeye olmayman (og'iz og'riq).",
         exercises: [
-          { q: "«Qila olmayman» = ?", options: ["못", "안", "안에"], correct: 0 },
-          { q: "«Bormayman» (iroda) = ?", options: ["안 가요", "못 가요", "가요"], correct: 0 },
-          { q: "안 __ ? («Yeysanmi?» rad)", options: ["먹어요", "먹을래요", "먹었어요"], correct: 0 },
+          { q: "«Qila olmayman» = ?", options: ["안", "안에", "못"], correct: 2 },
+          { q: "«Bormayman» (iroda) = ?", options: ["못 가요", "안 가요", "가요"], correct: 1 },
+          { q: "안 __ ? («Yeysanmi?» rad)", options: ["먹었어요", "먹을래요", "먹어요"], correct: 2 },
         ],
       },
       {
@@ -650,9 +650,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "집으로 = uyga (yo'nalish) va 집에 = uyga (maqsad) — ko'p joyda almashsa ham bo'ladi, lekin vositada 로 shart.",
         exercises: [
-          { q: "Maqsad «qayerga» = ?", options: ["에", "에서", "도"], correct: 0 },
-          { q: "Vosita «orqali» = ?", options: ["로", "에", "서"], correct: 0 },
-          { q: "학교__ 갑니다. (maqsad)", options: ["에", "로", "에서"], correct: 0 },
+          { q: "Maqsad «qayerga» = ?", options: ["도", "에서", "에"], correct: 2 },
+          { q: "Vosita «orqali» = ?", options: ["에", "로", "서"], correct: 1 },
+          { q: "학교__ 갑니다. (maqsad)", options: ["에서", "로", "에"], correct: 2 },
         ],
       },
     ],
@@ -678,7 +678,7 @@ export const grammarFolders: GrammarFolder[] = [
         exercises: [
           { q: "«Yeyish» = ?", options: ["먹다", "마시다", "자다"], correct: 0 },
           { q: "비빔밥을 ___ .", options: ["먹어요", "마셔요", "읽어요"], correct: 0 },
-          { q: "물을 ___ .", options: ["마셔요", "먹어요", "달어요"], correct: 0 },
+          { q: "물을 ___ .", options: ["달어요", "먹어요", "마셔요"], correct: 2 },
         ],
       },
       {
@@ -692,9 +692,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "«Keldim» = 왔어요, «Bordim» = 갔어요 — tish (ㅆ) ni unutmang.",
         exercises: [
-          { q: "«Kelish» = ?", options: ["오다", "가다", "있다"], correct: 0 },
-          { q: "«Bordim» (rasmiy) = ?", options: ["갔습니다", "왔습니다", "먹었습니다"], correct: 0 },
-          { q: "집__ 가요.", options: ["에", "서", "로"], correct: 0 },
+          { q: "«Kelish» = ?", options: ["오다", "있다", "가다"], correct: 0 },
+          { q: "«Bordim» (rasmiy) = ?", options: ["먹었습니다", "왔습니다", "갔습니다"], correct: 2 },
+          { q: "집__ 가요.", options: ["로", "서", "에"], correct: 2 },
         ],
       },
       {
@@ -708,9 +708,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "«Keldi» (o'tgan) emas — 있다 = mavjudlik: 「책이 있어요» (kitob bor).",
         exercises: [
-          { q: "«Bor» (mavjudlik) = ?", options: ["있다", "없다", "하다"], correct: 0 },
-          { q: "«Yo'q» = ?", options: ["없다", "있다", "옵니다"], correct: 0 },
-          { q: "시간이 ___ .", options: ["없어요", "있어요", "왔어요"], correct: 0 },
+          { q: "«Bor» (mavjudlik) = ?", options: ["없다", "있다", "하다"], correct: 1 },
+          { q: "«Yo'q» = ?", options: ["있다", "옵니다", "없다"], correct: 2 },
+          { q: "시간이 ___ .", options: ["있어요", "없어요", "왔어요"], correct: 1 },
         ],
       },
       {
@@ -724,9 +724,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "하다 → 해요 (qisqa), «하어요» emas.",
         exercises: [
-          { q: "«O'qish» = ?", options: ["공부하다", "먹다", "자다"], correct: 0 },
-          { q: "하다 (hozirgi) → ?", options: ["해요", "하요", "합니다"], correct: 0 },
-          { q: "전화를 ___ .", options: ["해요", "먹어요", "자요"], correct: 0 },
+          { q: "«O'qish» = ?", options: ["자다", "공부하다", "먹다"], correct: 1 },
+          { q: "하다 (hozirgi) → ?", options: ["해요", "합니다", "하요"], correct: 0 },
+          { q: "전화를 ___ .", options: ["자요", "먹어요", "해요"], correct: 2 },
         ],
       },
       {
@@ -740,9 +740,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "일어나다 — «turish» (emov), 일어서다 — «o'tirib turish» (tana) — farq bor.",
         exercises: [
-          { q: "«Turish» = ?", options: ["일어나다", "자다", "쓰다"], correct: 0 },
-          { q: "«Uxlab qoldim» = ?", options: ["잠들었어요", "일어났어요", "씻었어요"], correct: 0 },
-          { q: "밤 열한 시에 ___ .", options: ["자요", "일어나요", "씻어요"], correct: 0 },
+          { q: "«Turish» = ?", options: ["일어나다", "쓰다", "자다"], correct: 0 },
+          { q: "«Uxlab qoldim» = ?", options: ["잠들었어요", "씻었어요", "일어났어요"], correct: 0 },
+          { q: "밤 열한 시에 ___ .", options: ["씻어요", "일어나요", "자요"], correct: 2 },
         ],
       },
     ],
@@ -767,7 +767,7 @@ export const grammarFolders: GrammarFolder[] = [
         mistake: "«주세요» fe'ldan keyin emas — odatda narsa bilan: 「물 주세요».",
         exercises: [
           { q: "«Suv bering» = ?", options: ["물 주세요", "물 있어요", "물 먹어요"], correct: 0 },
-          { q: "«Menyu» = ?", options: ["메뉴", "계산", "카드"], correct: 0 },
+          { q: "«Menyu» = ?", options: ["카드", "메뉴", "계산"], correct: 1 },
           { q: "이걸로 ___ .", options: ["주세요", "있어요", "갑니다"], correct: 0 },
         ],
       },
@@ -782,9 +782,9 @@ export const grammarFolders: GrammarFolder[] = [
         ],
         mistake: "«Rahmat» = 감사합니다, «kechirasiz» = 죄송합니다 — almashtirmang.",
         exercises: [
-          { q: "«Rahmat» = ?", options: ["감사합니다", "죄송합니다", "안녕하세요"], correct: 0 },
-          { q: "«Kechirasiz» = ?", options: ["죄송합니다", "감사합니다", "안녕히 계세요"], correct: 0 },
-          { q: "도와주셔서 __ .", options: ["감사합니다", "미안합니다", "안녕하세요"], correct: 0 },
+          { q: "«Rahmat» = ?", options: ["안녕하세요", "죄송합니다", "감사합니다"], correct: 2 },
+          { q: "«Kechirasiz» = ?", options: ["죄송합니다", "안녕히 계세요", "감사합니다"], correct: 0 },
+          { q: "도와주셔서 __ .", options: ["미안합니다", "감사합니다", "안녕하세요"], correct: 1 },
         ],
       },
       {
@@ -799,8 +799,8 @@ export const grammarFolders: GrammarFolder[] = [
         mistake: "「카드로 할게요» — «karta bilan qilaman» (tilov), «카드예요» — «karta (o'zi)».",
         exercises: [
           { q: "«Hisob» = ?", options: ["계산", "영수증", "카드"], correct: 0 },
-          { q: "«Chek» = ?", options: ["영수증", "계산", "현금"], correct: 0 },
-          { q: "카드__ 할게요.", options: ["로", "에", "서"], correct: 0 },
+          { q: "«Chek» = ?", options: ["계산", "영수증", "현금"], correct: 1 },
+          { q: "카드__ 할게요.", options: ["로", "서", "에"], correct: 0 },
         ],
       },
       {
@@ -815,8 +815,8 @@ export const grammarFolders: GrammarFolder[] = [
         mistake: "«Xayr» uchun: ketyotgan odamga → 안녕히 가세요, qolayotgan odamga → 안녕히 계세요.",
         exercises: [
           { q: "Rasmiy salom = ?", options: ["안녕하세요", "안녕", "잘자"], correct: 0 },
-          { q: "Qolayotgan odamga xayr = ?", options: ["안녕히 계세요", "안녕히 가세요", "잘 자요"], correct: 0 },
-          { q: "Birinchi tanishuv = ?", options: ["처음 뵙겠습니다", "감사합니다", "죄송합니다"], correct: 0 },
+          { q: "Qolayotgan odamga xayr = ?", options: ["안녕히 가세요", "안녕히 계세요", "잘 자요"], correct: 1 },
+          { q: "Birinchi tanishuv = ?", options: ["죄송합니다", "처음 뵙겠습니다", "감사합니다"], correct: 1 },
         ],
       },
     ],
