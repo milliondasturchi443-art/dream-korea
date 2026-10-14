@@ -243,7 +243,7 @@ export const TOPIC_SEED_TESTS: SeedTest[] = [
     ],
   },
   {
-    id: "seed_topik2_full", title: "TOPIK II — Full Mock (40 savol)", level: "TOPIK II", type: "Full", time: "110 daq",
+    id: "seed_topik2_full", title: "TOPIK II — Full Mock (41 savol)", level: "TOPIK II", type: "Full", time: "110 daq",
     questions: [
     { text: "[R] 다음 글의 요지는?\n「탄소중립은 선택이 아닌 필수가 되었다. 기업도, 개인도 변화에 동참해야 한다.」", options: [{ key: "A", text: "탄소중립 동참의 필수성" }, { key: "B", text: "탄소중립의 불필요" }, { key: "C", text: "개인만 노력해야 한다" }, { key: "D", text: "기업은 제외된다" }], correct: "A", explanation: "탄소중립 동참의 필수성" },
     { text: "[R] 빈칸: 이 시설은 장애인의 ___ 을 고려하여 설계되었다.", options: [{ key: "A", text: "요리" }, { key: "B", text: "접근성" }, { key: "C", text: "수면" }, { key: "D", text: "취미" }], correct: "B", explanation: "접근성" },

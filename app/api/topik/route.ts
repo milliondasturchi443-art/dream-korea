@@ -13,6 +13,10 @@ export async function GET() {
       id: t.id, title: t.title, level: t.level, type: t.type,
       questions: t.questions.length, time: t.time,
     }));
+    seed.unshift({
+      id: "seed_topik1_full", title: "TOPIK I — Full Mock (30 savol)",
+      level: "TOPIK I", type: "Full", questions: 30, time: "80 daq",
+    });
     const db = tests.map(t => ({
       id: t.id, title: t.title, level: t.level, type: t.type,
       questions: t._count.questions,
