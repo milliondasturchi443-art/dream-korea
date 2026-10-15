@@ -133,9 +133,9 @@ export default function AdminGroupsPage(){
 
       <Card className="p-4">
         <div className="font-semibold text-sm">Yangi guruh</div>
-        <div className="mt-3 grid sm:grid-cols-[1fr_220px_120px] gap-2">
+        <div className="mt-3 grid sm:grid-cols-[minmax(0,1fr)_220px_120px] gap-2">
           <Input placeholder="Guruh nomi (mas: TOPIK I — A guruh)" value={name} onChange={e=>setName(e.target.value)} />
-          <select value={teacherId} onChange={e=>setTeacherId(e.target.value)} className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm">
+          <select value={teacherId} onChange={e=>setTeacherId(e.target.value)} className="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm">
             <option value="">— Ustoz tanlang (ixtiyoriy) —</option>
             {teachers.map(t=> <option key={t.id} value={t.id}>{t.name} — {t.email}</option>)}
           </select>

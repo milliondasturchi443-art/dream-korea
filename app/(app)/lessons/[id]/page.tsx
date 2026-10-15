@@ -79,7 +79,7 @@ export default function LessonPage() {
         <div className="text-xs text-slate-500">{curIdx+1} / {lessons.length} {done ? "· Yakunlandi" : ""}</div>
       </motion.div>
 
-      <div className="grid lg:grid-cols-[1fr_320px] gap-5">
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-5">
         <div className="space-y-4">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             <Card className="overflow-hidden">

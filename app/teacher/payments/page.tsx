@@ -121,8 +121,8 @@ export default function TeacherPaymentsPage() {
       {/* To'lov eslatmasi yuborish */}
       <Card className="p-4">
         <div className="font-semibold text-sm flex items-center gap-2"><BellRing className="h-4 w-4 text-amber-500"/> To'lov eslatmasi yuborish</div>
-        <div className="mt-3 grid sm:grid-cols-[1fr_140px_160px_1fr_auto] gap-2">
-          <select value={studentId} onChange={e => setStudentId(e.target.value)} className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm">
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_140px_160px_minmax(0,1fr)_auto] gap-2">
+          <select value={studentId} onChange={e => setStudentId(e.target.value)} className="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm">
             <option value="">— O'quvchini tanlang —</option>
             {students.map(s => (
               <option key={s.id} value={s.id}>
@@ -133,7 +133,7 @@ export default function TeacherPaymentsPage() {
           <Input placeholder="Summa" inputMode="numeric" value={amount} onChange={e => setAmount(e.target.value)} />
           <Input type="month" value={month} onChange={e => setMonth(e.target.value)} />
           <Input placeholder="Izoh (ixtiyoriy)" value={note} onChange={e => setNote(e.target.value)} />
-          <Button onClick={sendReminder} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin mr-1"/> : <BellRing className="h-4 w-4 mr-1"/>} Yuborish</Button>
+          <Button onClick={sendReminder} disabled={saving} className="whitespace-nowrap">{saving ? <Loader2 className="h-4 w-4 animate-spin mr-1"/> : <BellRing className="h-4 w-4 mr-1"/>} Yuborish</Button>
         </div>
         <p className="text-xs text-slate-500 mt-2">
           Barcha guruhlaringizdagi o'quvchilar — guruh nomi bilan ko'rsatiladi (guruh tanlash shart emas).

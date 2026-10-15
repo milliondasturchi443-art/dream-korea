@@ -190,7 +190,7 @@ export default function AdminContentPage() {
           <motion.div key="kurslar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-4">
             <Card className="p-4 space-y-3">
               <div className="font-semibold">Yangi kurs (bepul, БД) — faqat admin</div>
-              <div className="grid sm:grid-cols-[1fr_140px_100px] gap-2">
+              <div className="grid sm:grid-cols-[minmax(0,1fr)_140px_100px] gap-2">
                 <Input placeholder="Kurs nomi" value={title} onChange={e => setTitle(e.target.value)} />
                 <Input placeholder="Daraja A1/TOPIK I" value={level} onChange={e => setLevel(e.target.value)} />
                 <Button onClick={addCourse}>Qo‘shish</Button>
@@ -236,7 +236,7 @@ export default function AdminContentPage() {
           <motion.div key="testlar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-4">
             <Card className="p-4 space-y-3">
               <div className="font-semibold">Yangi test (БД) — talabalar /topik da ko‘radi</div>
-              <div className="grid sm:grid-cols-[1fr_120px_120px_100px] gap-2">
+              <div className="grid sm:grid-cols-[minmax(0,1fr)_120px_120px_100px] gap-2">
                 <Input placeholder="Test nomi (mas: TOPIK I — Reading)" value={tTitle} onChange={e => setTTitle(e.target.value)} />
                 <select value={tLevel} onChange={e => setTLevel(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm"><option>TOPIK I</option><option>TOPIK II</option><option>EPS-TOPIK</option></select>
                 <select value={tType} onChange={e => setTType(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm"><option>Reading</option><option>Listening</option><option>Full</option></select>
@@ -311,7 +311,7 @@ export default function AdminContentPage() {
           <motion.div key="materiallar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-4">
             <Card className="p-4 space-y-3">
               <div className="font-semibold">Yangi material (БД) — talabalar ko‘radi</div>
-              <div className="grid sm:grid-cols-[1fr_120px_100px] gap-2">
+              <div className="grid sm:grid-cols-[minmax(0,1fr)_120px_100px] gap-2">
                 <Input placeholder="Sarlavha (mas: Hangul qo‘llanma PDF)" value={matTitle} onChange={e => setMatTitle(e.target.value)} />
                 <Input placeholder="Turi PDF/Audio" value={matKind} onChange={e => setMatKind(e.target.value)} />
                 <Button onClick={addMaterial}>Qo‘shish</Button>
@@ -338,7 +338,7 @@ export default function AdminContentPage() {
           <motion.div key="videolar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-4">
             <Card className="p-4 space-y-3">
               <div className="font-semibold">Yangi video (БД) — /videos va /media da ko‘rinadi</div>
-              <div className="grid sm:grid-cols-[1fr_140px_110px_100px] gap-2">
+              <div className="grid sm:grid-cols-[minmax(0,1fr)_140px_110px_100px] gap-2">
                 <Input placeholder="Video nomi" value={vTitle} onChange={e => setVTitle(e.target.value)} />
                 <Input placeholder="Kategoriya (Koreys tili/TOPIK/Kino…)" value={vCat} onChange={e => setVCat(e.target.value)} />
                 <Input placeholder="Davomiylik 12:30" value={vDur} onChange={e => setVDur(e.target.value)} />
