@@ -34,20 +34,43 @@ Qoidalar:
 - Savol noaniq bo'lsa bir-ikki misol bilan aniqlashtirib so'r.
 - Hech qanday imkoniyatni uddalay olmasang, halol ayt va yordam uchun +998 94 328 05 13 raqamini ber.`;
 
-// POST /api/ai — { messages: [{role, text}] } → { reply, source }
+// POST /api/ai — { messages: [{role, text, images?}] } → { reply, source }
+// Rasm qabul qilamiz: faqat data:image/...;base64, ko'rinishidagi URLlar, har xabar uchun max 3 ta
+const MAX_IMAGES = 3;
+const MAX_IMG_CHARS = 2_000_000;
+type ChatMsg = { role: string; text: string; images?: string[] };
+
+function sanitizeImages(images: unknown): string[] {
+  if (!Array.isArray(images)) return [];
+  return images
+    .filter((i): i is string => typeof i === "string" && i.startsWith("data:image/") && i.length <= MAX_IMG_CHARS)
+    .slice(0, MAX_IMAGES);
+}
+
+function toContent(m: ChatMsg): string | { type: string; text?: string; image_url?: { url: string } }[] {
+  const imgs = sanitizeImages(m.images);
+  if (!imgs.length) return m.text || "";
+  return [
+    { type: "text", text: m.text || "Bu rasmda nima bor? O'zbekcha tushuntir." },
+    ...imgs.map(u => ({ type: "image_url", image_url: { url: u } })),
+  ];
+}
+
 export async function POST(req: Request) {
   // AI faqat tizimga kirgan foydalanuvchi uchun
   if (!readAuth(req)) {
     return Response.json({ error: "AI dan foydalanish uchun tizimga kiring", code: "UNAUTHORIZED" }, { status: 401 });
   }
-  let body: { messages?: { role: string; text: string }[] } = {};
+  let body: { messages?: ChatMsg[] } = {};
   try { body = await req.json(); } catch {}
   const messages = Array.isArray(body.messages) ? body.messages.slice(-10) : [];
-  const lastUser = [...messages].reverse().find(m => m.role === "user")?.text?.trim() ?? "";
+  const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
+  const lastUser = lastUserMsg?.text?.trim() ?? "";
+  const lastHasImages = sanitizeImages(lastUserMsg?.images).length > 0;
 
   // 1) OpenRouter (Axrorbek AI) — OPENROUTER_API_KEY bo'lsa
   const orKey = process.env.OPENROUTER_API_KEY;
-  if (orKey && lastUser) {
+  if (orKey && (lastUser || lastHasImages)) {
     try {
       const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -61,7 +84,7 @@ export async function POST(req: Request) {
           model: process.env.OPENROUTER_MODEL || "xiaomi/mimo-v2.6-flash",
           messages: [
             { role: "system", content: AXRORBEK_SYSTEM },
-            ...messages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text })),
+            ...messages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: toContent(m) })),
           ],
           max_tokens: 600,
         }),
@@ -81,7 +104,7 @@ export async function POST(req: Request) {
 
   // 2) OpenAI kaliti bo'lsa — real AI
   const key = process.env.OPENAI_API_KEY;
-  if (key && lastUser) {
+  if (key && (lastUser || lastHasImages)) {
     try {
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -90,7 +113,7 @@ export async function POST(req: Request) {
           model: process.env.OPENAI_MODEL || "gpt-4o-mini",
           messages: [
             { role: "system", content: "Sen DREAM KOREA o'quv markazining koreys tili yordamchisisan. O'zbek tilida javob bera olasan. Qisqa, aniq va foydali javob ber." },
-            ...messages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text })),
+            ...messages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: toContent(m) })),
           ],
           max_tokens: 500,
         }),
