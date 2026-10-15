@@ -58,7 +58,8 @@ export async function POST(req: Request) {
             create: { userId: user.id, unitId, [field]: passed, xpAwarded: gain },
             update: { [field]: passed || !!old?.[field], xpAwarded: { increment: gain } },
           });
-          const newlyComplete = row.vocabDone && row.grammarDone && row.listeningDone && row.homeworkDone && row.stars === 0;
+          // "Uy vazifasi" olib tashlandi — yakunlash faqat vocab + grammar + listening (3 bo'lim)
+          const newlyComplete = row.vocabDone && row.grammarDone && row.listeningDone && row.stars === 0;
           if (newlyComplete) await tx.darsProgress.update({ where: { id: row.id }, data: { stars: 3 } });
           if (gain) await tx.user.update({ where: { id: user.id }, data: { xp: { increment: gain + (newlyComplete ? 50 : 0) }, coins: { increment: 5 }, stars: { increment: newlyComplete ? 3 : 0 } } });
           return { gained: gain + (newlyComplete ? 50 : 0), passed, score, total: questions.length, review: questions };

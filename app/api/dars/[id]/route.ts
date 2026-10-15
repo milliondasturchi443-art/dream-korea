@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { verify, readAuthToken } from "@/lib/token";
 import { isAdminEmail } from "@/lib/auth";
+import { youtubeId } from "@/lib/youtube";
 export const dynamic = "force-dynamic";
 
 function isSeed(id: string) { return id.startsWith("seed-"); }
@@ -42,13 +43,36 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   let b: Record<string, string> = {};
   try { b = await req.json(); } catch {}
   try {
-    const u = await prisma.darsUnit.update({ where: { id }, data: {
-      ...(b.title ? { title: String(b.title).trim() } : {}),
-      ...(b.topic ? { topic: String(b.topic).trim() } : {}),
-      ...(b.level ? { level: String(b.level).trim() } : {}),
-      ...(b.description !== undefined ? { description: String(b.description).trim() || null } : {}),
-      ...(b.cover !== undefined ? { cover: String(b.cover).trim() || null } : {}),
-    }});
+    const unit = await prisma.darsUnit.findUnique({ where: { id } });
+    if (!unit) return Response.json({ error: "Topilmadi" }, { status: 404 });
+
+    // Unit maydonlari — faqat berilganlari yangilanadi
+    const fields: Record<string, string | null> = {};
+    if (b.title) fields.title = String(b.title).trim();
+    if (b.topic) fields.topic = String(b.topic).trim();
+    if (b.level) fields.level = String(b.level).trim();
+    if (b.description !== undefined) fields.description = String(b.description).trim() || null;
+    if (b.cover !== undefined) fields.cover = String(b.cover).trim() || null;
+    if (Object.keys(fields).length) await prisma.darsUnit.update({ where: { id }, data: fields });
+
+    // Video: YouTube havolasi yoki to‘g‘ri URL; bo‘sh qiymat — o‘chirish
+    if (b.videoUrl !== undefined) {
+      const url = String(b.videoUrl).trim();
+      if (url && !youtubeId(url) && !/^https?:\/\//i.test(url)) {
+        return Response.json({ error: "YouTube havolasi yoki https:// manzil kiriting" }, { status: 400 });
+      }
+      const existing = await prisma.darsVideo.findMany({ where: { unitId: id }, orderBy: { order: "asc" } });
+      if (!url) {
+        if (existing.length) await prisma.darsVideo.deleteMany({ where: { unitId: id } });
+      } else if (existing.length) {
+        await prisma.darsVideo.update({ where: { id: existing[0].id }, data: { videoUrl: url } });
+        if (existing.length > 1) await prisma.darsVideo.deleteMany({ where: { id: { in: existing.slice(1).map(v => v.id) } } });
+      } else {
+        await prisma.darsVideo.create({ data: { unitId: id, title: unit.topic, videoUrl: url, order: 0 } });
+      }
+    }
+
+    const u = await prisma.darsUnit.findUnique({ where: { id } });
     return Response.json({ ok: true, unit: u });
   } catch (e) { console.error("PATCH /api/dars/[id]", e); return Response.json({ error: "Saqlab bo‘lmadi" }, { status: 500 }); }
 }

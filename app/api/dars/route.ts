@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export async function GET() {
   try {
-    const units = await prisma.darsUnit.findMany({ orderBy: { order: "asc" }, include: { _count: { select: { vocab: true, videos: true, grammars: true, listenings: true, writings: true } } } });
+    const units = await prisma.darsUnit.findMany({ orderBy: { order: "asc" }, include: { _count: { select: { vocab: true, videos: true, grammars: true, listenings: true, writings: true } }, videos: { select: { id: true, videoUrl: true, title: true }, orderBy: { order: "asc" } } } });
     return Response.json({ units });
   } catch { return Response.json({ error: "Darslar yuklanmadi" }, { status: 503 }); }
 }
