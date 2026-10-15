@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Send, Sparkles, X, BookOpen, Bot } from "lucide-react";
+import { Send, Sparkles, X, BookOpen, Bot, ImagePlus } from "lucide-react";
+import { filesToDataUrls, MAX_IMAGES } from "@/lib/image-utils";
 
-type Msg = { role: "user" | "assistant"; text: string; source?: "openrouter" | "openai" | "reference" | "none" };
+type Msg = { role: "user" | "assistant"; text: string; images?: string[]; source?: "openrouter" | "openai" | "reference" | "none" };
 
 const prompts = [
   "은/는 va 이/가 farqini tushuntir",
@@ -19,8 +20,11 @@ export function AiFab() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [draftImages, setDraftImages] = useState<string[]>([]);
+  const [imgError, setImgError] = useState("");
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   // /ai sahifasida FAB kerak emas (o'z chati bor) — ikkita tugma ustma-ust kelmasin
   const hide = pathname === "/ai" || pathname?.startsWith("/ai?");
@@ -32,12 +36,21 @@ export function AiFab() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  async function pickImages(files: FileList | null) {
+    setImgError("");
+    const { images, error } = await filesToDataUrls(files, draftImages.length);
+    if (error) { setImgError(error); return; }
+    setDraftImages(prev => [...prev, ...images].slice(0, MAX_IMAGES));
+  }
+
   async function send(text?: string) {
     const t = (text ?? input).trim();
-    if (!t || loading) return;
-    const next = [...messages, { role: "user" as const, text: t }];
+    const imgs = draftImages;
+    if ((!t && !imgs.length) || loading) return;
+    const next: Msg[] = [...messages, { role: "user" as const, text: t, images: imgs.length ? imgs : undefined }];
     setMessages(next);
     setInput("");
+    setDraftImages([]);
     setLoading(true);
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -48,7 +61,7 @@ export function AiFab() {
       const r = await fetch("/api/ai", {
         method: "POST",
         headers,
-        body: JSON.stringify({ messages: next.map(m => ({ role: m.role, text: m.text })) }),
+        body: JSON.stringify({ messages: next.map(m => ({ role: m.role, text: m.text, images: m.images })) }),
       });
       if (r.status === 401) { window.location.href = "/login?next=/dashboard"; return; }
       const d = await r.json().catch(() => ({}));
@@ -111,6 +124,11 @@ export function AiFab() {
                       {m.source === "reference" ? "Ma'lumotnoma" : "Axrorbek AI"}
                     </span>
                   )}
+                  {m.images?.length ? (
+                    <div className="mb-1 flex flex-wrap gap-1">
+                      {m.images.map((src, j) => <img key={j} src={src} alt={`rasm ${j + 1}`} className="max-h-28 rounded-lg border border-white/40 object-contain" />)}
+                    </div>
+                  ) : null}
                   <div>{m.text}</div>
                 </div>
               </div>
@@ -118,17 +136,32 @@ export function AiFab() {
             {loading && <div className="text-[11px] text-slate-400">Javob tayyorlanmoqda…</div>}
           </div>
 
-          <div className="border-t border-slate-200 p-2 flex gap-2 shrink-0">
+          {draftImages.length > 0 && (
+            <div className="flex gap-2 px-3 pt-2 shrink-0">
+              {draftImages.map((src, i) => (
+                <div key={i} className="relative">
+                  <img src={src} alt={`tanlangan ${i + 1}`} className="h-14 w-14 rounded-lg border border-slate-200 object-cover" />
+                  <button aria-label="Rasmni o'chirish" onClick={() => setDraftImages(prev => prev.filter((_, j) => j !== i))} className="absolute -right-1.5 -top-1.5 rounded-full bg-slate-700 p-0.5 text-white"><X className="h-3 w-3" /></button>
+                </div>
+              ))}
+            </div>
+          )}
+          {imgError && <p className="px-3 pt-1.5 text-[11px] text-red-500 shrink-0">{imgError}</p>}
+          <div className="border-t border-slate-200 p-2 flex gap-2 shrink-0 items-end">
+            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { pickImages(e.target.files); e.target.value = ""; }} />
+            <button onClick={() => fileRef.current?.click()} disabled={loading || draftImages.length >= MAX_IMAGES} aria-label={`Rasm yuklash (max ${MAX_IMAGES})`} title={`Rasm yuklash (max ${MAX_IMAGES})`} className="shrink-0 h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-600 grid place-items-center hover:bg-slate-50 disabled:opacity-40 transition-colors">
+              <ImagePlus className="h-4 w-4" />
+            </button>
             <textarea
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Savol yozing…"
+              placeholder="Savol yozing yoki rasm tanlang…"
               rows={1}
               className="flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2 text-base sm:text-[13px] focus:border-blue-500 focus:outline-none max-h-24"
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             />
-            <button onClick={() => send()} disabled={loading || !input.trim()} aria-label="Yuborish" className="shrink-0 h-10 w-10 rounded-xl bg-[#2563eb] text-white grid place-items-center hover:bg-[#1d4ed8] disabled:opacity-40 transition-colors">
+            <button onClick={() => send()} disabled={loading || (!input.trim() && !draftImages.length)} aria-label="Yuborish" className="shrink-0 h-10 w-10 rounded-xl bg-[#2563eb] text-white grid place-items-center hover:bg-[#1d4ed8] disabled:opacity-40 transition-colors">
               <Send className="h-4 w-4" />
             </button>
           </div>

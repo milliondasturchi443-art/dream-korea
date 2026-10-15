@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { Send, Sparkles, BookOpen, ImagePlus, X } from "lucide-react";
+import { filesToDataUrls, MAX_IMAGES } from "@/lib/image-utils";
 
 type Msg = { role: "user" | "assistant"; text: string; images?: string[]; source?: "openrouter" | "openai" | "reference" | "none" };
 
@@ -14,24 +15,6 @@ const prompts = [
   "TOPIK uchun maslahat ber",
   "Bu gapni tekshir: 저는 학생입니다",
 ];
-const MAX_IMAGES = 3;
-const MAX_SIDE = 1024;
-
-// Faylni canvas orqali kichraytirib, JPEG data URLga aylantiramiz (server yengil qabul qilsin)
-async function fileToDataUrl(file: File): Promise<string> {
-  const bmp = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
-  const w = Math.max(1, Math.round(bmp.width * scale));
-  const h = Math.max(1, Math.round(bmp.height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas");
-  ctx.drawImage(bmp, 0, 0, w, h);
-  bmp.close();
-  return canvas.toDataURL("image/jpeg", 0.85);
-}
 
 export default function AiPage() {
   const router = useRouter();
@@ -45,21 +28,10 @@ export default function AiPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   async function pickImages(files: FileList | null) {
-    if (!files?.length) return;
     setImgError("");
-    const room = MAX_IMAGES - draftImages.length;
-    if (room <= 0) { setImgError(`Ko'pi bilta ${MAX_IMAGES} ta rasm`); return; }
-    try {
-      const picked: string[] = [];
-      for (const f of [...files].slice(0, room)) {
-        if (!f.type.startsWith("image/")) continue;
-        picked.push(await fileToDataUrl(f));
-      }
-      if (!picked.length) { setImgError("Faqat rasm fayllari (JPG/PNG)"); return; }
-      setDraftImages(prev => [...prev, ...picked].slice(0, MAX_IMAGES));
-    } catch {
-      setImgError("Rasmni o'qib bo'lmadi — boshqa rasm tanlang");
-    }
+    const { images, error } = await filesToDataUrls(files, draftImages.length);
+    if (error) { setImgError(error); return; }
+    setDraftImages(prev => [...prev, ...images].slice(0, MAX_IMAGES));
   }
 
   async function send(text?: string) {
