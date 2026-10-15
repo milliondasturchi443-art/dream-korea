@@ -6,8 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Star, Coins, Lock, Check } from "lucide-react";
 
-type Unit = { id: string; title: string; topic: string; level: string; order: number };
-type ProgressRow = { unitId: string; stars: number; vocabDone: boolean; grammarDone: boolean; listeningDone: boolean; homeworkDone: boolean };
+type Unit = { id: string; title: string; topic: string; level: string; order: number; videos?: { id: string }[] };
+type ProgressRow = { unitId: string; stars: number; vocabDone: boolean; grammarDone: boolean; listeningDone: boolean; videoDone: boolean; homeworkDone: boolean };
 
 export default function DarsPage() {
   const [data, setData] = useState<{ units: Unit[]; progress: ProgressRow[]; user: { stars: number; coins: number } } | null>(null);
@@ -30,8 +30,9 @@ export default function DarsPage() {
       {data.units.map((unit, index) => {
         const p = data.progress.find(p => p.unitId === unit.id);
         const unlocked = data.units.slice(0, index).every(u => data.progress.some(p => p.unitId === u.id && p.stars > 0));
-        // Uy vazifasi olib tashlandi — progress 3 bo'lim bo'yicha (vocab/grammar/listening)
-        const percent = p ? Math.round([p.vocabDone, p.grammarDone, p.listeningDone].filter(Boolean).length / 3 * 100) : 0;
+        // Uy vazifasi olib tashlandi — progress bo'limlar bo'yicha (vocab/grammar/listening [+video])
+        const total = (unit.videos?.length ?? 0) > 0 ? 4 : 3;
+        const percent = p ? Math.round([...[p.vocabDone, p.grammarDone, p.listeningDone], ...((unit.videos?.length ?? 0) > 0 ? [p.videoDone] : [])].filter(Boolean).length / total * 100) : 0;
         return <li key={unit.id} className={`relative ${index % 2 ? "ml-8 sm:ml-32" : "mr-8 sm:mr-32"}`}>
           {index > 0 && <svg aria-hidden="true" className="absolute -top-8 left-1/3 h-8 w-32" viewBox="0 0 128 32"><path d="M 0 0 C 0 24 128 8 128 32" fill="none" stroke="#93c5fd" strokeWidth="3" strokeDasharray="5 5" /></svg>}
           <Card className={`flex items-center gap-4 p-5 ${unlocked ? "border-blue-200" : "opacity-60"}`}><span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-blue-100 text-xl font-bold text-blue-700">{percent === 100 ? <Check className="h-6 w-6" /> : unlocked ? unit.order : <Lock className="h-5 w-5" />}</span><div className="min-w-0 flex-1"><p className="text-xs text-slate-500">Unit {unit.order} · {unit.level}</p><h2 className="font-bold">{unit.topic}</h2><Progress value={percent} className="my-2" /><p className="text-xs text-slate-500">{percent}% · {percent === 100 ? "Yakunlandi" : percent ? "Jarayonda" : unlocked ? "Boshlash mumkin" : "Oldingi unitni yakunlang"}</p>{unlocked && <Link href={`/dars/${unit.id}`} className="mt-2 inline-block font-semibold text-blue-600">{percent ? "Davom etish" : "Boshlash"} →</Link>}</div></Card>
