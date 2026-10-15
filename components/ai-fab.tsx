@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Send, Sparkles, X, BookOpen, Bot, ImagePlus } from "lucide-react";
 import { filesToDataUrls, MAX_IMAGES } from "@/lib/image-utils";
 
@@ -14,6 +14,7 @@ const prompts = [
 // Axrorbek AI — o'ng pastki burchakdagi tugma, bosilganda chat ochiladi
 export function AiFab() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([
     { role: "assistant", text: "Assalomu alaykum! Men Axrorbek AI — koreys tili yordamchisiman. Grammatika, lug'at, tarjima yoki TOPIK bo'yicha savol bering.", source: "openrouter" },
@@ -63,7 +64,7 @@ export function AiFab() {
         headers,
         body: JSON.stringify({ messages: next.map(m => ({ role: m.role, text: m.text, images: m.images })) }),
       });
-      if (r.status === 401) { window.location.href = "/login?next=/dashboard"; return; }
+      if (r.status === 401) { router.push("/login?next=/dashboard"); return; }
       const d = await r.json().catch(() => ({}));
       const reply = d.reply || "Server bilan bog'lanib bo'lmadi.";
       setMessages(m => [...m, { role: "assistant", text: reply, source: d.source ?? "none" }]);
