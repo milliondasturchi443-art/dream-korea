@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { VideoBg } from "@/components/video-bg";
 import { SITE_PHONE_E164, SITE_PHONE_DISPLAY, SITE_PHONE2_E164, SITE_PHONE2_DISPLAY, SITE_EMAIL, SITE_ADDRESS, SITE_TELEGRAM, SITE_TELEGRAM_BOT } from "@/lib/site";
 import { telHref } from "@/lib/phone";
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <VideoBg />
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <footer className="bg-[#0f1b3d] text-slate-300">
