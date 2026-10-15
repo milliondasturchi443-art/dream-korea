@@ -27,7 +27,10 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const groupId = url.searchParams.get("groupId")?.trim() || "";
   const date = url.searchParams.get("date")?.trim() || "";
+  const from = url.searchParams.get("from")?.trim() || "";
+  const to = url.searchParams.get("to")?.trim() || "";
   const studentId = url.searchParams.get("studentId")?.trim() || "";
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   try {
     if (auth.role === "STUDENT") {
       const where: Record<string, unknown> = { studentId: auth.id };
@@ -43,7 +46,11 @@ export async function GET(req: Request) {
     }
     const where: Record<string, unknown> = {};
     if (groupId) where.groupId = groupId;
-    if (date) where.date = date;
+    // bitta sana yoki oraliq (haftalik/oylik jadval uchun: ?from=&to=)
+    if (date && DATE_RE.test(date)) where.date = date;
+    else if ((from && DATE_RE.test(from)) || (to && DATE_RE.test(to))) {
+      where.date = { ...(from && DATE_RE.test(from) ? { gte: from } : {}), ...(to && DATE_RE.test(to) ? { lte: to } : {}) } as never;
+    }
     if (studentId) where.studentId = studentId;
     // teacher: faqat o'z guruhlari (groupId bo'lsa ham tekshiriladi — begona guruhga kirib bo'lmaydi)
     if (auth.role === "TEACHER") {
@@ -60,7 +67,7 @@ export async function GET(req: Request) {
       where: where as never,
       include: { student: { select: { id: true, name: true, email: true } } },
       orderBy: { date: "desc" },
-      take: 200,
+      take: 500,
     });
     return Response.json({ rows });
   } catch (e) { console.error("GET attendance", e); return Response.json({ rows: [] }); }
