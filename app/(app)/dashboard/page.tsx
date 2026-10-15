@@ -8,7 +8,6 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Book, FileText, Library, Video, Film, Shuffle, Building2, BookMarked, Headphones, ClipboardList, BarChart3 } from "lucide-react";
-import { motion } from "framer-motion";
 import { getCompleted } from "@/lib/lesson-progress";
 
 const quickActions = [
@@ -72,13 +71,13 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <div className="anim-fade-up">
         <h1 className="text-[22px] font-bold text-slate-900">Assalomu alaykum, {userName}! 👋</h1>
         <p className="text-sm text-slate-500">Koreys tilida yangi yutuqlarga!</p>
-      </motion.div>
+      </div>
 
       {/* real progress over all courses */}
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
+      <div className="anim-fade-up" style={{ animationDelay: "0.05s" }}>
         <Card className="p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
@@ -102,7 +101,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </Card>
-      </motion.div>
+      </div>
 
       {/* quick actions */}
       <div>
@@ -110,7 +109,7 @@ export default function DashboardPage() {
         <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
           {quickActions.map(a => (
             <Link key={a.label} href={a.href} className="group">
-              <Card className="p-4 flex flex-col items-center gap-2 text-center hover:shadow-md hover:border-[#bfdbfe] transition-all h-full">
+              <Card className="p-4 flex flex-col items-center gap-2 text-center hover:shadow-md hover:border-[#bfdbfe] transition h-full">
                 <div className="h-10 w-10 rounded-xl bg-[#eff6ff] group-hover:bg-[#2563eb] text-[#2563eb] group-hover:text-white grid place-items-center transition-colors">
                   <a.icon className="h-5 w-5" />
                 </div>
@@ -122,7 +121,7 @@ export default function DashboardPage() {
       </div>
 
       {/* my courses — real from DB */}
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.08 }}>
+      <div className="anim-fade-up" style={{ animationDelay: "0.08s" }}>
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-slate-900">Mening kurslarim</h2>
           <Link href="/courses" className="text-sm text-[#2563eb] font-medium">Barchasi →</Link>
@@ -150,7 +149,7 @@ export default function DashboardPage() {
             })}
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

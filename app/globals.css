@@ -46,8 +46,20 @@ body {
   overflow-wrap: break-word;
   word-break: break-word;
 }
+/* Phone/tablet: heavy multi-layer fixed background repaints the whole screen on
+   every scroll frame — drop to a single lightweight layer. Big FPS win on mobile. */
+@media (max-width: 1023px) {
+  body {
+    background-image:
+      linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,.55)),
+      var(--bg-photo);
+    background-size: auto, cover;
+    background-position: center, center;
+    background-attachment: scroll, scroll;
+  }
+}
 @media (max-width: 767px) {
-  body { background-attachment: scroll, scroll, scroll, scroll, scroll, scroll; }
+  body { background-attachment: scroll, scroll; }
 }
 
 /* Экран-ключ /admin: светлая версия пастельного фото */
@@ -195,3 +207,80 @@ a, button { -webkit-tap-highlight-color: transparent; }
   50%     { transform: scale(1.14) rotate(3deg); }
 }
 .streak-flame { animation: streakFlame .9s ease-in-out infinite; }
+
+/* ============ lightweight motion primitives (CSS-only, GPU transforms) ============
+   Replaces framer-motion for simple fade/rise — no JS per frame, no phone jank. */
+@keyframes dkFadeUp {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes dkFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes dkPopIn {
+  0%   { opacity: 0; transform: translate3d(0, 10px, 0) scale(.96); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes dkFloatY {
+  0%,100% { transform: translate3d(0, 0, 0); }
+  50%     { transform: translate3d(0, -7px, 0); }
+}
+@keyframes dkGlow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,.32); }
+  50%     { box-shadow: 0 0 0 8px rgba(37,99,235,0); }
+}
+.anim-fade-up   { animation: dkFadeUp .5s cubic-bezier(.22,.61,.36,1) both; }
+.anim-fade      { animation: dkFade .45s ease-out both; }
+.anim-pop       { animation: dkPopIn .34s cubic-bezier(.22,.61,.36,1) both; }
+/* infinite float only on bigger screens — never burn phone battery on loops */
+@media (min-width: 768px) { .anim-float { animation: dkFloatY 5s ease-in-out infinite; } }
+.anim-glow      { animation: dkGlow 2.4s ease-in-out infinite; }
+/* staggered children — rise one-by-one only AFTER the section is revealed */
+.reveal.in .stagger > * { animation: dkFadeUp .5s cubic-bezier(.22,.61,.36,1) both; }
+.reveal.in .stagger > *:nth-child(1) { animation-delay: .05s; }
+.reveal.in .stagger > *:nth-child(2) { animation-delay: .1s; }
+.reveal.in .stagger > *:nth-child(3) { animation-delay: .15s; }
+.reveal.in .stagger > *:nth-child(4) { animation-delay: .2s; }
+.reveal.in .stagger > *:nth-child(5) { animation-delay: .25s; }
+.reveal.in .stagger > *:nth-child(6) { animation-delay: .3s; }
+.reveal.in .stagger > *:nth-child(7) { animation-delay: .35s; }
+.reveal.in .stagger > *:nth-child(8) { animation-delay: .4s; }
+
+/* scroll reveal — IntersectionObserver adds .in, content rises once */
+.reveal { opacity: 0; transform: translate3d(0, 16px, 0); transition: opacity .5s ease-out, transform .5s cubic-bezier(.22,.61,.36,1); }
+.reveal.in { opacity: 1; transform: translate3d(0, 0, 0); }
+
+/* gentle gradient shine on hero heading (bigger screens only) */
+@media (min-width: 768px) {
+  .shimmer-text {
+    background-image: linear-gradient(100deg, #2563eb 32%, #60a5fa 47%, #3b82f6 62%, #2563eb 76%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shine 3.6s linear infinite;
+  }
+}
+
+/* hover lift for tappable cards (pointer devices only — no sticky hover on touch) */
+@media (hover: hover) and (pointer: fine) {
+  .lift { transition: transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .22s ease, border-color .22s ease; }
+  .lift:hover { transform: translate3d(0, -3px, 0); box-shadow: 0 18px 34px -20px rgba(15,27,61,.45); }
+}
+
+/* smooth FAQ / accordion open (height animates via grid rows, cheap) */
+.acc { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
+.acc.open { grid-template-rows: 1fr; }
+.acc > div { overflow: hidden; }
+
+/* Respect users who prefer no motion — kill everything at once */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+}

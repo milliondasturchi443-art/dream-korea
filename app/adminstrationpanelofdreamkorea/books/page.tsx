@@ -185,7 +185,7 @@ export default function BooksAdminPage() {
           {progress !== null && (
             <div>
               <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${progress}%` }} />
+                <div className="h-full rounded-full bg-blue-600 transition-[width]" style={{ width: `${progress}%` }} />
               </div>
               <p className="mt-1 text-xs text-slate-500">Yuklanmoqda… {progress}%</p>
             </div>

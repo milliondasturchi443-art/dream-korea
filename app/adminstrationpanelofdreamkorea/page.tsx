@@ -63,7 +63,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map(c => (
           <Link key={c.label} href={c.href}>
-            <Card className="p-5 hover:border-blue-200 hover:shadow-md transition-all">
+            <Card className="p-5 hover:border-blue-200 hover:shadow-md transition">
               <div className="flex items-center justify-between text-slate-500"><span className="text-xs">{c.label}</span><c.icon className="h-4 w-4"/></div>
               <div className="text-2xl font-extrabold text-slate-900 mt-1">{c.value}</div>
             </Card>
@@ -80,7 +80,7 @@ export default function AdminPage() {
           ["Kitoblar", "PDF qo'shish va boshqarish", `${base}/books`],
           ["Universitetlar", "Ro‘yxat", "/universities"],
         ].map(([title, sub, href]) => (
-          <Link key={title} href={href}><Card className="p-4 hover:shadow-md hover:border-blue-200 transition-all flex items-center justify-between"><div><div className="font-medium text-sm text-slate-900">{title}</div><div className="text-xs text-slate-500">{sub}</div></div><span className="text-[#2563eb] text-xs font-medium">Ochish →</span></Card></Link>
+          <Link key={title} href={href}><Card className="p-4 hover:shadow-md hover:border-blue-200 transition flex items-center justify-between"><div><div className="font-medium text-sm text-slate-900">{title}</div><div className="text-xs text-slate-500">{sub}</div></div><span className="text-[#2563eb] text-xs font-medium">Ochish →</span></Card></Link>
         ))}
       </div>
 

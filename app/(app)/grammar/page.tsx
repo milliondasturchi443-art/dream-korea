@@ -331,7 +331,7 @@ export default function GrammarPage() {
               {combo >= 3 && <span className="text-[11px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700"> x{combo}</span>}
             </div>
             <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden max-w-[260px]">
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
+              <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
             </div>
             <div className="text-[11px] text-slate-400 mt-1 leading-none">
               {lvl.next ? <><span className="font-semibold text-slate-600">{lvl.toNext} XP</span> → {lvl.next.icon} {lvl.next.name}</> : "Maksimal daraja 👑"}
@@ -355,7 +355,7 @@ export default function GrammarPage() {
             <svg className="h-14 w-14 -rotate-90" viewBox="0 0 36 36">
               <circle cx="18" cy="18" r="15.5" fill="none" stroke="#f1f5f9" strokeWidth="4" />
               <circle cx="18" cy="18" r="15.5" fill="none" stroke="#2563eb" strokeWidth="4" strokeLinecap="round"
-                strokeDasharray={`${pctAll} 100`} className="transition-all duration-700" />
+                strokeDasharray={`${pctAll} 100`} className="transition-[stroke-dasharray] duration-700" />
             </svg>
             <span className="absolute inset-0 grid place-items-center text-[11px] font-black text-[#2563eb]">{pctAll}%</span>
           </div>
@@ -405,7 +405,7 @@ export default function GrammarPage() {
           const active = folderId === f.id;
           return (
             <button key={f.id} onClick={() => goFolder(f.id)}
-              className={`text-left rounded-2xl border p-4 flex flex-col gap-2.5 transition-all ${active ? "shadow-md border-transparent" : "bg-white border-slate-200 hover:border-slate-300"}`}
+              className={`text-left rounded-2xl border p-4 flex flex-col gap-2.5 transition ${active ? "shadow-md border-transparent" : "bg-white border-slate-200 hover:border-slate-300"}`}
               style={active ? { borderColor: f.accent, background: f.soft } : undefined}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -417,7 +417,7 @@ export default function GrammarPage() {
               <div className="text-xs text-slate-500 leading-relaxed line-clamp-2">{f.desc}</div>
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${p}%`, background: f.accent }} />
+                  <div className="h-full rounded-full transition-[width]" style={{ width: `${p}%`, background: f.accent }} />
                 </div>
                 <span className="text-[11px] font-semibold text-slate-500">{done}/{f.topics.length}</span>
               </div>
@@ -565,7 +565,7 @@ export default function GrammarPage() {
                       </button>
                       <div className="min-w-0 flex-1">
                         <div className="text-[15px] font-semibold text-slate-900 break-words">{ex.ko}</div>
-                        <div className={`text-sm mt-0.5 transition-all ${showUz ? "text-slate-500" : "text-slate-300 select-none blur-[3px]"}`}>
+                        <div className={`text-sm mt-0.5 transition-[color,filter] ${showUz ? "text-slate-500" : "text-slate-300 select-none blur-[3px]"}`}>
                           {showUz ? `— ${ex.uz}` : "— tarjima yashirilgan"}
                         </div>
                       </div>
@@ -779,7 +779,7 @@ export default function GrammarPage() {
               <Progress value={((cIdx + 1) / cardQs.length) * 100} className="h-2" />
 
               <button onClick={() => setFlipped(f => !f)}
-                className="w-full min-h-[190px] rounded-3xl border-2 p-6 flex flex-col items-center justify-center gap-3 transition-all hover:shadow-md"
+                className="w-full min-h-[190px] rounded-3xl border-2 p-6 flex flex-col items-center justify-center gap-3 transition hover:shadow-md"
                 style={{ background: flipped ? folder.accent : folder.soft, borderColor: folder.accent, color: flipped ? "#fff" : "#0f1b3d" }}>
                 <span className="text-[11px] font-bold uppercase tracking-wider opacity-70">
                   {flipped ? "Tarjima" : "Koreyscha"}
@@ -869,7 +869,7 @@ export default function GrammarPage() {
                   {profile.xp} <span className="text-sm font-bold text-slate-400">XP</span>
                 </div>
                 <div className="mt-2 h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
+                  <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${lvl.pct}%`, background: lvl.cur.color }} />
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
                   {lvl.next

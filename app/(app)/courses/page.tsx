@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { getCompleted } from "@/lib/lesson-progress";
-import { motion } from "framer-motion";
 import { Reveal } from "@/components/reveal";
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; lessons: number; color: string };
@@ -57,10 +56,10 @@ export default function CoursesPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <div className="anim-fade-up">
         <h1 className="text-[22px] font-bold text-slate-900">Mening darslarim</h1>
         <p className="text-sm text-slate-500">Kurslar bo‘yicha progress va keyingi darslar — barcha kurslar bepul (БД).</p>
-      </motion.div>
+      </div>
 
       <div className="flex gap-2 border-b border-slate-200">
         {tabs.map(t => (
@@ -85,7 +84,7 @@ export default function CoursesPage() {
             const color = c.color || "from-[#1e3a8a] to-[#3b82f6]";
             return (
               <Reveal key={c.id} delay={Math.min(i * 0.06, 0.42)} className="h-full">
-              <Card className="overflow-hidden flex flex-col hover:shadow-md hover:border-blue-200 transition-all h-full">
+              <Card className="overflow-hidden flex flex-col hover:shadow-md hover:border-blue-200 transition h-full">
                 <div className={`h-24 bg-gradient-to-br ${color} p-4 flex items-start justify-between`}>
                   <Badge className="bg-white text-slate-800 text-[11px]">{c.level}</Badge>
                   <span className="text-white/90 text-xs font-medium">{done} / {c.lessons} dars</span>

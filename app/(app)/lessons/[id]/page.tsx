@@ -74,14 +74,14 @@ export default function LessonPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6">
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex items-center justify-between gap-4 mb-4">
+      <div className="anim-fade-up flex items-center justify-between gap-4 mb-4">
         <Link href={`/courses/${courseId}`} className="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-1"><ChevronLeft className="h-4 w-4"/> {courseTitle || "Kursga qaytish"}</Link>
         <div className="text-xs text-slate-500">{curIdx+1} / {lessons.length} {done ? "· Yakunlandi" : ""}</div>
-      </motion.div>
+      </div>
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-5">
         <div className="space-y-4">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+          <div className="anim-fade-up">
             <Card className="overflow-hidden">
               <div className="aspect-video bg-gradient-to-br from-[#0f1b3d] to-[#2563eb] grid place-items-center relative">
                 <div className="text-center text-white px-4">
@@ -99,7 +99,7 @@ export default function LessonPage() {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </div>
 
           <Card className="p-4">
             <div className="flex gap-2 border-b border-slate-200 mb-4">

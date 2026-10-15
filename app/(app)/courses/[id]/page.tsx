@@ -45,7 +45,7 @@ export default function CourseDetailPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+      <div className="anim-fade-up">
         <Card className="overflow-hidden">
           <div className={`h-40 bg-gradient-to-br ${course.color} p-6 text-white flex flex-col justify-end`}>
             <Badge className="bg-white text-slate-800 w-fit text-[11px]">{course.level}</Badge>
@@ -71,7 +71,7 @@ export default function CourseDetailPage() {
             </div>
           </div>
         </Card>
-      </motion.div>
+      </div>
 
       <div className="flex gap-2 border-b border-slate-200 overflow-auto">
         {tabs.map(t => (
@@ -87,11 +87,11 @@ export default function CourseDetailPage() {
                 const unlocked = isLessonUnlocked(course.id, idx);
                 const done = completed.includes(idx);
                 return (
-                  <motion.div key={l.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} layout>
+                  <div key={l.id} className="anim-fade-up">
                     <Link
                       href={unlocked ? `/lessons/${l.id}?course=${course.id}` : "#"}
                       onClick={e => { if (!unlocked) { e.preventDefault(); toast.error("Oldingi darsni yakunlang, keyin ochiladi"); }}}
-                      className={`flex items-center gap-3 p-4 rounded-2xl border bg-white transition-all ${!unlocked ? "opacity-60 cursor-not-allowed border-slate-200" : "hover:border-blue-200 hover:shadow-sm border-slate-200"}`}
+                      className={`flex items-center gap-3 p-4 rounded-2xl border bg-white transition ${!unlocked ? "opacity-60 cursor-not-allowed border-slate-200" : "hover:border-blue-200 hover:shadow-sm border-slate-200"}`}
                     >
                       <div className={`h-9 w-9 rounded-xl grid place-items-center shrink-0 transition-colors ${done ? "bg-emerald-100 text-emerald-600" : !unlocked ? "bg-slate-100 text-slate-400" : "bg-[#eff6ff] text-[#2563eb]"}`}>
                         {done ? <CheckCircle2 className="h-5 w-5" /> : !unlocked ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
@@ -102,7 +102,7 @@ export default function CourseDetailPage() {
                       </div>
                       <span className="text-xs font-medium hidden sm:block" style={{ color: !unlocked ? "#94a3b8" : "#2563eb" }}>{!unlocked ? "Yopiq" : done ? "Takrorlash →" : "Ochish →"}</span>
                     </Link>
-                  </motion.div>
+                  </div>
                 );
               })}
           </motion.div>

@@ -186,7 +186,7 @@ function TopikExamInner() {
       <div className="flex items-center gap-2">
         <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-1000 ease-linear ${qLeft <= 5 ? "bg-red-500" : qLeft <= 10 ? "bg-amber-500" : "bg-[#2563eb]"}`}
+            className={`h-full rounded-full transition-[width,background-color] duration-1000 ease-linear ${qLeft <= 5 ? "bg-red-500" : qLeft <= 10 ? "bg-amber-500" : "bg-[#2563eb]"}`}
             style={{ width: `${qLimit ? Math.max(0, (qLeft / qLimit) * 100) : 0}%` }}
           />
         </div>

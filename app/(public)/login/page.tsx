@@ -8,7 +8,6 @@ import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
 import { normalizeEmail } from "@/lib/auth";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -65,7 +64,7 @@ export default function LoginPage() {
     <div className="min-h-[70vh] grid place-items-center px-4 py-10 isolate relative overflow-hidden">
       <div className="orb -z-10 w-[420px] h-[420px] bg-blue-400/35 -top-32 -left-24" />
       <div className="orb -z-10 w-[360px] h-[360px] bg-indigo-300/30 -bottom-28 -right-20" />
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+      <div className="anim-fade-up">
         <Card className="w-full max-w-[440px] p-6 lg:p-8">
           <div className="flex justify-center"><Logo /></div>
           <h1 className="mt-4 text-xl font-bold text-center text-slate-900">Kirish</h1>
@@ -86,7 +85,7 @@ export default function LoginPage() {
             <Link href="/forgot-password" className="text-slate-500 hover:text-slate-700">Parolni unutdingizmi?</Link>
           </div>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }

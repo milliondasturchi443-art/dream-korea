@@ -154,7 +154,7 @@ export default function BooksPage() {
                 {mounted && st && st.sec > 0 && (
                   <div>
                     <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} />
+                      <div className="h-full rounded-full bg-emerald-500 transition-[width]" style={{ width: `${progress}%` }} />
                     </div>
                     <p className="mt-1 text-[11px] text-slate-400">{Math.floor(st.sec / 60)} daqiqa o‘qilgan · {bookXp(st)} XP</p>
                   </div>

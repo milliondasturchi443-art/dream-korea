@@ -192,7 +192,7 @@ export default function VocabularyPage() {
             <Progress value={(cardIdx / filtered.length) * 100} className="w-40" />
           </div>
           <div onClick={() => { setFlipped(f => !f); speak(filtered[cardIdx].ko); }} className="cursor-pointer select-none">
-            <Card className={`p-8 min-h-[240px] grid place-items-center text-center transition-all ${flipped ? "bg-[#0f1b3d]" : "bg-white"}`}>
+            <Card className={`p-8 min-h-[240px] grid place-items-center text-center transition-colors ${flipped ? "bg-[#0f1b3d]" : "bg-white"}`}>
               {!flipped ? (
                 <div>
                   <div className="text-5xl font-extrabold text-slate-900">{filtered[cardIdx].ko}</div>

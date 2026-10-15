@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, FileText, PenLine, Headphones, BookOpen, TrendingUp, AlertTriangle } from "lucide-react";
-import { motion } from "framer-motion";
 
 type T = { id: string; title: string; level: string; type: string; questions: number; time: string };
 type Attempt = { id: string; testId: string; score: number; total: number; createdAt: string; test?: { title: string; level: string; type: string } };
@@ -101,10 +100,10 @@ export default function TopikPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <div className="anim-fade-up">
         <h1 className="text-[22px] font-bold text-slate-900">TOPIK tayyorgarlik</h1>
         <p className="text-sm text-slate-500">Rasmiy bo‘limlar: o‘qish · tinglash · yozish. Natijangiz daraja (급) bo‘yicha tahlil qilinadi.</p>
-      </motion.div>
+      </div>
 
       <div className="grid md:grid-cols-3 gap-3">
         <Card className="p-4 bg-[#eff6ff] border-blue-200">
@@ -144,7 +143,7 @@ export default function TopikPage() {
         {filtered.length === 0 ? (
           <Card className="p-8 text-center text-sm text-slate-500 md:col-span-2 lg:col-span-3">Bu filterda test yo‘q</Card>
         ) : filtered.map(t => (
-          <Card key={t.id} className="overflow-hidden flex flex-col hover:shadow-md hover:border-blue-200 transition-all">
+          <Card key={t.id} className="overflow-hidden flex flex-col hover:shadow-md hover:border-blue-200 transition">
             <div className={`h-24 bg-gradient-to-br ${colorFor(t.level, t.type)} p-4 text-white flex flex-col justify-between`}>
               <Badge className="bg-white text-slate-800 w-fit text-[11px]">{t.level} · {t.type}</Badge>
               <div className="font-semibold leading-tight line-clamp-2">{t.title}</div>

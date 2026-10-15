@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
 import { Reveal } from "@/components/reveal";
+import { CountUp } from "@/components/count-up";
 import { GraduationCap, Cpu, Users, Trophy, BookOpen, Building2, ChevronDown, Newspaper } from "lucide-react";
 import { useEffect, useState } from "react";
 import { universities } from "@/lib/mock-data";
@@ -35,11 +35,11 @@ export default function LandingPage() {
     <div>
       {/* HERO */}
       <section className="mx-auto max-w-[1200px] px-4 py-10 lg:py-14 grid lg:grid-cols-2 gap-8 items-center">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <div className="anim-fade-up">
           <Badge className="bg-[#eff6ff] text-[#2563eb] border border-blue-100 mb-4">🇰🇷 Koreys tili platformasi</Badge>
           <h1 className="text-[32px] lg:text-[44px] font-extrabold leading-[1.05] tracking-tight text-[#0f1b3d]">
             Koreys tilini o‘rganing,<br />
-            <span className="text-[#2563eb]">orzuingizga yaqinlashing!</span>
+            <span className="text-[#2563eb] shimmer-text">orzuingizga yaqinlashing!</span>
           </h1>
           <p className="mt-4 text-slate-600 text-[15px] leading-relaxed max-w-[520px]">Zamonaviy platforma orqali koreys tilini noldan boshlab professional darajagacha o‘rganing. TOPIK, EPS-TOPIK va universitetlarga tayyorgarlik. Barcha kurslar bepul.</p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -51,11 +51,11 @@ export default function LandingPage() {
               <div className="font-semibold text-slate-900">{stats.students} ta o‘quvchi platformada</div>
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Real courses preview */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
-          <div className="rounded-[24px] glass overflow-hidden">
+        <div className="anim-fade-up" style={{ animationDelay: ".12s" }}>
+          <div className="rounded-[24px] glass overflow-hidden anim-float">
             <div className="h-10 bg-[#0f1b3d] flex items-center px-4 gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-red-400" /><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
               <span className="ml-3 text-xs text-slate-300">dreamkorea.uz — Kurslar</span>
@@ -77,7 +77,7 @@ export default function LandingPage() {
               <div className="text-[11px] text-slate-400">Barcha kurslar bepul · darslar ketma-ket ochiladi</div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* FEATURES */}
@@ -85,9 +85,9 @@ export default function LandingPage() {
       <section className="mx-auto max-w-[1200px] px-4 py-10">
         <h2 className="text-2xl font-bold text-[#0f1b3d]">Nega DREAM KOREA?</h2>
         <p className="text-slate-500 text-sm mt-1">Natijaga yo‘naltirilgan EdTech tajribasi</p>
-        <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-4 gap-4 stagger">
           {features.map(f => (
-            <Card key={f.title} className="p-5">
+            <Card key={f.title} className="p-5 lift">
               <div className="h-10 w-10 rounded-xl bg-[#eff6ff] grid place-items-center text-[#2563eb]"><f.icon className="h-5 w-5" /></div>
               <div className="mt-3 font-semibold text-slate-900">{f.title}</div>
               <div className="mt-1 text-sm text-slate-500 leading-relaxed">{f.desc}</div>
@@ -109,7 +109,7 @@ export default function LandingPage() {
         ) : (
           <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {courses.map(c => (
-              <Card key={c.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <Card key={c.id} className="overflow-hidden lift">
                 <div className={`h-28 bg-gradient-to-br ${c.color} relative p-4`}>
                   <Badge className="bg-white text-slate-800 text-[11px]">{c.level}</Badge>
                   <div className="absolute bottom-3 right-3 h-8 w-8 rounded-full bg-white/20 backdrop-blur grid place-items-center text-white"><BookOpen className="h-4 w-4" /></div>
@@ -138,7 +138,7 @@ export default function LandingPage() {
         </div>
         <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {news.map(n => (
-            <Card key={n.id} className={`overflow-hidden hover:shadow-md transition-shadow ${n.pinned ? "border-amber-300 bg-amber-50/40 md:col-span-2 lg:col-span-3" : ""}`}>
+            <Card key={n.id} className={`overflow-hidden lift ${n.pinned ? "border-amber-300 bg-amber-50/40 md:col-span-2 lg:col-span-3" : ""}`}>
               {n.image && (
                 <div className={n.pinned ? "max-h-80 overflow-hidden" : "h-40 overflow-hidden"}>
                   <img src={n.image} alt={n.title} className="w-full h-full object-cover" />
@@ -200,8 +200,8 @@ export default function LandingPage() {
               [String(stats.lessons), "dars"],
               [String(stats.tests), "TOPIK test"],
             ].map(([val, label]) => (
-              <Card key={label} className="p-5 text-center">
-                <div className="text-2xl font-extrabold text-[#0f1b3d]">{val}</div>
+              <Card key={label} className="p-5 text-center lift">
+                <div className="text-2xl font-extrabold text-[#0f1b3d]"><CountUp value={Number(val) || 0} /></div>
                 <div className="text-xs text-slate-500 mt-1">{label}</div>
               </Card>
             ))}
@@ -217,7 +217,7 @@ export default function LandingPage() {
         <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {universities.slice(0,6).map(u => (
             <Link key={u.id} href="/universities">
-              <Card className="p-4 flex gap-3 hover:border-blue-200 hover:shadow-md transition-all h-full">
+              <Card className="p-4 flex gap-3 lift hover:border-blue-200 h-full">
                 <div className="h-12 w-12 rounded-xl bg-[#eff6ff] grid place-items-center shrink-0"><Building2 className="h-6 w-6 text-[#2563eb]" /></div>
                 <div className="min-w-0"><div className="font-semibold text-slate-900 leading-tight truncate">{u.name}</div><div className="text-xs text-slate-500">{u.city} · {u.topik}</div><div className="text-xs text-slate-500 truncate">{u.programs.join(" · ")}</div></div>
               </Card>
@@ -243,7 +243,9 @@ export default function LandingPage() {
                 <span className="font-medium text-slate-900 text-sm">{q}</span>
                 <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${openFaq === idx ? "rotate-180" : ""}`} />
               </button>
-              {openFaq === idx && <div className="px-4 pb-4 text-sm text-slate-600 leading-relaxed">{a}</div>}
+              <div className={`acc ${openFaq === idx ? "open" : ""}`}>
+                <div><div className="px-4 pb-4 text-sm text-slate-600 leading-relaxed">{a}</div></div>
+              </div>
             </Card>
           ))}
         </div>
