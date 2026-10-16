@@ -4,12 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { darsRequest } from "@/lib/dars-client";
-import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users } from "lucide-react";
+import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check } from "lucide-react";
 
 type Teacher = { id: string; name: string; role: string };
 type Group = { id: string; name: string; teacherId?: string | null; teacher?: { name: string } | null };
 type Item = {
   id: string; name: string; phone: string; days: string; time: string; note?: string | null; status: string; createdAt: string;
+  address?: string | null; parentName?: string | null; parentPhone?: string | null; startDate?: string | null;
+  purpose?: string | null; plan?: string | null;
   teacher?: { name: string } | null;
   group?: { name: string } | null;
 };
@@ -19,6 +21,9 @@ const PRESETS: { label: string; days: string[] }[] = [
   { label: "Dush–Chor–Jum", days: ["Dushanba", "Chorshanba", "Juma"] },
   { label: "Ses–Pay–Shan", days: ["Seshanba", "Payshanba", "Shanba"] },
 ];
+const TIME_PRESETS = ["10:00", "13:30", "15:30"];
+const PURPOSES = ["TOPIK", "Koreada o'qish", "Ishlash", "Sayohat"];
+const PLANS = ["Til kursi", "Kolleg", "Bakalavr", "Magistr"];
 const STATUS_LABEL: Record<string, string> = { new: "Yangi", contacted: "Aloqa qilindi", enrolled: "Yozildi" };
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -42,6 +47,16 @@ export default function ReceptionPage() {
   const [teacherId, setTeacherId] = useState("");
   const [groupId, setGroupId] = useState("");
   const [note, setNote] = useState("");
+  const [address, setAddress] = useState("");
+  const [parentName, setParentName] = useState("");
+  const [parentPhone, setParentPhone] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [purpose, setPurpose] = useState<string[]>([]);
+  const [plan, setPlan] = useState("");
+
+  function togglePurpose(p: string) {
+    setPurpose(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+  }
 
   async function load() {
     setLoading(true); setError("");
@@ -66,8 +81,15 @@ export default function ReceptionPage() {
   async function submit() {
     setBusy(true); setError(""); setNotice(null);
     try {
-      await darsRequest("/api/reception", { name, phone, days, time, teacherId: teacherId || null, groupId: groupId || null, note: note || undefined });
+      await darsRequest("/api/reception", {
+        name, phone, days, time, teacherId: teacherId || null, groupId: groupId || null, note: note || undefined,
+        address: address || undefined, parentName: parentName || undefined, parentPhone: parentPhone || undefined,
+        startDate: startDate || undefined,
+        purpose: purpose.length ? purpose : undefined,
+        plan: plan || undefined,
+      });
       setName(""); setPhone(""); setDays([]); setTime(""); setTeacherId(""); setGroupId(""); setNote("");
+      setAddress(""); setParentName(""); setParentPhone(""); setStartDate(""); setPurpose([]); setPlan("");
       setNotice({ ok: true, text: "Ro'yxatga olindi" });
       await load();
     } catch (e) { setError((e as Error).message); }
@@ -116,6 +138,24 @@ export default function ReceptionPage() {
           </label>
         </div>
 
+        <label className="block space-y-1 text-sm font-medium text-slate-700">
+          <span className="flex items-center gap-1.5"><Home className="h-4 w-4 text-[#2563eb]" /> Yashash manzil</span>
+          <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="Namangan vil., Chust tum., Bog' ko'chasi 12-uy" />
+        </label>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="space-y-1 text-sm font-medium text-slate-700">
+            <span className="flex items-center gap-1.5"><Heart className="h-4 w-4 text-[#2563eb]" /> Ota-ona F.I.Sh.</span>
+            <Input value={parentName} onChange={e => setParentName(e.target.value)} placeholder="Qudratillayev Valijon" />
+          </label>
+          <label className="space-y-1 text-sm font-medium text-slate-700">Ota-ona telefon raqami
+            <Input value={parentPhone} onChange={e => setParentPhone(e.target.value)} placeholder="+998 90 111 22 33" inputMode="tel" />
+          </label>
+          <label className="space-y-1 text-sm font-medium text-slate-700">Kurs boshlash sanasi
+            <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+          </label>
+        </div>
+
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-700"><CalendarDays className="h-4 w-4" /> Dars kunlari</div>
           <div className="flex flex-wrap gap-2">
@@ -140,6 +180,17 @@ export default function ReceptionPage() {
           <label className="space-y-1 text-sm font-medium text-slate-700">Dars vaqti
             <Input type="time" value={time} onChange={e => setTime(e.target.value)} />
           </label>
+          <div className="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">
+            <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-[#2563eb]" /> Tez tanlash</span>
+            <div className="flex flex-wrap gap-2 pt-0.5">
+              {TIME_PRESETS.map(t => (
+                <button key={t} type="button" onClick={() => setTime(t)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${time === t ? "border-blue-500 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
           <label className="space-y-1 text-sm font-medium text-slate-700">O'qituvchi
             <select value={teacherId} onChange={e => { setTeacherId(e.target.value); setGroupId(""); }}
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
@@ -154,6 +205,47 @@ export default function ReceptionPage() {
               {teacherGroups.map(g => <option key={g.id} value={g.id}>{g.name}{g.teacher ? ` · ${g.teacher.name}` : ""}</option>)}
             </select>
           </label>
+        </div>
+
+        {/* ——— O'qish ma'lumotlari ——— */}
+        <div className="border-t border-slate-200 pt-4 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-900"><GraduationCap className="h-4 w-4 text-[#2563eb]" /> O‘qish ma’lumotlari</div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium text-slate-700">Til o‘rganish maqsadi <span className="text-xs font-normal text-slate-400">(bir yoki bir nechta)</span></div>
+            <div className="flex flex-wrap gap-2">
+              {PURPOSES.map(p => {
+                const on = purpose.includes(p);
+                return (
+                  <button key={p} type="button" onClick={() => togglePurpose(p)} aria-pressed={on}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${on ? "border-blue-500 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                    <span className={`grid h-4 w-4 place-items-center rounded border ${on ? "border-white/70 bg-white/25" : "border-slate-300 bg-white"}`}>
+                      {on && <Check className="h-3 w-3" />}
+                    </span>
+                    {p}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium text-slate-700">Kelajakdagi reja</div>
+            <div className="flex flex-wrap gap-2">
+              {PLANS.map(pl => {
+                const on = plan === pl;
+                return (
+                  <button key={pl} type="button" onClick={() => setPlan(on ? "" : pl)} aria-pressed={on}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${on ? "border-emerald-500 bg-emerald-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                    <span className={`grid h-4 w-4 place-items-center rounded-full border ${on ? "border-white/70 bg-white/25" : "border-slate-300 bg-white"}`}>
+                      {on && <Check className="h-3 w-3" />}
+                    </span>
+                    {pl}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <label className="block space-y-1 text-sm font-medium text-slate-700">Izoh (ixtiyoriy)
@@ -186,6 +278,22 @@ export default function ReceptionPage() {
                   <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{it.days}</span>
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{it.time}</span>
                 </div>
+                {(it.address || it.parentName || it.parentPhone || it.startDate) && (
+                  <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                    {it.address && <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-400" />{it.address}</span>}
+                    {it.parentName && <span className="flex items-center gap-1"><Heart className="h-3 w-3 text-slate-400" />{it.parentName}{it.parentPhone ? ` · ${it.parentPhone}` : ""}</span>}
+                    {it.parentPhone && !it.parentName && <a href={`tel:${it.parentPhone.replace(/\s/g, "")}`} className="flex items-center gap-1 hover:text-[#2563eb]"><Phone className="h-3 w-3" />{it.parentPhone}</a>}
+                    {it.startDate && <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3 text-slate-400" />Boshlash: {it.startDate.split("-").reverse().join(".")}</span>}
+                  </div>
+                )}
+                {(it.purpose || it.plan) && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {it.purpose?.split(",").filter(Boolean).map(p => (
+                      <span key={p} className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">{p}</span>
+                    ))}
+                    {it.plan && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">{it.plan}</span>}
+                  </div>
+                )}
                 {it.note && <p className="mt-1 text-xs text-slate-400">{it.note}</p>}
               </div>
               <div className="flex shrink-0 gap-1.5">

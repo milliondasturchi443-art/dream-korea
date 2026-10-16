@@ -63,18 +63,24 @@ model User {
 
 // Reception: front-desk student intake (name, phone, schedule, teacher)
 model Reception {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  phone     String
-  days      String   // e.g. "Dushanba,Chorshanba,Juma"
-  time      String   // e.g. "15:00"
-  teacherId String?  @db.ObjectId
-  teacher   User?    @relation(fields: [teacherId], references: [id])
-  groupId   String?  @db.ObjectId
-  group     Group?   @relation(fields: [groupId], references: [id])
-  note      String?
-  status    String   @default("new") // new | contacted | enrolled
-  createdAt DateTime @default(now())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  phone       String
+  days        String   // e.g. "Dushanba,Chorshanba,Juma"
+  time        String   // e.g. "15:00"
+  address     String?  // yashash manzil
+  parentName  String?  // ota-ona F.I.Sh.
+  parentPhone String?  // ota-ona telefon raqami
+  startDate   String?  // kurs boshlash sanasi, "YYYY-MM-DD"
+  purpose     String?  // til o'rganish maqsadi, comma-joined: "TOPIK,Koreada o'qish,…"
+  plan        String?  // kelajakdagi reja: "Til kursi" | "Kolleg" | "Bakalavr" | "Magistr"
+  teacherId   String?  @db.ObjectId
+  teacher     User?    @relation(fields: [teacherId], references: [id])
+  groupId     String?  @db.ObjectId
+  group       Group?   @relation(fields: [groupId], references: [id])
+  note        String?
+  status      String   @default("new") // new | contacted | enrolled
+  createdAt   DateTime @default(now())
 }
 
 model Course {

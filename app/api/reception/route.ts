@@ -4,6 +4,9 @@ import { z } from "zod";
 import * as bcrypt from "bcryptjs";
 export const dynamic = "force-dynamic";
 
+const PURPOSES = ["TOPIK", "Koreada o'qish", "Ishlash", "Sayohat"] as const;
+const PLANS = ["Til kursi", "Kolleg", "Bakalavr", "Magistr"] as const;
+
 const createSchema = z.object({
   name: z.string().trim().min(2).max(150),
   phone: z.string().trim().min(7).max(30),
@@ -12,6 +15,12 @@ const createSchema = z.object({
   teacherId: z.string().regex(/^[a-f\d]{24}$/i).optional().nullable(),
   groupId: z.string().regex(/^[a-f\d]{24}$/i).optional().nullable(),
   note: z.string().max(500).optional(),
+  address: z.string().trim().max(300).optional(),
+  parentName: z.string().trim().max(150).optional(),
+  parentPhone: z.string().trim().max(30).optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  purpose: z.array(z.enum(PURPOSES)).max(PURPOSES.length).optional(),
+  plan: z.enum(PLANS).optional(),
 });
 
 const include = { teacher: { select: { name: true } }, group: { select: { name: true } } } as const;
@@ -30,14 +39,21 @@ export async function POST(req: Request) {
   if (!user || user.role !== "ADMIN") return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   const parsed = createSchema.safeParse(await req.json());
   if (!parsed.success) return Response.json({ error: "Ma'lumotlar noto'g'ri (Ism, telefon, kunlar, vaqt majburiy)" }, { status: 400 });
-  const { name, phone, days, time, teacherId, groupId, note } = parsed.data;
+  const { name, phone, days, time, teacherId, groupId, note, address, parentName, parentPhone, startDate, purpose, plan } = parsed.data;
   if (groupId) {
     const g = await prisma.group.findUnique({ where: { id: groupId }, select: { teacherId: true } });
     if (!g) return Response.json({ error: "Guruh topilmadi" }, { status: 404 });
     if (teacherId && g.teacherId !== teacherId) return Response.json({ error: "Guruh tanlangan o'qituvchiga tegishli emas" }, { status: 400 });
   }
   try {
-    const item = await prisma.reception.create({ data: { name, phone, days: days.join(","), time, teacherId: teacherId ?? null, groupId: groupId ?? null, note: note ?? null } });
+    const item = await prisma.reception.create({ data: {
+      name, phone, days: days.join(","), time,
+      teacherId: teacherId ?? null, groupId: groupId ?? null, note: note ?? null,
+      address: address || null, parentName: parentName || null, parentPhone: parentPhone || null,
+      startDate: startDate || null,
+      purpose: purpose && purpose.length ? purpose.join(",") : null,
+      plan: plan || null,
+    } });
     return Response.json({ ok: true, item }, { status: 201 });
   } catch { return Response.json({ error: "Saqlab bo'lmadi" }, { status: 503 }); }
 }
