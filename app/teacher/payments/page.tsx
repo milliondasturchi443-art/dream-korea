@@ -1,23 +1,17 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CreditCard, Search, BellRing, CheckCircle2 } from "lucide-react";
+import { Loader2, CreditCard, Search, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Pay = { id: string; amount: number; method: string; month?: string | null; note?: string | null; status: string; createdAt: string; user: { id: string; name: string; email: string } };
-type Member = { user: { id: string; name: string; email: string } };
-type Group = { id: string; name: string; members?: Member[] };
+type Group = { id: string; name: string };
 
 function authHeader(): Record<string, string> {
   try { const t = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; return t ? { Authorization: `Bearer ${t}` } : {}; } catch { return {}; }
-}
-
-function currentMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 export default function TeacherPaymentsPage() {
@@ -26,12 +20,6 @@ export default function TeacherPaymentsPage() {
   const [payments, setPayments] = useState<Pay[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
-  // Eslatma formasi
-  const [studentId, setStudentId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [month, setMonth] = useState(currentMonth());
-  const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
   const [markingId, setMarkingId] = useState("");
 
   async function load() {
@@ -39,51 +27,13 @@ export default function TeacherPaymentsPage() {
     const h = authHeader();
     try {
       const gs = await fetch("/api/groups", { headers: h }).then(r => r.json());
-      const gList: Group[] = Array.isArray(gs.groups) ? gs.groups : [];
-      setGroups(gList);
+      setGroups(Array.isArray(gs.groups) ? gs.groups : []);
       const url = groupId ? `/api/payments?groupId=${encodeURIComponent(groupId)}` : "/api/payments";
       const pr = await fetch(url, { headers: h }).then(r => r.json());
       setPayments(Array.isArray(pr.payments) ? pr.payments : []);
     } catch {} finally { setLoading(false); }
   }
   useEffect(() => { load(); }, [groupId]);
-
-  // Tanlangan guruhdagi o'quvchilar (yoki "Barcha guruhlarim" bo'lsa — barcha guruhlardagi barcha o'quvchilar)
-  // Doimo BARCHA guruhlardagi barcha o'quvchilar (guruh tanlashdan qat'i nazar), guruh nomi bilan
-  const students = useMemo(() => {
-    const seen = new Map<string, { id: string; name: string; email: string; groupNames: string[] }>();
-    for (const g of groups) {
-      for (const m of g.members ?? []) {
-        if (!m.user?.id) continue;
-        const cur = seen.get(m.user.id);
-        if (cur) { if (g.name && !cur.groupNames.includes(g.name)) cur.groupNames.push(g.name); }
-        else seen.set(m.user.id, { ...m.user, groupNames: g.name ? [g.name] : [] });
-      }
-    }
-    return [...seen.values()];
-  }, [groups]);
-
-  useEffect(() => { setStudentId(""); }, [groupId]);
-
-  // To'lov eslatmasi yuborish (PENDING) — o'quvchiga bildirishnoma ketadi
-  async function sendReminder() {
-    if (!studentId) { toast.error("O'quvchini tanlang"); return; }
-    const am = Number(amount);
-    if (!am || am <= 0) { toast.error("Summa kiriting"); return; }
-    setSaving(true);
-    try {
-      const r = await fetch("/api/payments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify({ userId: studentId, amount: am, method: "reminder", status: "PENDING", month: month || undefined, note: note.trim() || undefined }),
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Yuborib bo'lmadi");
-      toast.success("To'lov eslatmasi yuborildi — o'quvchiga bildirishnoma ketdi");
-      setAmount(""); setNote("");
-      load();
-    } catch (e) { toast.error((e as Error).message); } finally { setSaving(false); }
-  }
 
   // PENDING → PAID (tasdiqlash) — o'quvchiga "muvaffaqiyatli to'landi" bildirishnomasi
   async function markPaid(p: Pay) {
@@ -110,36 +60,13 @@ export default function TeacherPaymentsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold text-slate-900 flex items-center gap-2"><CreditCard className="h-6 w-6 text-emerald-600"/> To'lovlar nazorati</h1>
-          <p className="text-sm text-slate-500">Eslatma yuboring, to'lovni tasdiqlang (faqat o'z guruhlaringiz)</p>
+          <p className="text-sm text-slate-500">To'lovlar ro'yxati (faqat o'z guruhlaringiz)</p>
         </div>
         <select value={groupId} onChange={e => setGroupId(e.target.value)} className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm min-w-[200px]">
           <option value="">Barcha guruhlarim</option>
           {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
       </div>
-
-      {/* To'lov eslatmasi yuborish */}
-      <Card className="p-4">
-        <div className="font-semibold text-sm flex items-center gap-2"><BellRing className="h-4 w-4 text-amber-500"/> To'lov eslatmasi yuborish</div>
-        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_140px_160px_minmax(0,1fr)_auto] gap-2">
-          <select value={studentId} onChange={e => setStudentId(e.target.value)} className="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm">
-            <option value="">— O'quvchini tanlang —</option>
-            {students.map(s => (
-              <option key={s.id} value={s.id}>
-                {s.groupNames.length ? `${s.groupNames.join(", ")} — ` : ""}{s.name} ({s.email})
-              </option>
-            ))}
-          </select>
-          <Input placeholder="Summa" inputMode="numeric" value={amount} onChange={e => setAmount(e.target.value)} />
-          <Input type="month" value={month} onChange={e => setMonth(e.target.value)} />
-          <Input placeholder="Izoh (ixtiyoriy)" value={note} onChange={e => setNote(e.target.value)} />
-          <Button onClick={sendReminder} disabled={saving} className="whitespace-nowrap">{saving ? <Loader2 className="h-4 w-4 animate-spin mr-1"/> : <BellRing className="h-4 w-4 mr-1"/>} Yuborish</Button>
-        </div>
-        <p className="text-xs text-slate-500 mt-2">
-          Barcha guruhlaringizdagi o'quvchilar — guruh nomi bilan ko'rsatiladi (guruh tanlash shart emas).
-          {pendingCount > 0 && <span className="ml-2 font-medium text-amber-600">{pendingCount} ta to'lov kutilmoqda</span>}
-        </p>
-      </Card>
 
       <Card className="p-4 flex gap-3">
         <div className="relative flex-1">
@@ -148,6 +75,10 @@ export default function TeacherPaymentsPage() {
         </div>
         <Button variant="outline" onClick={load}>Yangilash</Button>
       </Card>
+
+      {pendingCount > 0 && (
+        <p className="text-xs font-medium text-amber-600 -mt-2">{pendingCount} ta to'lov kutilmoqda</p>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-slate-500 p-4"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div>
