@@ -3,11 +3,10 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, CreditCard, Search, BellRing, CheckCircle2 } from "lucide-react";
+import { Loader2, CreditCard, BellRing } from "lucide-react";
 import { toast } from "sonner";
+import { PaymentsList, type PayRow } from "@/components/payments-list";
 
-type Pay = { id: string; amount: number; method: string; month?: string | null; note?: string | null; status: string; createdAt: string; user: { id: string; name: string; email: string } };
 type Student = { id: string; name: string; email: string; role: string };
 
 function authHeader(): Record<string, string> {
@@ -21,9 +20,8 @@ function currentMonth(): string {
 
 export default function AdminPaymentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [payments, setPayments] = useState<Pay[]>([]);
+  const [payments, setPayments] = useState<PayRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
   // Eslatma formasi
   const [studentId, setStudentId] = useState("");
   const [amount, setAmount] = useState("");
@@ -66,8 +64,8 @@ export default function AdminPaymentsPage() {
   }
 
   // PENDING → PAID (tasdiqlash)
-  async function markPaid(p: Pay) {
-    if (!confirm(`${p.user.name} — ${p.amount.toLocaleString("uz-UZ")} so&apos;m to'landi deb tasdiqlaysizmi?`)) return;
+  async function markPaid(p: PayRow) {
+    if (!confirm(`${p.user.name} — ${p.amount.toLocaleString("uz-UZ")} so'm to'landi deb tasdiqlaysizmi?`)) return;
     setMarkingId(p.id);
     try {
       const r = await fetch("/api/payments", {
@@ -82,7 +80,6 @@ export default function AdminPaymentsPage() {
     } catch (e) { toast.error((e as Error).message); } finally { setMarkingId(""); }
   }
 
-  const filtered = q.trim() ? payments.filter(p => (p.user.name + p.user.email).toLowerCase().includes(q.toLowerCase()) || String(p.amount).includes(q) || (p.month ?? "").toLowerCase().includes(q.toLowerCase())) : payments;
   const pendingCount = payments.filter(p => p.status === "PENDING").length;
 
   return (
@@ -115,49 +112,7 @@ export default function AdminPaymentsPage() {
         </p>
       </Card>
 
-      <Card className="p-4 flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"/>
-          <Input placeholder="Ism / email / oy / summa qidirish..." className="pl-9" value={q} onChange={e => setQ(e.target.value)} />
-        </div>
-        <Button variant="outline" onClick={load}>Yangilash</Button>
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500 p-4"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div>
-      ) : filtered.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-slate-500">To&apos;lovlar yo&apos;q</Card>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map(p => (
-            <Card key={p.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-sm font-semibold">{p.user?.name ?? "O'quvchi"} <span className="text-xs text-slate-500">· {p.user?.email ?? ""}</span></div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  {p.month && <span className="font-medium text-slate-600">{p.month} · </span>}
-                  {new Date(p.createdAt).toLocaleDateString("uz-UZ")}
-                  {p.note && <span className="text-slate-400"> · {p.note}</span>}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold">{p.amount.toLocaleString("uz-UZ")} so&apos;m</span>
-                {p.status === "PAID" ? (
-                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] flex items-center gap-1"><CheckCircle2 className="h-3 w-3"/> To&apos;langan</Badge>
-                ) : p.status === "PENDING" ? (
-                  <>
-                    <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px]">Hali to&apos;lanmagan</Badge>
-                    <Button size="sm" onClick={() => markPaid(p)} disabled={markingId === p.id} className="h-8">
-                      {markingId === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : <CheckCircle2 className="h-3.5 w-3.5 mr-1"/>} To&apos;landi
-                    </Button>
-                  </>
-                ) : (
-                  <Badge className="bg-slate-100 text-slate-700 border text-[11px]">{p.status}</Badge>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+      <PaymentsList payments={payments} loading={loading} onRefresh={load} onMarkPaid={markPaid} markingId={markingId} />
     </div>
   );
 }

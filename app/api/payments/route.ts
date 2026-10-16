@@ -17,6 +17,10 @@ export async function GET(req:Request){
   const auth = await getAuth(req);
   if(!auth) return Response.json({ error:"Auth kerak"}, { status:401 });
   const url=new URL(req.url); const userId=url.searchParams.get("userId")?.trim()||""; const groupId=url.searchParams.get("groupId")?.trim()||"";
+  // O'quvchi guruhlari bilan birga to'lovlar (ro'yxatda guruh nomlari ko'rsatilsin)
+  const userWithGroups={ select:{ id:true, name:true, email:true, groupMembers:{ select:{ group:{ select:{ name:true }}}}}};
+  type PayWithGroups={ id:string; amount:number; method:string; month:string|null; note:string|null; status:string; createdAt:Date; user:{ id:string; name:string; email:string; groupMembers:{ group:{ name:string|null }|null }[] } };
+  const shape=(payments:PayWithGroups[])=>payments.map(p=>({ ...p, user:{ id:p.user.id, name:p.user.name, email:p.user.email, groupNames:(p.user.groupMembers??[]).map(m=>m?.group?.name).filter((n):n is string=>Boolean(n)) }}));
   try{
     // teacher: payments of own groups members
     if(auth.role==="TEACHER"){
@@ -26,8 +30,8 @@ export async function GET(req:Request){
         // verify own group
         const g=await prisma.group.findUnique({ where:{ id:groupId}, select:{ teacherId:true }});
         if(String(g?.teacherId??"")!==auth.id) return Response.json({ error:"Bu guruh sizniki emas"}, { status:403});
-        const payments=await prisma.payment.findMany({ where:{ userId:{ in: ids }}, include:{ user:{ select:{ id:true, name:true, email:true }}}, orderBy:{ createdAt:"desc"}, take:200 });
-        return Response.json({ payments });
+        const payments=await prisma.payment.findMany({ where:{ userId:{ in: ids }}, include:{ user:userWithGroups }, orderBy:{ createdAt:"desc"}, take:200 });
+        return Response.json({ payments: shape(payments as PayWithGroups[]) });
       }
       // all groups of teacher
       const groups=await prisma.group.findMany({ where:{ teacherId: auth.id }, select:{ id:true }});
@@ -35,8 +39,8 @@ export async function GET(req:Request){
       const mems=await prisma.groupMember.findMany({ where:{ groupId:{ in: groupIds }}, select:{ userId:true }});
       const ids=[...new Set(mems.map(m=>m.userId))];
       if(ids.length===0) return Response.json({ payments:[]});
-      const payments=await prisma.payment.findMany({ where:{ userId:{ in: ids }}, include:{ user:{ select:{ id:true, name:true, email:true }}}, orderBy:{ createdAt:"desc"}, take:200 });
-      return Response.json({ payments });
+      const payments=await prisma.payment.findMany({ where:{ userId:{ in: ids }}, include:{ user:userWithGroups }, orderBy:{ createdAt:"desc"}, take:200 });
+      return Response.json({ payments: shape(payments as PayWithGroups[]) });
     }
     if(auth.role==="ADMIN"){
       const where: Record<string,unknown>={};
@@ -46,8 +50,8 @@ export async function GET(req:Request){
         where.userId={ in: mems.map(m=>m.userId)};
         if(mems.length===0) return Response.json({ payments:[]});
       }
-      const payments=await prisma.payment.findMany({ where: where as never, include:{ user:{ select:{ id:true, name:true, email:true }}}, orderBy:{ createdAt:"desc"}, take:300 });
-      return Response.json({ payments });
+      const payments=await prisma.payment.findMany({ where: where as never, include:{ user:userWithGroups }, orderBy:{ createdAt:"desc"}, take:300 });
+      return Response.json({ payments: shape(payments as PayWithGroups[]) });
     }
     // STUDENT — own
     const payments=await prisma.payment.findMany({ where:{ userId: auth.id }, orderBy:{ createdAt:"desc"}, take:100 });
