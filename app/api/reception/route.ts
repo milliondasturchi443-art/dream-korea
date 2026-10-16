@@ -11,7 +11,7 @@ const createSchema = z.object({
   name: z.string().trim().min(2).max(150),
   phone: z.string().trim().min(7).max(30),
   days: z.array(z.enum(["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"])).min(1),
-  time: z.string().trim().regex(/^\d{2}:\d{2}$/),
+  time: z.string().trim().regex(/^\d{2}:\d{2}( ?- ?\d{2}:\d{2})?$/), // "15:00" yoki "10:00 - 12:00"
   teacherId: z.string().regex(/^[a-f\d]{24}$/i).optional().nullable(),
   groupId: z.string().regex(/^[a-f\d]{24}$/i).optional().nullable(),
   note: z.string().max(500).optional(),

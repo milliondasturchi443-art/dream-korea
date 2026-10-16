@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { darsRequest } from "@/lib/dars-client";
-import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check } from "lucide-react";
+import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check, CalendarClock } from "lucide-react";
 
 type Teacher = { id: string; name: string; role: string };
 type Group = { id: string; name: string; teacherId?: string | null; teacher?: { name: string } | null };
@@ -21,10 +21,18 @@ const PRESETS: { label: string; days: string[] }[] = [
   { label: "Dush–Chor–Jum", days: ["Dushanba", "Chorshanba", "Juma"] },
   { label: "Ses–Pay–Shan", days: ["Seshanba", "Payshanba", "Shanba"] },
 ];
-const TIME_PRESETS = ["10:00", "13:30", "15:30"];
+const TIME_PRESETS = ["10:00 - 12:00", "13:30 - 15:30", "15:30 - 17:30"];
+const TIME_RE = /^\d{2}:\d{2}( ?- ?\d{2}:\d{2})?$/;
 const PURPOSES = ["TOPIK", "Koreada o'qish", "Ishlash", "Sayohat"];
 const PLANS = ["Til kursi", "Kolleg", "Bakalavr", "Magistr"];
 const STATUS_LABEL: Record<string, string> = { new: "Yangi", contacted: "Aloqa qilindi", enrolled: "Yozildi" };
+
+function fmtDateTime(isoStr: string) {
+  const d = new Date(isoStr);
+  if (Number.isNaN(d.getTime())) return isoStr;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 async function authHeaders(): Promise<Record<string, string>> {
   const token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || "";
@@ -117,7 +125,7 @@ export default function ReceptionPage() {
     try { await fetch(`/api/reception?id=${id}`, { method: "DELETE", headers: await authHeaders() }); await load(); } catch {}
   }
 
-  const valid = name.trim().length >= 2 && phone.trim().length >= 7 && days.length > 0 && /^\d{2}:\d{2}$/.test(time);
+  const valid = name.trim().length >= 2 && phone.trim().length >= 7 && days.length > 0 && TIME_RE.test(time.trim());
 
   return (
     <div className="mx-auto max-w-[1200px] p-4 lg:p-6 space-y-5">
@@ -178,7 +186,7 @@ export default function ReceptionPage() {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="space-y-1 text-sm font-medium text-slate-700">Dars vaqti
-            <Input type="time" value={time} onChange={e => setTime(e.target.value)} />
+            <Input value={time} onChange={e => setTime(e.target.value)} placeholder="10:00 - 12:00" inputMode="numeric" />
           </label>
           <div className="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">
             <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-[#2563eb]" /> Tez tanlash</span>
@@ -277,6 +285,9 @@ export default function ReceptionPage() {
                   <a href={`tel:${it.phone.replace(/\s/g, "")}`} className="flex items-center gap-1 hover:text-[#2563eb]"><Phone className="h-3 w-3" />{it.phone}</a>
                   <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{it.days}</span>
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{it.time}</span>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-3 text-xs">
+                  <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 font-medium text-slate-600"><CalendarClock className="h-3 w-3 text-[#2563eb]" />Ro‘yxatga olindi: {fmtDateTime(it.createdAt)}</span>
                 </div>
                 {(it.address || it.parentName || it.parentPhone || it.startDate) && (
                   <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
