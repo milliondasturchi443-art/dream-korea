@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { speak, stopSpeak } from "@/lib/tts";
 
 type Mode = "list" | "cards" | "quiz";
+type DarsGroup = { unit: number; title: string; words: Word[] };
 
 export default function VocabularyPage() {
   const [q, setQ] = useState("");
@@ -21,14 +22,23 @@ export default function VocabularyPage() {
   const [fav, setFav] = useState<Set<string>>(new Set());
   const [learned, setLearned] = useState<Set<string>>(new Set());
   const [dbWords, setDbWords] = useState<Word[]>([]);
+  // Darslar (unitlar) so'zlari — saralash uchun unit-chiplari
+  const [darsWords, setDarsWords] = useState<Word[]>([]);
+  const [unitChips, setUnitChips] = useState<{ unit: number; title: string; count: number }[]>([]);
 
   // Admin qo'shilgan so'zlar (БД) — lug'atga avtomatik qo'shiladi
   useEffect(() => {
     let active = true;
-    fetch("/api/vocabulary").then(r => r.json()).then(d => { if (active && Array.isArray(d.words)) setDbWords(d.words); }).catch(() => {});
+    fetch("/api/vocabulary").then(r => r.json()).then(d => {
+      if (!active) return;
+      if (Array.isArray(d.words)) setDbWords(d.words);
+      const groups: DarsGroup[] = Array.isArray(d.dars) ? d.dars : [];
+      setDarsWords(groups.flatMap(g => g.words ?? []));
+      setUnitChips(groups.map(g => ({ unit: g.unit, title: g.title, count: g.words?.length ?? 0 })));
+    }).catch(() => {});
     return () => { active = false; };
   }, []);
-  const allWords = useMemo(() => [...words, ...dbWords], [dbWords]);
+  const allWords = useMemo(() => [...words, ...dbWords, ...darsWords], [dbWords, darsWords]);
 
   // flashcard
   const [cardIdx, setCardIdx] = useState(0);
@@ -113,7 +123,7 @@ export default function VocabularyPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-[22px] font-bold text-slate-900">Lug‘at</h1>
-          <p className="text-sm text-slate-500">220+ so‘z · 16 kategoriya · ovoz, kartochkalar, test, saqlanganlar</p>
+          <p className="text-sm text-slate-500">{allWords.length} so‘z · 16 kategoriya · darslar unitlari bilan · ovoz, kartochkalar, test</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={pickRandom}><Shuffle className="h-4 w-4 mr-1"/> Tasodifiy</Button>
@@ -143,10 +153,29 @@ export default function VocabularyPage() {
           </button>
         </div>
         <div className="flex gap-1.5 flex-wrap">
-          {["Barchasi", ...["A1", "A2", "B1"]].map(l => (
+          {["Barchasi", ...["A1", "A2", "B1", "TOPIK I", "TOPIK II"]].map(l => (
             <button key={l} onClick={() => setLevel(l)} className={`px-3 py-1.5 rounded-full text-xs font-medium border ${level===l ? "bg-[#2563eb] text-white border-[#2563eb]" : "bg-white border-slate-200 text-slate-600"}`}>{l}</button>
           ))}
         </div>
+        {unitChips.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 items-center">
+            <span className="mr-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">Darslardan</span>
+            {unitChips.map(u => {
+              const id = `unit-${u.unit}`;
+              const active = cat === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setCat(active ? "Barchasi" : id)}
+                  title={u.title}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border ${active ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"}`}
+                >
+                  Unit {u.unit} · {u.count} so&apos;z
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="flex gap-1.5 flex-wrap">
           {["Barchasi", ...categories.map(c => c.id)].map(cid => {
             const c = categories.find(x => x.id === cid);
@@ -173,7 +202,10 @@ export default function VocabularyPage() {
             return (
               <Card key={v.ko+v.cat} className={`p-4 hover:shadow-md transition-shadow ${isLearned ? "border-emerald-200 bg-emerald-50/30" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
-                  <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">{v.level}</Badge>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">{v.level}</Badge>
+                    {v.cat.startsWith("unit-") && <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px]">Unit {v.cat.slice(5)}</Badge>}
+                  </div>
                   <div className="flex gap-1">
                     <button onClick={() => toggleLearned(v.ko)} className={`h-8 w-8 rounded-full grid place-items-center border ${isLearned ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-white border-slate-200 text-slate-400"}`}><CheckCircle2 className={`h-4 w-4 ${isLearned?"text-emerald-600":""}`}/></button>
                     <button onClick={() => toggleFav(v.ko)} className={`h-8 w-8 rounded-full grid place-items-center border ${isFav ? "bg-rose-50 border-rose-200 text-rose-600" : "bg-white border-slate-200 text-slate-400"}`}><Heart className={`h-4 w-4 ${isFav?"fill-rose-500":""}`}/></button>

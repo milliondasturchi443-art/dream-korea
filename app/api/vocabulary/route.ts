@@ -10,13 +10,35 @@ function isAdmin(req: Request) {
   return !!d && d.role === "ADMIN" && isAdminEmail(String(d.email ?? ""));
 }
 
-// GET /api/vocabulary — lug'atdagi qo'shilgan so'zlar (hamma uchun)
+// GET /api/vocabulary — lug'atdagi qo'shilgan so'zlar (hamma uchun) + darslar (unitlar) so'zlari
 export async function GET() {
   try {
-    const words = await prisma.vocabulary.findMany({ orderBy: { createdAt: "desc" }, take: 500 });
-    return Response.json({ words });
+    const [words, darsUnits] = await Promise.all([
+      prisma.vocabulary.findMany({ orderBy: { createdAt: "desc" }, take: 500 }),
+      prisma.darsUnit.findMany({
+        orderBy: { order: "asc" },
+        select: {
+          order: true,
+          title: true,
+          level: true,
+          vocab: { orderBy: { order: "asc" }, select: { ko: true, uz: true, tr: true } },
+        },
+      }),
+    ]);
+    const dars = darsUnits.map(u => ({
+      unit: u.order,
+      title: u.title,
+      words: u.vocab.map(w => ({
+        ko: w.ko,
+        uz: w.uz,
+        tr: w.tr || w.ko,
+        level: u.level,
+        cat: `unit-${u.order}`,
+      })),
+    }));
+    return Response.json({ words, dars });
   } catch {
-    return Response.json({ words: [] });
+    return Response.json({ words: [], dars: [] });
   }
 }
 
