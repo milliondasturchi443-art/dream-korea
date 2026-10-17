@@ -6,7 +6,9 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Volume2, Trash2, Languages } from "lucide-react";
+import { speak } from "@/lib/tts";
+import { categories } from "@/lib/vocabulary-data";
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; description: string; teacher: string; lessons: number; color: string };
 type ApiCourseDetail = ApiCourse & { lessons: { id: string; order: number; title: string; duration: string }[] };
@@ -14,13 +16,14 @@ type TestListItem = { id: string; title: string; level: string; type: string; qu
 type TestDetail = { id: string; title: string; questions: { id: string; text: string; correct: string; options?: { key: string; text: string }[] }[] };
 type Material = { id: string; title: string; kind: string; url: string | null };
 type Video = { id: string; title: string; category: string; duration: string; videoUrl: string | null };
+type LugatWord = { id: string; ko: string; tr: string; uz: string; level: string; cat: string };
 
 function authHeader(): Record<string, string> {
   try { const t = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token"); return t ? { Authorization: `Bearer ${t}` } : {}; } catch { try { const t2 = localStorage.getItem("dk_token"); return t2 ? { Authorization: `Bearer ${t2}` } : {}; } catch { return {}; } }
 }
 
 export default function AdminContentPage() {
-  const [tab, setTab] = useState<"kurslar" | "testlar" | "materiallar" | "videolar">("kurslar");
+  const [tab, setTab] = useState<"kurslar" | "testlar" | "materiallar" | "videolar" | "lugat">("kurslar");
 
   // Kurslar
   const [courses, setCourses] = useState<ApiCourse[]>([]);
@@ -58,6 +61,16 @@ export default function AdminContentPage() {
   const [vDur, setVDur] = useState("");
   const [vUrl, setVUrl] = useState("");
 
+  // Lug'at (БД) — alohida so'z qo'shish + avtomatik koreys TTS
+  const [lugatWords, setLugatWords] = useState<LugatWord[]>([]);
+  const [lugLoading, setLugLoading] = useState(false);
+  const [wKo, setWKo] = useState("");
+  const [wUz, setWUz] = useState("");
+  const [wTr, setWTr] = useState("");
+  const [wLevel, setWLevel] = useState("A1");
+  const [wCat, setWCat] = useState("greeting");
+  const [wSaving, setWSaving] = useState(false);
+
   const h = authHeader;
 
   const fetchCourses = useCallback(async () => {
@@ -83,9 +96,14 @@ export default function AdminContentPage() {
     try { const r = await fetch("/api/videos"); const d = await r.json(); if (r.ok && Array.isArray(d.videos)) setVideos(d.videos); } catch {}
     setVidLoading(false);
   }, []);
+  const fetchLugat = useCallback(async () => {
+    setLugLoading(true);
+    try { const r = await fetch("/api/vocabulary"); const d = await r.json(); if (r.ok && Array.isArray(d.words)) setLugatWords(d.words); } catch {}
+    setLugLoading(false);
+  }, []);
 
   useEffect(() => { fetchCourses(); }, [fetchCourses]);
-  useEffect(() => { if (tab === "testlar") fetchTests(); if (tab === "materiallar") fetchMaterials(); if (tab === "videolar") fetchVideos(); }, [tab, fetchTests, fetchMaterials, fetchVideos]);
+  useEffect(() => { if (tab === "testlar") fetchTests(); if (tab === "materiallar") fetchMaterials(); if (tab === "videolar") fetchVideos(); if (tab === "lugat") fetchLugat(); }, [tab, fetchTests, fetchMaterials, fetchVideos, fetchLugat]);
 
   async function req(url: string, method: string, body?: unknown): Promise<any> {
     const hd = h();
@@ -166,7 +184,25 @@ export default function AdminContentPage() {
     try { await req("/api/videos", "POST", { title: vTitle.trim(), category: vCat.trim(), duration: vDur.trim(), videoUrl: vUrl.trim() }); setVTitle(""); setVDur(""); setVUrl(""); toast.success("Video qo‘shildi (БД)"); fetchVideos(); } catch (e) { toast.error((e as Error).message); }
   }
   async function removeVideo(id: string) {
-    try { await req(`/api/videos/${id}`, "DELETE"); toast.success("O‘chirildi"); fetchVideos(); } catch (e) { toast.error((e as Error).message); }
+    try { await req(`/api/videos/${id}`, "DELETE"); toast.success("Video o‘chirildi"); fetchVideos(); } catch (e) { toast.error((e as Error).message); }
+  }
+
+  // ---- Lug'at (БД) — so'z qo'shish, avtomatik koreys TTS ovozi ----
+  async function addLugatWord() {
+    if (!wKo.trim() || !wUz.trim()) { toast.error("Koreys va o‘zbek matnini kiriting"); return; }
+    setWSaving(true);
+    try {
+      const d = await req("/api/vocabulary", "POST", { ko: wKo.trim(), uz: wUz.trim(), tr: wTr.trim(), level: wLevel, cat: wCat });
+      // Avtomatik TTS — qo‘shilgan so‘z koreys tilida ovozli o‘qiladi
+      try { speak(d.word?.ko || wKo.trim()); } catch {}
+      toast.success("So‘z lug‘atga qo‘shildi — koreys talaffuzi eshitildi");
+      setWKo(""); setWUz(""); setWTr("");
+      fetchLugat();
+    } catch (e) { toast.error((e as Error).message); } finally { setWSaving(false); }
+  }
+  async function removeLugatWord(id: string) {
+    if (!confirm("So‘zni lug‘atdan o‘chirasizmi?")) return;
+    try { await req(`/api/vocabulary?id=${encodeURIComponent(id)}`, "DELETE"); toast.success("O‘chirildi"); fetchLugat(); } catch (e) { toast.error((e as Error).message); }
   }
 
   return (
@@ -178,9 +214,9 @@ export default function AdminContentPage() {
       </motion.div>
 
       <div className="flex gap-1.5 p-1 rounded-full bg-slate-100 w-fit flex-wrap">
-        {(["kurslar", "testlar", "materiallar", "videolar"] as const).map(id => (
+        {(["kurslar", "testlar", "materiallar", "videolar", "lugat"] as const).map(id => (
           <button key={id} onClick={() => setTab(id)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${tab === id ? "bg-[#0f1b3d] text-white shadow" : "text-slate-600 hover:text-slate-900"}`}>
-            {id === "kurslar" ? "Kurslar" : id === "testlar" ? "Testlar" : id === "materiallar" ? "Materiallar" : "Videolar"}
+            {id === "kurslar" ? "Kurslar" : id === "testlar" ? "Testlar" : id === "materiallar" ? "Materiallar" : id === "videolar" ? "Videolar" : "Lug‘at"}
           </button>
         ))}
       </div>
@@ -355,6 +391,46 @@ export default function AdminContentPage() {
                       <div className="text-xs text-slate-500 mt-1 flex gap-1.5 flex-wrap items-center"><Badge className="text-[11px]">{v.category}</Badge><span>{v.duration}</span>{v.videoUrl && <a href={v.videoUrl} target="_blank" rel="noopener noreferrer" className="text-[#2563eb] underline truncate">havola</a>}</div>
                     </div>
                     <Button variant="ghost" size="sm" className="text-red-600" onClick={() => removeVideo(v.id)}>O‘chirish</Button>
+                  </Card>
+                ))}
+              </div>
+            }
+          </motion.div>
+        )}
+        {tab === "lugat" && (
+          <motion.div key="lugat" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-4">
+            <Card className="p-4 space-y-3">
+              <div className="font-semibold flex items-center gap-2"><Languages className="h-4 w-4 text-blue-600" /> Yangi so‘z qo‘shish — saqlangach koreyscha avtomatik ovoz chiqadi</div>
+              <div className="grid sm:grid-cols-2 gap-2">
+                <Input placeholder="Koreyscha (ko‘) — 사랑" value={wKo} onChange={e => setWKo(e.target.value)} />
+                <Input placeholder="O‘zbekcha (uz) — Sevgi" value={wUz} onChange={e => setWUz(e.target.value)} />
+                <Input placeholder="Transliteration (tr) — sarang" value={wTr} onChange={e => setWTr(e.target.value)} />
+                <div className="flex gap-2">
+                  <select value={wLevel} onChange={e => setWLevel(e.target.value)} className="h-9 flex-1 rounded-lg border border-slate-200 bg-white px-2 text-sm"><option>A1</option><option>A2</option><option>B1</option></select>
+                  <select value={wCat} onChange={e => setWCat(e.target.value)} className="h-9 flex-[2] rounded-lg border border-slate-200 bg-white px-2 text-sm">
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.title}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button onClick={addLugatWord} disabled={wSaving || !wKo.trim() || !wUz.trim()}>
+                  {wSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Volume2 className="h-4 w-4 mr-1" />} Qo‘shish va eshitish
+                </Button>
+                <span className="text-xs text-slate-500">Talaffuz: Google TTS (ko-KR)</span>
+              </div>
+            </Card>
+            {lugLoading ? <Card className="p-8 text-center text-sm text-slate-400">Yuklanmoqda…</Card> :
+             lugatWords.length === 0 ? <Card className="p-8 text-center text-sm text-slate-500">Hali so‘z qo‘shilmagan</Card> :
+              <div className="grid sm:grid-cols-2 gap-2">
+                {lugatWords.map(w => (
+                  <Card key={w.id} className="p-3 flex items-center gap-2.5">
+                    <button onClick={() => speak(w.ko)} aria-label={`${w.ko} talaffuzi`} className="h-9 w-9 rounded-full bg-blue-50 text-blue-600 grid place-items-center shrink-0 hover:bg-blue-100"><Volume2 className="h-4 w-4" /></button>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold truncate">{w.ko} <span className="font-normal text-xs text-slate-400">{w.tr}</span></div>
+                      <div className="text-sm text-slate-600 truncate">{w.uz}</div>
+                    </div>
+                    <Badge className="text-[10px] shrink-0">{w.level}</Badge>
+                    <button onClick={() => removeLugatWord(w.id)} className="text-red-500 hover:text-red-700 shrink-0" aria-label="O‘chirish"><Trash2 className="h-4 w-4" /></button>
                   </Card>
                 ))}
               </div>

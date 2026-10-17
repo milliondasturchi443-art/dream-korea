@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { speak } from "@/lib/tts";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import { playWin } from "@/lib/win-sound";
-import { Volume2, BookOpen, Video, PenLine, ArrowRight, Check, Circle, Play } from "lucide-react";
+import { Volume2, BookOpen, Video, PenLine, ArrowRight, Check, Circle, Play, RotateCcw, AlignLeft, Headphones } from "lucide-react";
 
 type Exercise = { q: string; options: string[]; correct: number };
 type Unit = {
+  order: number;
   title: string; topic: string; level: string; description?: string;
   vocab: { id: string; ko: string; uz: string; tr?: string; exampleKo?: string; exampleUz?: string }[];
   videos: { id: string; title: string; videoUrl: string }[];
@@ -25,6 +26,7 @@ type UnitRef = { id: string; order: number; topic: string };
 type ProgressRow = { unitId: string; stars: number; vocabDone: boolean; grammarDone: boolean; listeningDone: boolean; videoDone: boolean };
 
 const VIDEO_POS = "dk_video_pos";
+const MAX_VOCAB = 35;
 
 export default function UnitPage() {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +42,8 @@ export default function UnitPage() {
   const [writingHistory, setWritingHistory] = useState<Record<string, WritingAttempt[]>>({});
   const [units, setUnits] = useState<UnitRef[]>([]);
   const [progress, setProgress] = useState<ProgressRow[]>([]);
+  // Yakunlangan bo'limni qayta yechish (Qayta ishlash) — faqat lokal qulf
+  const [retry, setRetry] = useState<Record<string, boolean>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const resultRef = useRef<HTMLDivElement | null>(null);
 
@@ -69,6 +73,7 @@ export default function UnitPage() {
       const res = await darsRequest<Result>("/api/dars/progress", { unitId: id, section, answers });
       setResult(res);
       if (res.passed) playWin();
+      setRetry(r => ({ ...r, [section]: false }));
       await refreshProgress();
     }
     catch (e) { setError((e as Error).message); }
@@ -81,10 +86,17 @@ export default function UnitPage() {
     try {
       await darsRequest("/api/dars/progress", { unitId: id, section: "video", answers: {} });
       playWin();
+      setRetry(r => ({ ...r, video: false }));
       await refreshProgress();
     }
     catch (e) { setError((e as Error).message); }
     finally { setVideoBusy(false); }
+  }
+
+  function startRetry(section: string) {
+    setRetry(r => ({ ...r, [section]: true }));
+    setResult(null);
+    setError("");
   }
 
   async function loadWritingHistory(writingId: string) {
@@ -120,35 +132,73 @@ export default function UnitPage() {
 
   const me = progress.find(p => p.unitId === id);
   const hasVideo = !!unit && unit.videos.length > 0;
+  // server holati (progressda qayd etilgan)
   const secDone = {
     vocab: !!me?.vocabDone,
     grammar: !!me?.grammarDone,
     listening: !!me?.listeningDone,
     video: !!unit && (unit.videos.length === 0 || !!me?.videoDone),
   };
+  // qulf: yakunlangan va "Qayta ishlash" bosilmagan bo'lim yechilmaydi
+  const locked = {
+    vocab: secDone.vocab && !retry.vocab,
+    grammar: secDone.grammar && !retry.grammar,
+    listening: secDone.listening && !retry.listening,
+    video: secDone.video && !retry.video,
+  };
   const statusParts = [
-    { label: "Lug‘at", ok: secDone.vocab },
-    ...(hasVideo ? [{ label: "Video", ok: secDone.video }] : []),
+    { label: "Video", ok: secDone.video || !hasVideo },
     { label: "Grammatika", ok: secDone.grammar },
     { label: "Tinglash", ok: secDone.listening },
+    { label: "Lug‘at", ok: secDone.vocab },
   ];
   function secBadge(ok: boolean) {
     return ok ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Yakunlandi</span> : null;
   }
-  function doneFooter(ok: boolean, children: ReactNode) {
-    return ok ? <span className="inline-flex h-10 items-center rounded-full bg-slate-200 px-5 text-sm font-medium text-slate-500">✓ Yakunlandi</span> : children;
+  // Yakunlangan bo'lim: kulrang holat + "Qayta ishlash" tugmasi bilan qayta yechish mumkin
+  function doneFooter(serverDone: boolean, section: string, children: ReactNode) {
+    if (serverDone && !retry[section]) return (
+      <span className="inline-flex flex-wrap items-center gap-2">
+        <span className="inline-flex h-10 items-center rounded-full bg-slate-200 px-5 text-sm font-medium text-slate-500">✓ Yakunlandi</span>
+        <Button variant="outline" onClick={() => startRetry(section)}><RotateCcw className="h-4 w-4 mr-1" /> Qayta ishlash</Button>
+      </span>
+    );
+    return children;
   }
+
+  // Sarlavha: "1) Salomlashish" + "1-dars · 인사"
+  const topicRaw = (unit?.topic || unit?.title || "").trim();
+  const hasSep = topicRaw.includes("·");
+  const koPart = hasSep ? topicRaw.split("·")[0].trim() : "";
+  const uzPart = hasSep ? topicRaw.split("·").slice(1).join("·").trim() : topicRaw;
+  const orderNo = unit?.order ?? 1;
 
   return <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
     <Link href="/dars" className="text-blue-600">← Darslar</Link>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">{error}</p>}
     {!unit ? <p>Yuklanmoqda…</p> : <>
-      <header><p className="text-sm text-blue-600">{unit.level}</p><h1 className="text-2xl font-bold">{unit.topic}</h1>{unit.description && <p className="mt-1 text-sm text-slate-500">{unit.description}</p>}</header>
-      <Card className={`space-y-4 p-5 ${secDone.vocab ? "opacity-60" : ""}`}><h2 className="flex items-center gap-2 text-xl font-bold"><BookOpen className="h-5 w-5" /> Lug‘at {secBadge(secDone.vocab)}</h2>{unit.vocab.map(v => <div key={v.id} className="border-b pb-3"><h3 className="text-lg font-bold">{v.ko} <button aria-label={`${v.ko} talaffuzi`} onClick={() => speak(v.ko)} className="text-blue-600"><Volume2 className="h-4 w-4" /></button></h3><p className="text-sm text-slate-500">{v.tr}</p><details><summary>Tarjima va misol</summary><p>{v.uz}</p><p>{v.exampleKo}</p><p>{v.exampleUz}</p></details>{choices(v.id, unit.vocab.map(w => w.uz), secDone.vocab, unit.vocab.indexOf(v))}</div>)}{doneFooter(secDone.vocab, <Button disabled={saving || !unit.vocab.length} onClick={() => submit("vocab")}>Tekshirish va saqlash</Button>)}</Card>
-      <Card className={`space-y-4 p-5 ${hasVideo && secDone.video ? "opacity-60" : ""}`}><h2 className="flex items-center gap-2 text-xl font-bold"><Video className="h-5 w-5" /> Video Dars {secBadge(hasVideo && secDone.video)}</h2>{!unit.videos.length && <p className="text-slate-500">Bu unitga video hali qo‘shilmagan.</p>}{hasVideo && doneFooter(secDone.video, <Button disabled={videoBusy} onClick={acceptVideo}><Play className="mr-2 h-4 w-4" />{videoBusy ? "Qabul qilinmoqda…" : "Video ko`rib boldim"}</Button>)}{unit.videos.map(v => <div key={v.id}><h3 className="mb-2 font-bold">{v.title}</h3>{youtubeEmbedUrl(v.videoUrl) ? <iframe title={v.title} src={youtubeEmbedUrl(v.videoUrl)!} className="aspect-video w-full rounded-xl" allowFullScreen /> : <video ref={el => { videoRefs.current[v.id] = el; }} controls preload="metadata" src={v.videoUrl} className="w-full rounded-xl" onLoadedMetadata={e => { try { const m = JSON.parse(localStorage.getItem(VIDEO_POS) || "{}"); const t = Number(m[v.id]); if (t > 0 && e.currentTarget.duration > t) e.currentTarget.currentTime = t; } catch {} }} onTimeUpdate={e => { if (Math.floor(e.currentTarget.currentTime) % 5 === 0) saveVideoPos(v.id, e.currentTarget.currentTime); }} />}</div>)}</Card>
-      <Card className={`space-y-5 p-5 ${secDone.grammar ? "opacity-60" : ""}`}><h2 className="text-xl font-bold">문법 · Grammatika {secBadge(secDone.grammar)}</h2>{unit.grammars.map(g => <section key={g.id} className="space-y-3"><h3 className="font-bold">{g.title}</h3>{g.pattern && <p className="rounded-xl bg-blue-50 p-3 font-bold">{g.pattern}</p>}<p>{g.explain}</p>{g.examples.map((e, i) => <p key={i}>{e.ko} — {e.uz}</p>)}{g.exercises.map((e, i) => <div key={i}><p>{e.q}</p>{choices(`${g.id}:${i}`, e.options, secDone.grammar, e.correct)}</div>)}</section>)}{doneFooter(secDone.grammar, <Button disabled={saving || !unit.grammars.length} onClick={() => submit("grammar")}>Tekshirish va saqlash</Button>)}</Card>
-      <Card className={`space-y-5 p-5 ${secDone.listening ? "opacity-60" : ""}`}><h2 className="text-xl font-bold">듣기 · Tinglash {secBadge(secDone.listening)}</h2>{unit.listenings.map(l => <section key={l.id}><h3 className="mb-3 font-bold">{l.title}</h3>{l.audioUrl ? <audio controls src={l.audioUrl} className="w-full" /> : l.audioText ? <><Button variant="outline" onClick={() => speak(l.audioText!)}>Eshitish</Button><p className="text-xs text-slate-500">Sintezlangan ovoz (TTS)</p></> : <p>Audio hali qo‘shilmagan.</p>}{l.transcript && <details className="mt-2 text-sm text-slate-600"><summary>Transkript</summary>{l.transcript}</details>}{l.questions.map((q, i) => <div key={i} className="mt-4"><p>{q.text}</p>{choices(`${l.id}:${i}`, q.options.map(o => o.text), secDone.listening, q.options.findIndex(o => o.key === q.correct))}</div>)}</section>)}{doneFooter(secDone.listening, <Button disabled={saving || !unit.listenings.length} onClick={() => submit("listening")}>Tekshirish va saqlash</Button>)}</Card>
-      {unit.writings.length > 0 && <Card className="space-y-5 p-5"><h2 className="flex items-center gap-2 text-xl font-bold"><PenLine className="h-5 w-5" /> Yozish mashqlari</h2>{unit.writings.map(w => <section key={w.id} className="space-y-3"><h3 className="font-bold">{w.title}</h3><p className="text-sm text-slate-700">{w.prompt}</p>{w.criteria && <p className="text-xs text-slate-500">Meyzonlar: {w.criteria}</p>}<textarea value={writingText} onChange={e => setWritingText(e.target.value)} rows={8} placeholder="Javobingizni koreys tilida yozing…" className="w-full rounded-xl border border-slate-200 p-3 text-base sm:text-sm focus:border-blue-500 focus:outline-none" /><div className="flex items-center justify-between gap-2"><span className="text-xs text-slate-400">{writingText.length} belgi</span><Button onClick={() => submitWriting(w.id)} disabled={writingBusy || writingText.trim().length < 10}>{writingBusy ? "Baholanmoqda…" : "Topshirish"}</Button></div>{writingResult && <div className="rounded-xl bg-emerald-50 p-3 text-sm" role="status"><b>Baho: {writingResult.score ?? "—"}/100</b><p className="mt-1 text-slate-600">{writingResult.feedback}</p></div>}{w.sampleAnswer && <details className="text-sm text-slate-500"><summary>Namuna javob</summary>{w.sampleAnswer}</details>}{(writingHistory[w.id]?.length ?? 0) > 0 && <details className="text-sm text-slate-500"><summary>Oxirgi urinishlar</summary>{writingHistory[w.id]!.map(a => <div key={a.id} className="mt-1 flex justify-between"><span>{new Date(a.createdAt).toLocaleDateString("uz-UZ")}</span><b>{a.score ?? "—"}/100</b></div>)}</details>}</section>)}</Card>}
+      <header>
+        <p className="text-sm text-blue-600">{unit.level}</p>
+        <h1 className="text-2xl font-bold">{orderNo}) {uzPart || topicRaw}</h1>
+        <p className="mt-0.5 text-sm font-medium text-slate-600">{orderNo}-dars{koPart ? ` · ${koPart}` : ""}</p>
+        {unit.description && <p className="mt-1 text-sm text-slate-500">{unit.description}</p>}
+      </header>
+
+      {/* a) Video */}
+      <Card className={`space-y-4 p-5 ${locked.video ? "opacity-60" : ""}`}><h2 className="flex items-center gap-2 text-xl font-bold"><Video className="h-5 w-5" /> a) Video Dars {secBadge(secDone.video)}</h2>{!unit.videos.length && <p className="text-slate-500">Bu unitga video hali qo‘shilmagan.</p>}{hasVideo && doneFooter(secDone.video, "video", <Button disabled={videoBusy} onClick={acceptVideo}><Play className="mr-2 h-4 w-4" />{videoBusy ? "Qabul qilinmoqda…" : "Video ko`rib boldim"}</Button>)}{unit.videos.map(v => <div key={v.id}><h3 className="mb-2 font-bold">{v.title}</h3>{youtubeEmbedUrl(v.videoUrl) ? <iframe title={v.title} src={youtubeEmbedUrl(v.videoUrl)!} className="aspect-video w-full rounded-xl" allowFullScreen /> : <video ref={el => { videoRefs.current[v.id] = el; }} controls preload="metadata" src={v.videoUrl} className="w-full rounded-xl" onLoadedMetadata={e => { try { const m = JSON.parse(localStorage.getItem(VIDEO_POS) || "{}"); const t = Number(m[v.id]); if (t > 0 && e.currentTarget.duration > t) e.currentTarget.currentTime = t; } catch {} }} onTimeUpdate={e => { if (Math.floor(e.currentTarget.currentTime) % 5 === 0) saveVideoPos(v.id, e.currentTarget.currentTime); }} />}</div>)}</Card>
+
+      {/* b) Grammatika */}
+      <Card className={`space-y-5 p-5 ${locked.grammar ? "opacity-60" : ""}`}><h2 className="flex items-center gap-2 text-xl font-bold"><AlignLeft className="h-5 w-5" /> b) 문법 · Grammatika {secBadge(secDone.grammar)}</h2>{unit.grammars.map(g => <section key={g.id} className="space-y-3"><h3 className="font-bold">{g.title}</h3>{g.pattern && <p className="rounded-xl bg-blue-50 p-3 font-bold">{g.pattern}</p>}<p>{g.explain}</p>{g.examples.map((e, i) => <p key={i}>{e.ko} — {e.uz}</p>)}{g.exercises.map((e, i) => <div key={i}><p>{e.q}</p>{choices(`${g.id}:${i}`, e.options, locked.grammar, e.correct)}</div>)}</section>)}{doneFooter(secDone.grammar, "grammar", <Button disabled={saving || !unit.grammars.length} onClick={() => submit("grammar")}>Tekshirish va saqlash</Button>)}</Card>
+
+      {/* c) Tinglash */}
+      <Card className={`space-y-5 p-5 ${locked.listening ? "opacity-60" : ""}`}><h2 className="flex items-center gap-2 text-xl font-bold"><Headphones className="h-5 w-5" /> c) 듣기 · Tinglash {secBadge(secDone.listening)}</h2>{unit.listenings.map(l => <section key={l.id}><h3 className="mb-3 font-bold">{l.title}</h3>{l.audioUrl ? <audio controls src={l.audioUrl} className="w-full" /> : l.audioText ? <><Button variant="outline" onClick={() => speak(l.audioText!)}>Eshitish</Button><p className="text-xs text-slate-500">Sintezlangan ovoz (TTS)</p></> : <p>Audio hali qo‘shilmagan.</p>}{l.transcript && <details className="mt-2 text-sm text-slate-600"><summary>Transkript</summary>{l.transcript}</details>}{l.questions.map((q, i) => <div key={i} className="mt-4"><p>{q.text}</p>{choices(`${l.id}:${i}`, q.options.map(o => o.text), locked.listening, q.options.findIndex(o => o.key === q.correct))}</div>)}</section>)}{doneFooter(secDone.listening, "listening", <Button disabled={saving || !unit.listenings.length} onClick={() => submit("listening")}>Tekshirish va saqlash</Button>)}</Card>
+
+      {/* d) So'zlar (Lug'at) — 1..35 */}
+      <Card className={`space-y-4 p-5 ${locked.vocab ? "opacity-60" : ""}`}><h2 className="flex items-center gap-2 text-xl font-bold"><BookOpen className="h-5 w-5" /> d) So‘zlar · Lug‘at {secBadge(secDone.vocab)}<span className="ml-auto text-xs font-medium text-slate-400">{unit.vocab.length}/{MAX_VOCAB} so‘z</span></h2>{unit.vocab.map((v, i) => <div key={v.id} className="border-b pb-3"><h3 className="text-lg font-bold"><span className="mr-2 text-sm font-medium text-slate-400">{i + 1}.</span>{v.ko} <button aria-label={`${v.ko} talaffuzi`} onClick={() => speak(v.ko)} className="text-blue-600"><Volume2 className="h-4 w-4" /></button></h3><p className="text-sm text-slate-500">{v.tr}</p><details><summary>Tarjima va misol</summary><p>{v.uz}</p><p>{v.exampleKo}</p><p>{v.exampleUz}</p></details>{choices(v.id, unit.vocab.map(w => w.uz), locked.vocab, i)}</div>)}{doneFooter(secDone.vocab, "vocab", <Button disabled={saving || !unit.vocab.length} onClick={() => submit("vocab")}>Tekshirish va saqlash</Button>)}</Card>
+
+      {/* e) Yozish */}
+      {unit.writings.length > 0 && <Card className="space-y-5 p-5"><h2 className="flex items-center gap-2 text-xl font-bold"><PenLine className="h-5 w-5" /> e) Yozish mashqlari</h2>{unit.writings.map(w => <section key={w.id} className="space-y-3"><h3 className="font-bold">{w.title}</h3><p className="text-sm text-slate-700">{w.prompt}</p>{w.criteria && <p className="text-xs text-slate-500">Meyzonlar: {w.criteria}</p>}<textarea value={writingText} onChange={e => setWritingText(e.target.value)} rows={8} placeholder="Javobingizni koreys tilida yozing…" className="w-full rounded-xl border border-slate-200 p-3 text-base sm:text-sm focus:border-blue-500 focus:outline-none" /><div className="flex items-center justify-between gap-2"><span className="text-xs text-slate-400">{writingText.length} belgi</span><Button onClick={() => submitWriting(w.id)} disabled={writingBusy || writingText.trim().length < 10}>{writingBusy ? "Baholanmoqda…" : "Topshirish"}</Button></div>{writingResult && <div className="rounded-xl bg-emerald-50 p-3 text-sm" role="status"><b>Baho: {writingResult.score ?? "—"}/100</b><p className="mt-1 text-slate-600">{writingResult.feedback}</p></div>}{w.sampleAnswer && <details className="text-sm text-slate-500"><summary>Namuna javob</summary>{w.sampleAnswer}</details>}{(writingHistory[w.id]?.length ?? 0) > 0 && <details className="text-sm text-slate-500"><summary>Oxirgi urinishlar</summary>{writingHistory[w.id]!.map(a => <div key={a.id} className="mt-1 flex justify-between"><span>{new Date(a.createdAt).toLocaleDateString("uz-UZ")}</span><b>{a.score ?? "—"}/100</b></div>)}</details>}</section>)}</Card>}
+
       {units.length > 0 && (() => {
         const idx = units.findIndex(u => u.id === id);
         const done = (me?.stars ?? 0) > 0;

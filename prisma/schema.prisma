@@ -172,6 +172,7 @@ model Vocabulary {
   tr        String
   uz        String
   level     String
+  cat       String   @default("greeting")
   createdAt DateTime @default(now())
 }
 

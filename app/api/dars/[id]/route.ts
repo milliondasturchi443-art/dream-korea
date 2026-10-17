@@ -55,6 +55,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (b.cover !== undefined) fields.cover = String(b.cover).trim() || null;
     if (Object.keys(fields).length) await prisma.darsUnit.update({ where: { id }, data: fields });
 
+    // Tartib raqami — o'zgarsa, unit yangi joyga siljiydi (unique buzilmaydi)
+    if (b.order !== undefined) {
+      const newOrder = Math.round(Number(b.order));
+      if (Number.isFinite(newOrder) && newOrder >= 1 && newOrder !== unit.order) {
+        const all = await prisma.darsUnit.findMany({ orderBy: { order: "asc" }, select: { id: true } });
+        const rest = all.filter(u => u.id !== id).map(u => u.id);
+        const idx = Math.min(Math.max(newOrder, 1), rest.length + 1) - 1;
+        const orderedIds = [...rest.slice(0, idx), id, ...rest.slice(idx)];
+        // 1-faza: vaqtinchalik manfiy raqamlar (kokly uniqueness buzilmaydi)
+        for (let i = 0; i < all.length; i++) await prisma.darsUnit.update({ where: { id: all[i].id }, data: { order: -(i + 1) } });
+        // 2-faza: yakuniy 1..N
+        for (let i = 0; i < orderedIds.length; i++) await prisma.darsUnit.update({ where: { id: orderedIds[i] }, data: { order: i + 1 } });
+      }
+    }
+
     // Video: YouTube havolasi yoki to‘g‘ri URL; bo‘sh qiymat — o‘chirish
     if (b.videoUrl !== undefined) {
       const url = String(b.videoUrl).trim();

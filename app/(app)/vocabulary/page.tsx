@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { words, categories } from "@/lib/vocabulary-data";
+import { words, categories, type Word } from "@/lib/vocabulary-data";
 import { Search, Volume2, Heart, Shuffle, Layers, Gamepad2, Eye, EyeOff, CheckCircle2, XCircle, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { speak, stopSpeak } from "@/lib/tts";
@@ -20,6 +20,15 @@ export default function VocabularyPage() {
   const [showTr, setShowTr] = useState(true);
   const [fav, setFav] = useState<Set<string>>(new Set());
   const [learned, setLearned] = useState<Set<string>>(new Set());
+  const [dbWords, setDbWords] = useState<Word[]>([]);
+
+  // Admin qo'shilgan so'zlar (БД) — lug'atga avtomatik qo'shiladi
+  useEffect(() => {
+    let active = true;
+    fetch("/api/vocabulary").then(r => r.json()).then(d => { if (active && Array.isArray(d.words)) setDbWords(d.words); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+  const allWords = useMemo(() => [...words, ...dbWords], [dbWords]);
 
   // flashcard
   const [cardIdx, setCardIdx] = useState(0);
@@ -42,15 +51,15 @@ export default function VocabularyPage() {
   }, []);
   function save(key: string, s: Set<string>) { try { localStorage.setItem(key, JSON.stringify([...s])); } catch {} }
 
-  const filtered = useMemo(() => words.filter(v => {
+  const filtered = useMemo(() => allWords.filter(v => {
     if (cat !== "Barchasi" && v.cat !== cat) return false;
     if (level !== "Barchasi" && v.level !== level) return false;
     if (q && !(`${v.ko} ${v.uz} ${v.tr}`.toLowerCase().includes(q.toLowerCase()))) return false;
     return true;
-  }), [q, cat, level]);
+  }), [q, cat, level, allWords]);
 
   function pickRandom() {
-    const rnd = words[Math.floor(Math.random() * words.length)];
+    const rnd = allWords[Math.floor(Math.random() * allWords.length)];
     speak(rnd.ko);
     toast.info(`${rnd.ko} (${rnd.tr}) — ${rnd.uz}`);
   }
@@ -76,14 +85,14 @@ export default function VocabularyPage() {
   const curQ = quizSet.length ? filtered[quizSet[quizIdx]] : null;
   const options = useMemo(() => {
     if (!curQ) return [];
-    const pool = words.filter(w => w.uz !== curQ.uz);
+    const pool = allWords.filter(w => w.uz !== curQ.uz);
     const others: string[] = [];
     while (others.length < 3 && pool.length) {
       const r = pool[Math.floor(Math.random() * pool.length)];
       if (r && !others.includes(r.uz)) others.push(r.uz);
     }
     return [...others, curQ.uz].sort(() => Math.random() - 0.5);
-  }, [curQ, quizIdx]);
+  }, [curQ, quizIdx, allWords]);
 
   function answerQuiz(opt: string) {
     if (picked !== null) return;
