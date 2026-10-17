@@ -25,6 +25,14 @@ function authHeader(): Record<string, string> {
 export default function AdminContentPage() {
   const [tab, setTab] = useState<"kurslar" | "testlar" | "materiallar" | "videolar" | "lugat">("kurslar");
 
+  // ?tab=testlar — yon paneldagi havola orqali to'g'ridan-to'g'ri testlar vkladkasi
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t === "kurslar" || t === "testlar" || t === "materiallar" || t === "videolar" || t === "lugat") {
+      queueMicrotask(() => setTab(t));
+    }
+  }, []);
+
   // Kurslar
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
@@ -40,6 +48,11 @@ export default function AdminContentPage() {
   const [tTitle, setTTitle] = useState("");
   const [tLevel, setTLevel] = useState("TOPIK I");
   const [tType, setTType] = useState("Reading");
+  // Test tahrirlash (PATCH /api/topik/[id])
+  const [editId, setEditId] = useState<string | null>(null);
+  const [eTitle, setETitle] = useState("");
+  const [eLevel, setELevel] = useState("TOPIK I");
+  const [eType, setEType] = useState("Reading");
   const [qTest, setQTest] = useState<string>("");
   const [qText, setQText] = useState("");
   const [qA, setQA] = useState(""); const [qB, setQB] = useState(""); const [qC, setQC] = useState(""); const [qD, setQD] = useState("");
@@ -142,6 +155,14 @@ export default function AdminContentPage() {
       const d = await req("/api/topik", "POST", { title: tTitle.trim(), level: tLevel, type: tType });
       setTTitle(""); toast.success("Test yaratildi (БД) — endi savol qo‘shing"); fetchTests();
       if (d?.id) setQTest(d.id);
+    } catch (e) { toast.error((e as Error).message); }
+  }
+  async function saveEdit() {
+    if (!editId) return;
+    if (!eTitle.trim()) { toast.error("Sarlavhani kiriting"); return; }
+    try {
+      await req(`/api/topik/${encodeURIComponent(editId)}`, "PATCH", { title: eTitle.trim(), level: eLevel, type: eType });
+      setEditId(null); toast.success("Test yangilandi (БД)"); fetchTests();
     } catch (e) { toast.error((e as Error).message); }
   }
   async function fetchTestDetail(id: string) {
@@ -318,10 +339,24 @@ export default function AdminContentPage() {
                           <div className="mt-1 flex items-center gap-1.5 flex-wrap"><Badge className="text-[11px]">{t.level}</Badge><Badge className="text-[11px] bg-blue-50 text-blue-700">{t.type}</Badge><span className="text-xs text-slate-500">{t.questions} savol</span>{t.seeded && <Badge className="text-[11px] bg-slate-100 text-slate-600">Ichki namuna — o‘chirilmaydi</Badge>}</div>
                         </div>
                         <div className="flex gap-1 shrink-0">
+                          {!t.seeded && <Button variant="ghost" size="sm" onClick={() => { setEditId(t.id); setETitle(t.title); setELevel(t.level); setEType(t.type); }}>Tahrirlash</Button>}
                           <Button variant="ghost" size="sm" onClick={() => { setQTest(t.id); fetchTestDetail(t.id); }}>Savollar</Button>
                           {!t.seeded && <Button variant="ghost" size="sm" className="text-red-600" onClick={() => removeTest(t.id)}>O‘chirish</Button>}
                         </div>
                       </div>
+                      {editId === t.id && (
+                        <div className="mt-3 space-y-2 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
+                          <Input placeholder="Test nomi" value={eTitle} onChange={e => setETitle(e.target.value)} />
+                          <div className="grid gap-2 sm:grid-cols-[140px_140px_auto]">
+                            <select value={eLevel} onChange={e => setELevel(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm"><option>TOPIK I</option><option>TOPIK II</option><option>EPS-TOPIK</option></select>
+                            <select value={eType} onChange={e => setEType(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm"><option>Reading</option><option>Listening</option><option>Full</option></select>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={saveEdit}>Saqlash</Button>
+                              <Button size="sm" variant="outline" onClick={() => setEditId(null)}>Bekor</Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {d && (
                         <div className="mt-3 space-y-1.5">
                           {d.questions.length === 0 ? <p className="text-xs text-slate-400">Savol yo‘q — yuqoridagi formadan qo‘shing</p> :

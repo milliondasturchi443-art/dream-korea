@@ -5,9 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Clock, FileText, PenLine, Headphones, BookOpen, TrendingUp, AlertTriangle } from "lucide-react";
+import { PenLine, Headphones, BookOpen, TrendingUp, AlertTriangle, ExternalLink } from "lucide-react";
 
-type T = { id: string; title: string; level: string; type: string; questions: number; time: string };
 type Attempt = { id: string; testId: string; score: number; total: number; createdAt: string; test?: { title: string; level: string; type: string } };
 
 function gradeTopikI(points: number) { return points >= 140 ? "2급" : points >= 80 ? "1급" : null; }
@@ -19,14 +18,6 @@ const TOPIC_I_LADDER = [
 const TOPIC_II_LADDER = [
   { grade: "3급", min: 120 }, { grade: "4급", min: 150 }, { grade: "5급", min: 190 }, { grade: "6급", min: 230 },
 ];
-
-function colorFor(level: string, type: string) {
-  if (type === "Writing") return "from-rose-600 to-pink-700";
-  if (type === "Listening") return "from-emerald-600 to-teal-600";
-  if (level === "TOPIK I" && type === "Full") return "from-[#0f1b3d] to-[#2563eb]";
-  if (level === "TOPIK II") return "from-violet-600 to-purple-600";
-  return "from-blue-600 to-indigo-600";
-}
 
 function Ladder({ title, ladder, points, scale }: { title: string; ladder: { grade: string; min: number }[]; points: number | null; scale: number }) {
   const achieved = points == null ? null : (points >= ladder[ladder.length - 1].min ? ladder[ladder.length - 1].grade : ladder.find(l => points < l.min)?.grade ?? null);
@@ -55,14 +46,11 @@ function Ladder({ title, ladder, points, scale }: { title: string; ladder: { gra
 }
 
 export default function TopikPage() {
-  const [tests, setTests] = useState<T[]>([]);
-  const [filter, setFilter] = useState("Barchasi");
   const [history, setHistory] = useState<Attempt[]>([]);
   const [hasAuth, setHasAuth] = useState(false);
 
   useEffect(() => {
     const ac = new AbortController();
-    fetch("/api/topik", { signal: ac.signal }).then(r => r.json()).then(d => { if (Array.isArray(d.tests)) setTests(d.tests); }).catch(() => {});
     try {
       const token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token");
       if (token) {
@@ -95,8 +83,6 @@ export default function TopikPage() {
     const weak = sections.length ? sections.reduce((a, b) => (b.avg < a.avg ? b : a)) : null;
     return { bestI, bestII, sections, weak, total: history.length };
   }, [history]);
-
-  const filtered = filter === "Barchasi" ? tests : tests.filter(t => t.level === filter || t.type === filter);
 
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
@@ -132,32 +118,24 @@ export default function TopikPage() {
         <Link href="/topik/writing"><Card className="p-4 hover:shadow-md transition-shadow cursor-pointer"><PenLine className="h-5 w-5 text-rose-600 mb-2" /><div className="font-semibold text-sm">Yozish · 쓰기</div><p className="text-xs text-slate-500 mt-1">51/53/54 uslubidagi mashqlar + avto-baholash.</p></Card></Link>
       </div>
 
-      <div className="flex gap-2 overflow-auto pb-1 -mx-1 px-1">
-        {["Barchasi", "TOPIK I", "TOPIK II", "Reading", "Listening", "Full"].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-medium border transition-colors min-h-[36px] ${filter === f ? "bg-[#0f1b3d] text-white border-[#0f1b3d]" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"}`}>{f}</button>
-        ))}
-      </div>
-
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.length === 0 ? (
-          <Card className="p-8 text-center text-sm text-slate-500 md:col-span-2 lg:col-span-3">Bu filterda test yo‘q</Card>
-        ) : filtered.map(t => (
-          <Card key={t.id} className="overflow-hidden flex flex-col hover:shadow-md hover:border-blue-200 transition">
-            <div className={`h-24 bg-gradient-to-br ${colorFor(t.level, t.type)} p-4 text-white flex flex-col justify-between`}>
-              <Badge className="bg-white text-slate-800 w-fit text-[11px]">{t.level} · {t.type}</Badge>
-              <div className="font-semibold leading-tight line-clamp-2">{t.title}</div>
-            </div>
-            <div className="p-4 flex-1 flex flex-col gap-3">
-              <div className="flex items-center gap-3 text-xs text-slate-500">
-                <span className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> {t.questions} savol</span>
-                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {t.time}</span>
-              </div>
-              <Link href={`/topik/exam?id=${encodeURIComponent(t.id)}`} className="mt-auto"><Button className="w-full">Boshlash →</Button></Link>
-            </div>
-          </Card>
-        ))}
-      </div>
+      {/* Rasmiy TOPIK sayti — tashqi imtihonlar */}
+      <Card className="p-5 bg-gradient-to-r from-[#eff6ff] via-white to-white border-blue-200">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-100 text-[#2563eb]"><ExternalLink className="h-5 w-5" /></span>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-slate-900">Rasmiy TOPIK testlari</div>
+            <p className="text-xs text-slate-500 mt-1">Haqiqiy imtihon materiallari TOPIK rasmiy saytida — o‘qish, tinglash va yozish bo‘limlari rasmiy formatda.</p>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <a href="https://www.topik.go.kr/TWSTDY/TWSTDY0080.do" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[#2563eb] px-4 text-sm font-medium text-white transition hover:bg-[#1d4ed8]">
+              Rasmiy testlar <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+            <a href="https://www.topik.go.kr/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+              TOPIK sayti <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        </div>
+      </Card>
 
       {stats.weak && (
         <Card className="p-5">

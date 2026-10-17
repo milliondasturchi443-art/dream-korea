@@ -95,6 +95,39 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 }
 
+// PATCH /api/topik/[id] — testni tahrirlash: sarlavha / daraja / tur (ADMIN)
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!requireAdmin(req)) return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  const { id } = await params;
+  if (id.startsWith("seed_")) return Response.json({ error: "Seed testni o'zgartirib bo'lmaydi" }, { status: 400 });
+  let body: { title?: string; level?: string; type?: string } = {};
+  try { body = await req.json(); } catch {}
+  const data: { title?: string; level?: string; type?: string } = {};
+  if (body.title !== undefined) {
+    const title = String(body.title).trim();
+    if (!title) return Response.json({ error: "Sarlavha bo'sh bo'lishi mumkin emas" }, { status: 400 });
+    if (title.length > 150) return Response.json({ error: "Sarlavha juda uzun (max 150)" }, { status: 400 });
+    data.title = title;
+  }
+  if (body.level !== undefined) {
+    const level = String(body.level).trim();
+    if (!level || level.length > 20) return Response.json({ error: "Daraja noto'g'ri" }, { status: 400 });
+    data.level = level;
+  }
+  if (body.type !== undefined) {
+    const type = String(body.type).trim();
+    if (!type || type.length > 20) return Response.json({ error: "Tur noto'g'ri" }, { status: 400 });
+    data.type = type;
+  }
+  if (!Object.keys(data).length) return Response.json({ error: "O'zgarish yo'q" }, { status: 400 });
+  try {
+    await prisma.test.update({ where: { id }, data });
+    return Response.json({ ok: true });
+  } catch {
+    return Response.json({ error: "Test topilmadi" }, { status: 404 });
+  }
+}
+
 // DELETE /api/topik/[id] — testni o'chirish; ?question=qid — faqat savolni o'chirish (ADMIN)
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!requireAdmin(req)) return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
