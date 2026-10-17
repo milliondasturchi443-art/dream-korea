@@ -3,9 +3,27 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, GraduationCap, Layers, BookOpenCheck, ArrowUpRight, Loader2, AlertTriangle } from "lucide-react";
+import { Users, GraduationCap, Layers, BookOpenCheck, ArrowUpRight, Loader2, AlertTriangle, ClipboardCheck, BookOpen, Headphones, PenLine, ListChecks, Library, Award, BarChart3, type LucideIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { adminBase } from "@/lib/admin-base";
+
+type LearningStudent = {
+  id: string; name: string; email: string; xp: number; stars: number; streak: number;
+  topikLevel: string | null; lastActive: string;
+  unitsDone: number; percent: number; started: boolean;
+  examBest: { score: number; total: number } | null; examAttempts: number;
+  topikN: number; topikAvg: number; writingN: number; homeworkN: number;
+};
+type Learning = {
+  unitsTotal: number;
+  dars: { started: number; unitsCompleted: number; avgPercent: number; exams: { bests: number; attempts: number } };
+  topik: { attempts: number; avg: number; bySection: { type: string; n: number; avg: number }[]; levels: { level: string; n: number }[] };
+  yozish: { topik: { n: number; avg: number }; dars: { n: number; avg: number } };
+  books: { count: number; byCategory: { category: string; n: number }[] };
+  homework: { done: number };
+  courses: { completedLessons: number; enrollments: number };
+  students: LearningStudent[];
+};
 
 type Stats = {
   db: boolean;
@@ -14,6 +32,7 @@ type Stats = {
   admissions?: { id: string; name: string; phone: string; createdAt: string }[];
   recentCourses?: { id: string; title: string; createdAt: string; _count: { lessons: number } }[];
   byMonth?: { name: string; users: number }[];
+  learning?: Learning;
 };
 
 const fmtDate = (s: string) => new Date(s).toLocaleDateString("uz-UZ", { day: "2-digit", month: "short", year: "numeric" });
@@ -70,6 +89,100 @@ export default function AdminPage() {
           </Link>
         ))}
       </div>
+
+      {s.learning && (() => {
+        const L = s.learning;
+        const reading = L.topik.bySection.find(x => x.type === "Reading");
+        const listening = L.topik.bySection.find(x => x.type === "Listening");
+        const levelSum = L.topik.levels.filter(l => l.level !== "Belgilanmagan").reduce<number>((a, b) => a + b.n, 0);
+        const tiles: { label: string; value: string | number; sub: string; icon: LucideIcon; href: string }[] = [
+          { label: "Darslar", value: `${L.dars.started}/${s.students}`, sub: `boshlagan · o‘rtacha ${L.dars.avgPercent}%`, icon: GraduationCap, href: `${base}/dars` },
+          { label: "Imtihonlar", value: L.dars.exams.attempts, sub: `urinish · ${L.dars.exams.bests} ta rekord`, icon: ClipboardCheck, href: `${base}/dars` },
+          { label: "O‘qish · Reading", value: reading?.n ?? 0, sub: reading ? `urinish · o‘rtacha ${reading.avg}%` : "urinish hali yo‘q", icon: BookOpen, href: "/topik" },
+          { label: "Tinglash · Listening", value: listening?.n ?? 0, sub: listening ? `urinish · o‘rtacha ${listening.avg}%` : "urinish hali yo‘q", icon: Headphones, href: "/topik" },
+          { label: "Yozish", value: L.yozish.topik.n + L.yozish.dars.n, sub: L.yozish.topik.n + L.yozish.dars.n ? `TOPIK ${L.yozish.topik.n} (${L.yozish.topik.avg}) · Dars ${L.yozish.dars.n} (${L.yozish.dars.avg})` : "topshirish hali yo‘q", icon: PenLine, href: "/topik/writing" },
+          { label: "Uy vazifalari", value: L.homework.done, sub: `topshirilgan · ${L.courses.completedLessons} dars yakunlandi`, icon: ListChecks, href: "/homework" },
+          { label: "Kitoblar", value: L.books.count, sub: L.books.count ? L.books.byCategory.map(c => `${c.category}: ${c.n}`).join(" · ") : "kitoblar hali qo‘shilmagan", icon: Library, href: `${base}/books` },
+          { label: "Darajalar", value: levelSum, sub: L.topik.levels.map(l => `${l.level}: ${l.n}`).join(" · ") || "ma’lumot yo‘q", icon: Award, href: `${base}/users` },
+        ];
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-[#2563eb]" />
+              <h2 className="font-semibold text-slate-900">O‘quv statistikasi</h2>
+              <span className="text-xs text-slate-500">darslar, imtihonlar, TOPIK, yozish, kitoblar</span>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {tiles.map(t => (
+                <Link key={t.label} href={t.href}>
+                  <Card className="p-4 h-full hover:border-blue-200 hover:shadow-md transition">
+                    <div className="flex items-center justify-between text-slate-500">
+                      <span className="text-xs">{t.label}</span>
+                      <t.icon className="h-4 w-4 shrink-0" />
+                    </div>
+                    <div className="text-xl font-bold text-slate-900 mt-1">{t.value}</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">{t.sub}</div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+
+            <Card className="p-5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-semibold text-slate-900">O‘quvchilar statistikasi</div>
+                <span className="text-xs text-slate-500 shrink-0">{L.students.length} ta · {L.unitsTotal} unit bo‘yicha</span>
+              </div>
+              {L.students.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-400">Hozircha o‘quvchi yo‘q.</p>
+              ) : (
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full min-w-[860px] text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                        <th className="py-2 pr-3 font-medium">O‘quvchi</th>
+                        <th className="py-2 pr-3 font-medium">Darslar</th>
+                        <th className="py-2 pr-3 font-medium">Imtihon</th>
+                        <th className="py-2 pr-3 font-medium">TOPIK</th>
+                        <th className="py-2 pr-3 font-medium">Yozish</th>
+                        <th className="py-2 pr-3 font-medium">Vazifa</th>
+                        <th className="py-2 pr-3 font-medium">XP</th>
+                        <th className="py-2 pr-3 font-medium">Yulduz</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {L.students.map(st => (
+                        <tr key={st.id} className="border-b border-slate-100 last:border-0">
+                          <td className="py-2.5 pr-3">
+                            <div className="max-w-[190px] truncate font-medium text-slate-800">{st.name}</div>
+                            <div className="max-w-[190px] truncate text-xs text-slate-400">{st.email}{st.topikLevel ? ` · ${st.topikLevel}` : ""}</div>
+                          </td>
+                          <td className="py-2.5 pr-3">
+                            <div className="flex items-center gap-2">
+                              <div className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-slate-100">
+                                <div className="h-full rounded-full bg-blue-600" style={{ width: `${st.percent}%` }} />
+                              </div>
+                              <span className="shrink-0 text-xs text-slate-600">{st.unitsDone}/{L.unitsTotal} · {st.percent}%</span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 pr-3 text-xs text-slate-600">
+                            {st.examBest ? `${st.examBest.score}/${st.examBest.total}` : "—"}{st.examAttempts > 1 ? ` · ${st.examAttempts}×` : ""}
+                          </td>
+                          <td className="py-2.5 pr-3 text-xs text-slate-600">{st.topikN ? `${st.topikN} urinish · ${st.topikAvg}%` : "—"}</td>
+                          <td className="py-2.5 pr-3 text-xs text-slate-600">{st.writingN || "—"}</td>
+                          <td className="py-2.5 pr-3 text-xs text-slate-600">{st.homeworkN || "—"}</td>
+                          <td className="py-2.5 pr-3 text-xs font-medium text-slate-800">{st.xp}</td>
+                          <td className="py-2.5 pr-3 text-xs font-medium text-amber-600">{st.stars}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </div>
+        );
+      })()}
 
       <div className="grid lg:grid-cols-3 gap-4">
         {[
