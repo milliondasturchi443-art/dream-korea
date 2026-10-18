@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Send, Sparkles, X, BookOpen, Bot, ImagePlus } from "lucide-react";
 import { filesToDataUrls, MAX_IMAGES } from "@/lib/image-utils";
@@ -11,11 +11,30 @@ const prompts = [
   "TOPIK uchun maslahat ber",
 ];
 
-// Axrorbek AI — o'ng pastki burchakdagi tugma, bosilganda chat ochiladi
+const FAB_POS_KEY = "dk_fab_pos";
+const FAB_SIZE = 56;
+const DRAG_THRESHOLD = 6;
+
+type FabPos = { left: number; top: number };
+
+function clampFab(left: number, top: number): FabPos {
+  const vw = typeof window !== "undefined" ? window.innerWidth : 360;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 740;
+  return {
+    left: Math.min(Math.max(left, 8), Math.max(8, vw - FAB_SIZE - 8)),
+    top: Math.min(Math.max(top, 8), Math.max(8, vh - FAB_SIZE - 8)),
+  };
+}
+
+// Axrorbek AI — o'ng pastki burchakdagi tugma, bosilganda chat ochiladi.
+// Tugma assistive touch uslubida suriladi (pointer drag), pozitsiya saqlanadi.
 export function AiFab() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<FabPos | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ id: number; startX: number; startY: number; baseLeft: number; baseTop: number; moved: boolean } | null>(null);
   const [messages, setMessages] = useState<Msg[]>([
     { role: "assistant", text: "Assalomu alaykum! Men Axrorbek AI — koreys tili yordamchisiman. Grammatika, lug'at, tarjima yoki TOPIK bo'yicha savol bering.", source: "openrouter" },
   ]);
@@ -36,6 +55,79 @@ export function AiFab() {
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
+
+  // Saqlangan pozitsiyani tiklash + oynani o'zgarsa chegarada ushlab turish
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem(FAB_POS_KEY);
+        if (raw) {
+          const p = JSON.parse(raw);
+          if (typeof p?.left === "number" && typeof p?.top === "number") setPos(clampFab(p.left, p.top));
+        }
+      } catch {}
+    });
+    const onResize = () => setPos(p => (p ? clampFab(p.left, p.top) : p));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const savePos = useCallback((p: FabPos) => {
+    try { localStorage.setItem(FAB_POS_KEY, JSON.stringify(p)); } catch {}
+  }, []);
+
+  function onFabPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    dragRef.current = {
+      id: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      baseLeft: rect.left,
+      baseTop: rect.top,
+      moved: false,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function onFabPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+    if (!d.moved) {
+      d.moved = true;
+      setDragging(true);
+    }
+    setPos(clampFab(d.baseLeft + dx, d.baseTop + dy));
+  }
+
+  function onFabPointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+    const d = dragRef.current;
+    dragRef.current = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+    if (!d) return;
+    if (!d.moved) {
+      // oddiy bosish — chatni och/yop
+      setOpen(v => !v);
+      return;
+    }
+    setDragging(false);
+    // assistive touch uslubida eng yaqin chegaraga "yopishib qolish"
+    setPos(p => {
+      if (!p) return p;
+      const vw = window.innerWidth;
+      const snapped = clampFab(p.left + FAB_SIZE / 2 < vw / 2 ? 8 : vw - FAB_SIZE - 8, p.top);
+      savePos(snapped);
+      return snapped;
+    });
+  }
+
+  function onFabPointerCancel() {
+    dragRef.current = null;
+    setDragging(false);
+  }
 
   async function pickImages(files: FileList | null) {
     setImgError("");
@@ -75,26 +167,46 @@ export function AiFab() {
 
   if (hide) return null;
 
+  // FAB pozitsiyasi: saqlangan bo'lsa — undan, aks holda o'ng pastki burchak
+  const fabStyle: React.CSSProperties = pos
+    ? { left: pos.left, top: pos.top, right: "auto", bottom: "auto" }
+    : { right: 16, bottom: "var(--dk-fab-bottom)" };
+
   return (
     <>
-      {/* FAB — o'ng pastki burchak (mobil nav ustida, safe-area bilan) */}
+      {/* FAB — assistive touch uslubida suriladigan tugma */}
       <button
-        onClick={() => setOpen(v => !v)}
+        onPointerDown={onFabPointerDown}
+        onPointerMove={onFabPointerMove}
+        onPointerUp={onFabPointerUp}
+        onPointerCancel={onFabPointerCancel}
+        onClick={e => { if (e.detail === 0) setOpen(v => !v); }}
         aria-label={open ? "AI yopish" : "Axrorbek AI ochish"}
-        className="fixed right-4 z-40 h-14 w-14 rounded-full bg-[#2563eb] text-white shadow-[0_8px_24px_-6px_rgba(37,99,235,.55)] grid place-items-center active:scale-90 transition-transform hover:bg-[#1d4ed8]"
-        style={{ bottom: "var(--dk-fab-bottom)" }}
+        className={`fixed z-40 h-14 w-14 rounded-full bg-[#2563eb] text-white shadow-[0_8px_24px_-6px_rgba(37,99,235,.55)] grid place-items-center select-none transition-[box-shadow,transform] duration-150 ${dragging ? "cursor-grabbing shadow-[0_12px_32px_-6px_rgba(37,99,235,.7)] scale-110" : "cursor-grab active:scale-95"}`}
+        style={{ ...fabStyle, touchAction: "none" }}
       >
         {open ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
       </button>
 
-      {/* Chat panel — keyboard-aware via dvh */}
+      {/* Chat panel — keyboard-aware via dvh; FAB yonida ochiladi */}
       {open && (
         <div
-          className="fixed right-3 z-40 w-[calc(100vw-24px)] max-w-[400px] rounded-2xl bg-white border border-slate-200 shadow-[0_16px_48px_-12px_rgba(15,27,61,.35)] flex flex-col overflow-hidden animate-in"
-          style={{
-            bottom: "var(--dk-chat-bottom)",
-            height: "min(520px, calc(100dvh - 220px))",
-          }}
+          className="fixed z-40 w-[calc(100vw-24px)] max-w-[400px] rounded-2xl bg-white border border-slate-200 shadow-[0_16px_48px_-12px_rgba(15,27,61,.35)] flex flex-col overflow-hidden animate-in"
+          style={
+            pos
+              ? {
+                  left: pos.left + FAB_SIZE / 2 > (typeof window !== "undefined" ? window.innerWidth : 360) / 2
+                    ? Math.max(12, pos.left + FAB_SIZE - Math.min(400, (typeof window !== "undefined" ? window.innerWidth : 360) - 24))
+                    : pos.left,
+                  bottom: Math.max(12, (typeof window !== "undefined" ? window.innerHeight : 740) - pos.top + 12),
+                  height: "min(520px, calc(100dvh - 220px))",
+                }
+              : {
+                  right: 12,
+                  bottom: "var(--dk-chat-bottom)",
+                  height: "min(520px, calc(100dvh - 220px))",
+                }
+          }
         >
           <div className="flex items-center justify-between gap-2 px-4 py-3 bg-[#0f1b3d] text-white shrink-0">
             <div className="flex items-center gap-2 min-w-0">

@@ -1,9 +1,22 @@
-// Web Speech API — koreys tilida ovozli o'qish (TTS) + Google TTS zaxira.
+// Web Speech API — koreys tilida ovozli o'qish (TTS) + Android bridge + Google TTS zaxira.
 // iOS/Safari: ovozlar async yuklanadi, birinchi bosishda bo'sh bo'lishi mumkin.
+// Android WebView: speechSynthesis ko'pincha ovozsiz — ilova ichida `AndroidTTS` bridge
+// (nat TextToSpeech) birinchi navbatda ishlatiladi.
 
 let voicesCache: SpeechSynthesisVoice[] = [];
 let audioEl: HTMLAudioElement | null = null;
 let pendingText = "";
+
+type AndroidTtsBridge = { speak: (text: string, rate?: number) => boolean; stop: () => void };
+
+function androidTts(): AndroidTtsBridge | null {
+  try {
+    const a = (window as unknown as { AndroidTTS?: AndroidTtsBridge }).AndroidTTS;
+    return a && typeof a.speak === "function" ? a : null;
+  } catch {
+    return null;
+  }
+}
 
 function synth(): SpeechSynthesis | null {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
@@ -35,10 +48,13 @@ function pickKoVoice(): SpeechSynthesisVoice | null {
 }
 
 export function hasTTS(): boolean {
-  return typeof window !== "undefined" && ("speechSynthesis" in window || true);
+  if (typeof window === "undefined") return false;
+  return !!androidTts() || "speechSynthesis" in window || typeof Audio !== "undefined";
 }
 
 export function hasKoreanVoice(): boolean {
+  // Android bridge doimiy ko-KR ovozini ishlatadi (nat TextToSpeech)
+  if (typeof window !== "undefined" && androidTts()) return true;
   return !!pickKoVoice();
 }
 
@@ -49,6 +65,7 @@ function googleTtsUrl(text: string): string {
 }
 
 function stopAll() {
+  try { androidTts()?.stop(); } catch {}
   try { window.speechSynthesis?.cancel(); } catch {}
   try { audioEl?.pause(); } catch {}
 }
@@ -60,7 +77,13 @@ export function speak(text: string): boolean {
   if (typeof window === "undefined") return false;
   stopAll();
 
-  // 1) Avval Google TTS (haqiqiy koreys ovozi, ko'p qurilmada ishonchli)
+  // 0) Android ilova bridge — nat TextToSpeech (WebView'da eng ishonchli)
+  try {
+    const bridge = androidTts();
+    if (bridge && bridge.speak(t, 0.9)) return true;
+  } catch {}
+
+  // 1) Google TTS (haqiqiy koreys ovozi, ko'p qurilmada ishonchli)
   try {
     if (!audioEl) {
       audioEl = new Audio();
@@ -77,9 +100,6 @@ export function speak(text: string): boolean {
     // Google bloklangan bo'lsa — lokal ovoz
     return speakLocal(t);
   }
-
-  // 2) Zaxira: Web Speech API
-  return speakLocal(t);
 }
 
 // Faqat lokal (brauzer) ovoz

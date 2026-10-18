@@ -22,6 +22,11 @@ export function SiteHeader() {
   const [me, setMe] = useState<{ name: string; role: string } | null>(null);
 
   useEffect(() => {
+    // menyu marshrut o'zgarganda yopilsin (async — eslint set-state-in-effect uchun)
+    queueMicrotask(() => setOpen(false));
+  }, [pathname]);
+
+  useEffect(() => {
     try {
       const raw = localStorage.getItem("dk_user");
       if (raw) {
@@ -109,8 +114,8 @@ export function SiteHeader() {
               </>
             ) : (
               <div className="flex gap-2">
-                <Link href="/login" className="flex-1"><Button variant="outline" className="w-full">Kirish</Button></Link>
-                <Link href="/register" className="flex-1"><Button className="w-full">Ro‘yxatdan o‘tish</Button></Link>
+                <Link href="/login" className="flex-1" onClick={() => setOpen(false)}><Button variant="outline" className="w-full">Kirish</Button></Link>
+                <Link href="/register" className="flex-1" onClick={() => setOpen(false)}><Button className="w-full">Ro‘yxatdan o‘tish</Button></Link>
               </div>
             )}
           </div>

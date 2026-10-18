@@ -35,9 +35,9 @@ export default function LandingPage() {
     <div>
       {/* HERO */}
       <section className="mx-auto max-w-[1200px] px-4 py-10 lg:py-14 grid lg:grid-cols-2 gap-8 items-center">
-        <div className="anim-fade-up">
+        <div className="min-w-0 anim-fade-up">
           <Badge className="bg-[#eff6ff] text-[#2563eb] border border-blue-100 mb-4">🇰🇷 Koreys tili platformasi</Badge>
-          <h1 className="text-[32px] lg:text-[44px] font-extrabold leading-[1.05] tracking-tight text-[#0f1b3d]">
+          <h1 className="text-[28px] sm:text-[32px] lg:text-[44px] font-extrabold leading-[1.05] tracking-tight text-[#0f1b3d] break-words">
             Koreys tilini o‘rganing,<br />
             <span className="text-[#2563eb] shimmer-text">orzuingizga yaqinlashing!</span>
           </h1>
@@ -54,7 +54,7 @@ export default function LandingPage() {
         </div>
 
         {/* Real courses preview */}
-        <div className="anim-fade-up" style={{ animationDelay: ".12s" }}>
+        <div className="min-w-0 anim-fade-up" style={{ animationDelay: ".12s" }}>
           <div className="rounded-[24px] glass overflow-hidden anim-float">
             <div className="h-10 bg-[#0f1b3d] flex items-center px-4 gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-red-400" /><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
@@ -216,7 +216,7 @@ export default function LandingPage() {
         <div className="flex items-end justify-between"><h2 className="text-2xl font-bold text-[#0f1b3d]">Universitetlar</h2><Link href="/universities" className="text-sm font-medium text-[#2563eb]">Barchasi →</Link></div>
         <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {universities.slice(0,6).map(u => (
-            <Link key={u.id} href="/universities">
+            <Link key={u.id} href="/universities" className="min-w-0">
               <Card className="p-4 flex gap-3 lift hover:border-blue-200 h-full">
                 <div className="h-12 w-12 rounded-xl bg-[#eff6ff] grid place-items-center shrink-0"><Building2 className="h-6 w-6 text-[#2563eb]" /></div>
                 <div className="min-w-0"><div className="font-semibold text-slate-900 leading-tight truncate">{u.name}</div><div className="text-xs text-slate-500">{u.city} · {u.topik}</div><div className="text-xs text-slate-500 truncate">{u.programs.join(" · ")}</div></div>
