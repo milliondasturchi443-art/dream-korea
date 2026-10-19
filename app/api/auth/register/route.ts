@@ -4,6 +4,7 @@ import { sign } from "@/lib/token";
 import { sendVerificationCode, generateOtp, emailVerifyEnabled } from "@/lib/email";
 import { cookies } from "next/headers";
 import { phoneKey } from "@/lib/phone";
+import { clientIp } from "@/lib/ip";
 import * as bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,8 @@ export async function POST(req: Request) {
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return Response.json({ error: "Bu email allaqachon ro‘yxatda" }, { status: 409 });
     const hash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, role: "STUDENT", emailVerified: verifyOn ? false : true } });
+    const ip = clientIp(req);
+    const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, role: "STUDENT", emailVerified: verifyOn ? false : true, regIp: ip || undefined, lastIp: ip || undefined, lastIpAt: ip ? new Date() : undefined } });
     if (!verifyOn) {
       // Tasdiqlash vaqtincha o'chirilgan — darhol session
       const token = sign({ email: user.email, name: user.name, role: user.role, id: user.id });

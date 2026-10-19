@@ -28,6 +28,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           if (alive) setOk(true);
           return;
         }
+        // Ban — eski tokenlarni tozalaymiz, qayta kirishga majbur qilamiz
+        if (d && d.code === "BANNED") {
+          try { sessionStorage.removeItem("dk_token"); localStorage.removeItem("dk_token"); sessionStorage.removeItem("dk_user"); localStorage.removeItem("dk_user"); sessionStorage.removeItem("dk_role"); localStorage.removeItem("dk_role"); } catch {}
+        }
       } catch {}
       if (alive) {
         setOk(false);

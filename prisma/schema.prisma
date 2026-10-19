@@ -39,6 +39,13 @@ model User {
   stars     Int       @default(0)
   streak    Int       @default(0)
   lastStreakAt DateTime?
+  // Moderatsiya: ban + IP tarixi (klonlarni kuzatish uchun)
+  banned      Boolean   @default(false)
+  bannedAt    DateTime?
+  bannedReason String?
+  lastIp      String?
+  lastIpAt    DateTime?
+  regIp       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

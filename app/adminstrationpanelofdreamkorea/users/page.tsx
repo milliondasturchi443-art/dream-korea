@@ -4,11 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Trash2, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { Search, Trash2, Loader2, AlertTriangle, RefreshCw, Ban, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 type U = {
   id: string; name: string; email: string; phone: string | null; role: string; topikLevel: string | null; createdAt: string;
+  banned: boolean; bannedAt: string | null; bannedReason: string | null; lastIp: string | null; regIp: string | null;
   _count: { lessonProgress: number; testAttempts: number; enrollments: number };
 };
 
@@ -50,6 +51,29 @@ export default function AdminUsersPage() {
       if (!r.ok) throw new Error(d.error || "Xato");
       setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u));
       toast.success("Rol yangilandi");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally { setSavingId(""); }
+  }
+
+  async function setBan(u: U) {
+    const next = !u.banned;
+    const why = next
+      ? prompt(`"${u.name}" hisobini bloklash sababini kiriting (ixtiyoriy):`, "")
+      : "";
+    if (why === null) return; // bekor qilindi
+    setSavingId(u.id);
+    try {
+      const token = (()=>{ try{ return sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; }catch{ return localStorage.getItem("dk_token") || ""; } })();
+      const r = await fetch(`/api/users/${u.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ banned: next, bannedReason: (why || "").trim() }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Xato");
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, banned: next, bannedAt: next ? new Date().toISOString() : null, bannedReason: next ? ((why || "").trim() || null) : null } : x));
+      toast.success(next ? "Hisob bloklandi" : "Bloklash olib tashlandi");
     } catch (e) {
       toast.error((e as Error).message);
     } finally { setSavingId(""); }
@@ -112,8 +136,15 @@ export default function AdminUsersPage() {
                     <div className="font-semibold text-sm text-slate-900 truncate flex items-center gap-2">
                       {u.name}
                       {u.role === "ADMIN" && <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[10px]">Admin</Badge>}
+                      {u.banned && <Badge className="bg-red-600 text-white border border-red-700 text-[10px]">Bloklangan</Badge>}
                     </div>
                     <div className="text-xs text-slate-500 truncate">{u.email}{u.phone ? ` · ${u.phone}` : ""}</div>
+                    {(u.lastIp || u.regIp) && (
+                      <div className="text-[11px] text-slate-400 truncate font-mono">
+                        IP: {u.lastIp || "—"}{u.regIp && u.regIp !== u.lastIp ? ` · reg: ${u.regIp}` : ""}
+                        {u.banned && u.bannedReason ? ` · sabab: ${u.bannedReason}` : ""}
+                      </div>
+                    )}
                   </div>
                   <div className="text-xs text-slate-500 hidden md:block text-right">
                     <div>{u._count.lessonProgress} dars · {u._count.testAttempts} test</div>
@@ -129,6 +160,17 @@ export default function AdminUsersPage() {
                     <option value="TEACHER">Ustoz</option>
                     <option value="ADMIN">Admin</option>
                   </select>
+                  <Button
+                    variant="outline" size="sm"
+                    className={u.banned
+                      ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      : "border-orange-200 text-orange-700 hover:bg-orange-50"}
+                    disabled={savingId === u.id}
+                    onClick={() => setBan(u)}
+                    title={u.banned ? "Bloklashni olib tashlash" : "Hisobni bloklash"}
+                  >
+                    {u.banned ? <ShieldCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                  </Button>
                   <Button
                     variant="outline" size="sm"
                     className="border-red-200 text-red-600 hover:bg-red-50"

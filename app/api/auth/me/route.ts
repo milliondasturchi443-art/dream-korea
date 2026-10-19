@@ -13,6 +13,7 @@ export async function GET(req: Request) {
   let name = String(data.name ?? "");
   let role = String(data.role ?? "STUDENT");
   let id = data.id ? String(data.id) : "";
+  let banned = false;
 
   // Роль из БД — источник правды (исправляет баг когда админ меняет роль)
   try {
@@ -20,27 +21,34 @@ export async function GET(req: Request) {
     if (key) {
       const u = await prisma.user.findUnique({
         where: { email: key },
-        select: { id: true, name: true, role: true, email: true },
+        select: { id: true, name: true, role: true, email: true, banned: true },
       });
       if (u) {
         email = u.email;
         name = u.name;
         role = String(u.role);
         id = u.id;
+        banned = u.banned === true;
       }
     } else if (id) {
       const u = await prisma.user.findUnique({
         where: { id },
-        select: { id: true, name: true, role: true, email: true },
+        select: { id: true, name: true, role: true, email: true, banned: true },
       });
       if (u) {
         email = u.email;
         name = u.name;
         role = String(u.role);
         id = u.id;
+        banned = u.banned === true;
       }
     }
   } catch {}
+
+  // Ban — sessiyani darhol uzamiz (AuthGuard 403 ko'rib foydalanuvchini chiqaradi)
+  if (banned) {
+    return Response.json({ error: "Hisobingiz cheklangan.", code: "BANNED" }, { status: 403 });
+  }
 
   const payload: Record<string, unknown> = { email, name, role };
   if (id) payload.id = id;

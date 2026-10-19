@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { normalizeEmail, ADMIN_EMAIL } from "@/lib/auth";
 import { emailVerifyEnabled } from "@/lib/email";
 import { sign } from "@/lib/token";
+import { clientIp } from "@/lib/ip";
 import { cookies } from "next/headers";
 import * as bcrypt from "bcryptjs";
 
@@ -46,6 +47,15 @@ export async function POST(req: Request) {
     if (emailVerifyEnabled() && user.emailVerified === false) {
       return Response.json({ error: "Email tasdiqlanmagan — pochtangizdagi havolani bosing", code: "EMAIL_NOT_VERIFIED" }, { status: 403 });
     }
+    // Ban tekshiruvi — cheklangan hisob kira olmaydi
+    if (user.banned) {
+      return Response.json({ error: "Hisobingiz cheklangan. Administratorga murojaat qiling.", code: "BANNED" }, { status: 403 });
+    }
+    // Kirish IP'sini yozamiz (klonlarni kuzatish uchun) — xato kirishni to'xtatmaydi
+    try {
+      const ip = clientIp(req);
+      if (ip) await prisma.user.update({ where: { id: user.id }, data: { lastIp: ip, lastIpAt: new Date() } });
+    } catch {}
     const role = user.role as string;
     const token = sign({ email: user.email, name: user.name, role, id: user.id });
     await setSessionCookie(token, role);

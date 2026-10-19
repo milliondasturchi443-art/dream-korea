@@ -16,13 +16,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const admin = requireAdmin(req);
   if (!admin) return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   const { id } = await params;
-  let body: { name?: string; role?: string; phone?: string; topikLevel?: string } = {};
+  let body: { name?: string; role?: string; phone?: string; topikLevel?: string; banned?: boolean; bannedReason?: string } = {};
   try { body = await req.json(); } catch {}
-  const data: Record<string, string> = {};
+  const data: Record<string, unknown> = {};
   if (typeof body.name === "string" && body.name.trim()) data.name = body.name.trim();
   if (body.role && ["STUDENT", "TEACHER", "ADMIN"].includes(body.role)) data.role = body.role;
   if (typeof body.phone === "string") data.phone = body.phone.trim();
   if (typeof body.topikLevel === "string") data.topikLevel = body.topikLevel;
+  // Ban — o'zini/boshqaruvchi asosiy hisobni bloklash taqiqlanadi
+  if (typeof body.banned === "boolean") {
+    const target = await prisma.user.findUnique({ where: { id }, select: { email: true } });
+    if (!target) return Response.json({ error: "Foydalanuvchi topilmadi" }, { status: 404 });
+    const envAdmin = (process.env.ADMIN_EMAIL || "dreamkorea@adminstator.kr").trim().toLowerCase();
+    if (target.email.trim().toLowerCase() === envAdmin) {
+      return Response.json({ error: "Asosiy admin hisobini bloklab bo'lmaydi" }, { status: 400 });
+    }
+    data.banned = body.banned;
+    data.bannedAt = body.banned ? new Date() : null;
+    if (!body.banned) data.bannedReason = null;
+  }
+  if (typeof body.bannedReason === "string") data.bannedReason = body.bannedReason.trim().slice(0, 200) || null;
   if (!Object.keys(data).length) return Response.json({ error: "O'zgarish kiritilmadi" }, { status: 400 });
   try {
     const u = await prisma.user.update({ where: { id }, data });

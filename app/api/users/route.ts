@@ -47,6 +47,7 @@ export async function GET(req: Request) {
     const users = await prisma.user.findMany({
       select: {
         id: true, name: true, email: true, phone: true, role: true, topikLevel: true, createdAt: true,
+        banned: true, bannedAt: true, bannedReason: true, lastIp: true, lastIpAt: true, regIp: true,
         _count: { select: { lessonProgress: true, testAttempts: true, enrollments: true } },
       },
       where: scopedIds ? { id: { in: [...scopedIds] } } : undefined,
