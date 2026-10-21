@@ -103,12 +103,13 @@ function payloadFrom(kind: Kind, d: Draft): unknown {
   return { ...d };
 }
 
-const SECTIONS: { kind: Kind; label: string; icon: typeof BookOpen }[] = [
-  { kind: "vocab", label: "d) So‘zlar (lug‘at)", icon: BookOpen },
-  { kind: "video", label: "a) Videolar", icon: Video },
-  { kind: "grammar", label: "b) Grammatika", icon: AlignLeft },
-  { kind: "listening", label: "c) Tinglash", icon: Headphones },
-  { kind: "writing", label: "e) Yozish", icon: PenLine },
+// Har bir bo'limning nima uchun kerakligi — admin foydalanuvchisi uchun qisqa tushuntirish.
+const SECTIONS: { kind: Kind; label: string; icon: typeof BookOpen; hint: string }[] = [
+  { kind: "vocab", label: "d) So‘zlar (lug‘at)", icon: BookOpen, hint: "Unit lug‘ati: koreyscha so‘z, o‘zbekcha tarjima va transliteratsiya. Shu so‘zlar keyingi mashqlarda ham ishlatiladi." },
+  { kind: "video", label: "a) Videolar", icon: Video, hint: "Dars videosi (YouTube yoki boshqa havola). Talaba uni ko‘rib, keyingi bo‘limga o‘tadi." },
+  { kind: "grammar", label: "b) Grammatika", icon: AlignLeft, hint: "Qoida bo‘limi: shakl (pattern), tushuntirish, misollar va variantli mashqlar (A/B/C/D) — avto-baholanadi." },
+  { kind: "listening", label: "c) Tinglash", icon: Headphones, hint: "Ovozli material: audio yoki TTS matni, transkript va savollar — talaba tinglab javob beradi." },
+  { kind: "writing", label: "e) Yozish", icon: PenLine, hint: "Yozish topshirig‘i: vazifa (prompt), baholash mezonlari va namuna javob." },
 ];
 
 function rowSummary(kind: Kind, item: Item, i: number): string {
@@ -171,6 +172,8 @@ function SectionEditor({ unitId, kind, items, onChanged }: { unitId: string; kin
           </Button>
         </div>
       </div>
+
+      <p className="-mt-1.5 text-xs text-slate-500 leading-relaxed">{meta.hint}</p>
 
       {mode && (
         <div className="space-y-2 rounded-xl border border-blue-100 bg-blue-50/40 p-3">

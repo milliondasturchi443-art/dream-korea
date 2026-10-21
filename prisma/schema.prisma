@@ -505,3 +505,17 @@ model DarsExamBest {
   updatedAt DateTime @updatedAt
   @@unique([userId, from])
 }
+
+// TOPIK sahifasidagi kirish kartochkalari (O'qish / Tinglash / Yozish) — admin tahrirlaydi.
+// Bo'sh bo'lsa API standart kartochkalarni qaytaradi (sayt hech qachon buzilmaydi).
+model TopikCard {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  desc      String   @default("")
+  href      String
+  icon      String   @default("BookOpen") // lib/topik-cards.ts ICONS kalitlari
+  color     String   @default("blue-600") // lib/topik-cards.ts COLOR_KEYS
+  order     Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

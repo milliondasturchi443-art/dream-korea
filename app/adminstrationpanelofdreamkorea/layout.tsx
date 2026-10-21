@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { doLogout } from "@/lib/logout";
 import { LayoutDashboard, Users, Bell, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff, UserPlus, Newspaper, Menu, X, BookMarked, CreditCard, GraduationCap, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,35 @@ const nav = (base: string) => [
 // "Talaba ko'rinishi" — admin o'zini talaba sifatida ko'radi (preview)
 function enterStudentView() {
   try { sessionStorage.setItem("dk_viewas_student", "1"); } catch {}
+}
+
+// Faollikni aniqlaydi. "TOPIK testlar" va "Kontent (kurslar)" bir xil
+// pathname'ga ega (/content), shuning uchun ?tab= bo'yicha ajratiladi —
+// aks holda "TOPIK testlar" bosilganda doim "Kontent (kurslar)" yonardi.
+function isActiveItem(label: string, href: string, pathname: string, tab: string | null): boolean {
+  const path = href.split("?")[0];
+  if (pathname !== path) return false;
+  if (label === "TOPIK testlar") return tab === "testlar";
+  if (label === "Kontent (kurslar)") return tab !== "testlar";
+  return true;
+}
+
+// Yon menyu ro'yxati. useSearchParams shu ichki komponentda — u faqat
+// autentifikatsiyadan keyin render bo'ladi (loading / kalit ekrani vaqtida
+// yuqorida qaytariladi), shuning uchun praysaytga ta'sir qilmaydi.
+function NavList({ base, pathname }: { base: string; pathname: string }) {
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab");
+  return (
+    <nav className="space-y-1 flex-1">
+      {nav(base).map(([label, href, Icon]) => (
+        <Link key={label} href={href} onClick={label === "Talaba ko‘rinishi" ? enterStudentView : undefined} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
+          isActiveItem(label, href, pathname, tab) ? "bg-white/90 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.4)]" : "text-slate-600 hover:bg-white/60")}>
+          <Icon className="h-4 w-4 shrink-0" /> {label}
+        </Link>
+      ))}
+    </nav>
+  );
 }
 
 // Telefonda /admin — faqat kalit so'raydigan alohida ekran
@@ -174,14 +203,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="font-bold text-sm">Menyu</span>
             <button onClick={() => setMenuOpen(false)} aria-label="Yopish" className="p-2 -mr-2"><X className="h-5 w-5" /></button>
           </div>
-          <nav className="space-y-1 flex-1">
-            {nav(base).map(([label, href, Icon]) => (
-              <Link key={label} href={href} onClick={label === "Talaba ko‘rinishi" ? enterStudentView : undefined} className={cn("flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
-                pathname === href ? "bg-white/90 text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.4)]" : "text-slate-600 hover:bg-white/60")}>
-                <Icon className="h-4 w-4 shrink-0" /> {label}
-              </Link>
-            ))}
-          </nav>
+          <NavList base={base} pathname={pathname} />
           <button onClick={onLogout} className="mt-3 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 w-full min-h-[44px]"><LogOut className="h-4 w-4"/> Chiqish</button>
         </aside>
         {menuOpen && <div className="md:hidden fixed inset-0 bg-black/30 z-30" onClick={() => setMenuOpen(false)} />}

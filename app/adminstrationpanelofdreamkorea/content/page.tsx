@@ -1,14 +1,24 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { createElement, useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Volume2, Trash2, Languages } from "lucide-react";
+import { Loader2, Volume2, Trash2, Languages, Plus, Pencil, Eye, EyeOff } from "lucide-react";
 import { speak } from "@/lib/tts";
 import { categories } from "@/lib/vocabulary-data";
+import { adminBase } from "@/lib/admin-base";
+import {
+  COLOR_KEYS,
+  DEFAULT_TOPIK_CARDS,
+  ICON_KEYS,
+  cardColor,
+  cardIcon,
+  type TopikCardData,
+} from "@/lib/topik-cards";
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; description: string; teacher: string; lessons: number; color: string };
 type ApiCourseDetail = ApiCourse & { lessons: { id: string; order: number; title: string; duration: string }[] };
@@ -22,16 +32,42 @@ function authHeader(): Record<string, string> {
   try { const t = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token"); return t ? { Authorization: `Bearer ${t}` } : {}; } catch { try { const t2 = localStorage.getItem("dk_token"); return t2 ? { Authorization: `Bearer ${t2}` } : {}; } catch { return {}; } }
 }
 
-export default function AdminContentPage() {
-  const [tab, setTab] = useState<"kurslar" | "testlar" | "materiallar" | "videolar" | "lugat">("kurslar");
+const TAB_IDS = ["kurslar", "testlar", "materiallar", "videolar", "lugat"] as const;
+type TabId = (typeof TAB_IDS)[number];
 
-  // ?tab=testlar — yon paneldagi havola orqali to'g'ridan-to'g'ri testlar vkladkasi
+// Kichik ko'rinish: ikonka nomidan chiziladi. createElement ishlatilgani
+// sababli render davomida komponent yaratilmaydi (react-hooks/static-components).
+function CardIconPreview({ name, className }: { name: string; className?: string }) {
+  return createElement(cardIcon(name), { className });
+}
+
+export default function AdminContentPage() {
+  const [tab, setTab] = useState<TabId>("kurslar");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+
+  // ?tab= — yon paneldagi havola. Eski kod URL'ni faqat mount'da o'qigan
+  // (bo'sh deps) uchun ishlamay qolgan: sahifaning o'zida turib "TOPIK
+  // testlar" bosilganda URL ?tab=testlar bo'lsa ham komponent qayta
+  // yuklanmaydi va vkladka eski holatida (Kurslar) qolardi.
+  // Endi param o'zgarsa zudlik bilan mos vkladka ochiladi.
+  // queueMicrotask — shu loyihadagi qoida: to'g'ridan-to'g'ri setState
+  // effect ichida react-hooks/set-state-in-effect qoidasini buzadi.
   useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get("tab");
-    if (t === "kurslar" || t === "testlar" || t === "materiallar" || t === "videolar" || t === "lugat") {
-      queueMicrotask(() => setTab(t));
-    }
-  }, []);
+    const next: TabId | null = tabParam
+      ? ((TAB_IDS as readonly string[]).includes(tabParam) ? (tabParam as TabId) : null)
+      : "kurslar";
+    if (next) queueMicrotask(() => setTab(next));
+  }, [tabParam]);
+
+  // Vkladka tugmasi URL ni ham yangilaydi — manzil har doim haqiqiy
+  // holatni aks ettiradi va yon paneldagi havolalar to'g'ri ishlaydi.
+  function goTab(id: TabId) {
+    setTab(id);
+    router.replace(`${adminBase(pathname)}?tab=${id}`, { scroll: false });
+  }
 
   // Kurslar
   const [courses, setCourses] = useState<ApiCourse[]>([]);
@@ -84,6 +120,17 @@ export default function AdminContentPage() {
   const [wCat, setWCat] = useState("greeting");
   const [wSaving, setWSaving] = useState(false);
 
+  // Kirish kartochkalari (talabalar /topik — O'qish / Tinglash / Yozish)
+  const [cards, setCards] = useState<TopikCardData[]>([]);
+  const [cardsLoading, setCardsLoading] = useState(false);
+  const [cEditId, setCEditId] = useState<string | null>(null);
+  const [cTitle, setCTitle] = useState("");
+  const [cDesc, setCDesc] = useState("");
+  const [cHref, setCHref] = useState("");
+  const [cIcon, setCIcon] = useState<string>("BookOpen");
+  const [cColor, setCColor] = useState<string>("blue-600");
+  const [cSaving, setCSaving] = useState(false);
+
   const h = authHeader;
 
   const fetchCourses = useCallback(async () => {
@@ -115,8 +162,37 @@ export default function AdminContentPage() {
     setLugLoading(false);
   }, []);
 
+  // Kirish kartochkalari. Bazada yozilmagan bo'lsa (source: "default") —
+  // avval standart 3 tasini saqlaymiz, shundan keyin ular tahrirlanadi.
+  const fetchCards = useCallback(async () => {
+    setCardsLoading(true);
+    try {
+      const r = await fetch("/api/topik-cards");
+      const d = await r.json().catch(() => ({}));
+      let items: TopikCardData[] = Array.isArray(d.items) ? d.items : [];
+      if (d.source === "default") {
+        const hd = authHeader();
+        if (hd.Authorization) {
+          for (const c of DEFAULT_TOPIK_CARDS) {
+            await fetch("/api/topik-cards", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...hd },
+              body: JSON.stringify({ title: c.title, desc: c.desc, href: c.href, icon: c.icon, color: c.color, order: c.order, enabled: c.enabled }),
+            }).catch(() => null);
+          }
+          const r2 = await fetch("/api/topik-cards");
+          const d2 = await r2.json().catch(() => ({}));
+          if (Array.isArray(d2.items)) items = d2.items;
+          if (d2.source === "db") toast.info("Standart kartochkalar bazaga ko‘chirildi — endi tahrirlaysiz");
+        }
+      }
+      setCards(items);
+    } catch { setCards([]); }
+    setCardsLoading(false);
+  }, []);
+
   useEffect(() => { fetchCourses(); }, [fetchCourses]);
-  useEffect(() => { if (tab === "testlar") fetchTests(); if (tab === "materiallar") fetchMaterials(); if (tab === "videolar") fetchVideos(); if (tab === "lugat") fetchLugat(); }, [tab, fetchTests, fetchMaterials, fetchVideos, fetchLugat]);
+  useEffect(() => { if (tab === "testlar") { fetchTests(); fetchCards(); } if (tab === "materiallar") fetchMaterials(); if (tab === "videolar") fetchVideos(); if (tab === "lugat") fetchLugat(); }, [tab, fetchTests, fetchCards, fetchMaterials, fetchVideos, fetchLugat]);
 
   async function req(url: string, method: string, body?: unknown): Promise<any> {
     const hd = h();
@@ -226,6 +302,39 @@ export default function AdminContentPage() {
     try { await req(`/api/vocabulary?id=${encodeURIComponent(id)}`, "DELETE"); toast.success("O‘chirildi"); fetchLugat(); } catch (e) { toast.error((e as Error).message); }
   }
 
+  // ---- Kirish kartochkalari (talabalar /topik) ----
+  function resetCardForm() {
+    setCEditId(null); setCTitle(""); setCDesc(""); setCHref(""); setCIcon("BookOpen"); setCColor("blue-600");
+  }
+  function startEditCard(c: TopikCardData) {
+    setCEditId(c.id); setCTitle(c.title); setCDesc(c.desc); setCHref(c.href); setCIcon(c.icon); setCColor(c.color);
+  }
+  async function saveCard() {
+    if (!cTitle.trim() || !cHref.trim()) { toast.error("Sarlavha va havola majburiy"); return; }
+    setCSaving(true);
+    try {
+      const body = { title: cTitle.trim(), desc: cDesc.trim(), href: cHref.trim(), icon: cIcon, color: cColor };
+      if (cEditId) { await req(`/api/topik-cards/${cEditId}`, "PATCH", body); toast.success("Kartochka yangilandi"); }
+      else { await req("/api/topik-cards", "POST", body); toast.success("Kartochka qo‘shildi"); }
+      resetCardForm();
+      await fetchCards();
+    } catch (e) { toast.error((e as Error).message || "Saqlab bo‘lmadi"); }
+    setCSaving(false);
+  }
+  async function removeCard(id: string) {
+    if (!confirm("Bu kartochka o‘chirilsinmi?")) return;
+    try {
+      await req(`/api/topik-cards/${id}`, "DELETE");
+      if (cEditId === id) resetCardForm();
+      toast.success("O‘chirildi");
+      await fetchCards();
+    } catch (e) { toast.error((e as Error).message || "O‘chirib bo‘lmadi"); }
+  }
+  async function toggleCard(c: TopikCardData) {
+    try { await req(`/api/topik-cards/${c.id}`, "PATCH", { enabled: !c.enabled }); await fetchCards(); }
+    catch (e) { toast.error((e as Error).message || "Xato"); }
+  }
+
   return (
     <div className="mx-auto max-w-[980px] p-4 lg:p-6 space-y-5">
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
@@ -235,8 +344,8 @@ export default function AdminContentPage() {
       </motion.div>
 
       <div className="flex gap-1.5 p-1 rounded-full bg-slate-100 w-fit flex-wrap">
-        {(["kurslar", "testlar", "materiallar", "videolar", "lugat"] as const).map(id => (
-          <button key={id} onClick={() => setTab(id)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${tab === id ? "bg-[#0f1b3d] text-white shadow" : "text-slate-600 hover:text-slate-900"}`}>
+        {TAB_IDS.map(id => (
+          <button key={id} onClick={() => goTab(id)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${tab === id ? "bg-[#0f1b3d] text-white shadow" : "text-slate-600 hover:text-slate-900"}`}>
             {id === "kurslar" ? "Kurslar" : id === "testlar" ? "Testlar" : id === "materiallar" ? "Materiallar" : id === "videolar" ? "Videolar" : "Lug‘at"}
           </button>
         ))}
@@ -291,6 +400,78 @@ export default function AdminContentPage() {
 
         {tab === "testlar" && (
           <motion.div key="testlar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-4">
+            <Card className="p-4 space-y-3">
+              <div>
+                <div className="font-semibold">Kirish kartochkalari — talabalar /topik sahifasi</div>
+                <p className="text-xs text-slate-500 mt-0.5">O‘qish / Tinglash / Yozish kartochkalari: nom, qisqa matn, havola, ikonka va rangni o‘zgartirasiz. Yashirilsa — talaba ko‘rmaydi.</p>
+              </div>
+
+              {cardsLoading ? (
+                <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda…</div>
+              ) : cards.length === 0 ? (
+                <div className="text-sm text-slate-500">Kartochka yo‘q — quyidan qo‘shing</div>
+              ) : (
+                <div className="space-y-2">
+                  {cards.map(c => {
+                    const Icon = cardIcon(c.icon);
+                    return (
+                      <div key={c.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                        <Icon className={`h-4 w-4 shrink-0 ${cardColor(c.color)}`} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium truncate">{c.title}</span>
+                            {!c.enabled && <Badge className="text-[10px] bg-slate-200 text-slate-600 shrink-0">Yashirilgan</Badge>}
+                          </div>
+                          <div className="text-xs text-slate-500 truncate">{c.desc || "—"}</div>
+                          <div className="text-[11px] text-slate-400 truncate">{c.href}</div>
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button onClick={() => toggleCard(c)} title={c.enabled ? "Saytda yashirish" : "Saytda ko‘rsatish"} aria-label={c.enabled ? "Yashirish" : "Ko‘rsatish"} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-white">
+                            {c.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </button>
+                          <button onClick={() => startEditCard(c)} aria-label="Tahrirlash" className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={() => removeCard(c.id)} aria-label="O‘chirish" className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-white"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="space-y-2 rounded-xl border border-dashed border-slate-300 p-3">
+                <div className="text-xs font-semibold text-blue-700">{cEditId ? "Kartochkani tahrirlash" : "Yangi kartochka"}</div>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  <Input placeholder="Sarlavha (mas: O‘qish · Reading)" value={cTitle} onChange={e => setCTitle(e.target.value)} />
+                  <Input placeholder="Havola (mas: /topik/exam?id=seed_topik1_reading)" value={cHref} onChange={e => setCHref(e.target.value)} />
+                </div>
+                <Textarea placeholder="Qisqa tushuntirish (mas: Matnlar va savollar — rasmiy uslubda.)" value={cDesc} onChange={e => setCDesc(e.target.value)} className="min-h-[56px]" />
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="text-xs text-slate-500">Ikonka
+                    <select value={cIcon} onChange={e => setCIcon(e.target.value)} className="ml-1.5 h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm">
+                      {ICON_KEYS.map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs text-slate-500">Rang
+                    <select value={cColor} onChange={e => setCColor(e.target.value)} className="ml-1.5 h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm">
+                      {COLOR_KEYS.map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                  </label>
+                  <div className="flex gap-2">
+                    <Button onClick={saveCard} disabled={cSaving || !cTitle.trim() || !cHref.trim()}>
+                      {cSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : !cEditId && <Plus className="h-4 w-4 mr-1" />}
+                      {cEditId ? "Saqlash" : "Qo‘shish"}
+                    </Button>
+                    {cEditId && <Button variant="outline" onClick={resetCardForm}>Bekor qilish</Button>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs">
+                  <CardIconPreview name={cIcon} className={`h-4 w-4 shrink-0 ${cardColor(cColor)}`} />
+                  <span className="font-medium text-slate-700 truncate">{cTitle || "Sarlavha"}</span>
+                  <span className="text-slate-400 truncate">{cDesc || "tushuntirish…"}</span>
+                </div>
+              </div>
+            </Card>
+
             <Card className="p-4 space-y-3">
               <div className="font-semibold">Yangi test (БД) — talabalar /topik da ko‘radi</div>
               <div className="grid sm:grid-cols-[minmax(0,1fr)_120px_120px_100px] gap-2">

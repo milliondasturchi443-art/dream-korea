@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { PenLine, Headphones, BookOpen, TrendingUp, AlertTriangle, ExternalLink, ArrowRight } from "lucide-react";
+import { Headphones, TrendingUp, AlertTriangle, ExternalLink, ArrowRight } from "lucide-react";
+import { DEFAULT_TOPIK_CARDS, cardColor, cardIcon, type TopikCardData } from "@/lib/topik-cards";
 
 type Attempt = { id: string; testId: string; score: number; total: number; createdAt: string; test?: { title: string; level: string; type: string } };
 
@@ -62,6 +63,18 @@ function Ladder({ title, ladder, points, scale }: { title: string; ladder: { gra
 export default function TopikPage() {
   const [history, setHistory] = useState<Attempt[]>([]);
   const [hasAuth, setHasAuth] = useState(false);
+  // Kirish kartochkalari (O'qish / Tinglash / Yozish) — bazadan keladi;
+  // server javob bermasa standart kartochkalari qoladi.
+  const [cards, setCards] = useState<TopikCardData[]>(DEFAULT_TOPIK_CARDS);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    fetch("/api/topik-cards", { signal: ac.signal })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d && Array.isArray(d.items)) setCards(d.items.filter((c: TopikCardData) => c.enabled)); })
+      .catch(() => {});
+    return () => ac.abort();
+  }, []);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -127,9 +140,18 @@ export default function TopikPage() {
       </div>
 
       <div className="grid sm:grid-cols-3 gap-3">
-        <Link href="/topik/exam?id=seed_topik1_reading"><Card className="p-4 hover:shadow-md transition-shadow cursor-pointer"><BookOpen className="h-5 w-5 text-blue-600 mb-2" /><div className="font-semibold text-sm">O‘qish · Reading</div><p className="text-xs text-slate-500 mt-1">Matnlar va savollar — rasmiy uslubda.</p></Card></Link>
-        <Link href="/topik/exam?id=seed_topik1_listening"><Card className="p-4 hover:shadow-md transition-shadow cursor-pointer"><Headphones className="h-5 w-5 text-emerald-600 mb-2" /><div className="font-semibold text-sm">Tinglash · Listening</div><p className="text-xs text-slate-500 mt-1">Ovozli savollar — taymer bilan.</p></Card></Link>
-        <Link href="/topik/writing"><Card className="p-4 hover:shadow-md transition-shadow cursor-pointer"><PenLine className="h-5 w-5 text-rose-600 mb-2" /><div className="font-semibold text-sm">Yozish · 쓰기</div><p className="text-xs text-slate-500 mt-1">51/53/54 uslubidagi mashqlar + avto-baholash.</p></Card></Link>
+        {cards.map(c => {
+          const Icon = cardIcon(c.icon);
+          return (
+            <Link key={c.id} href={c.href}>
+              <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+                <Icon className={`h-5 w-5 ${cardColor(c.color)} mb-2`} />
+                <div className="font-semibold text-sm">{c.title}</div>
+                <p className="text-xs text-slate-500 mt-1">{c.desc}</p>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Rasmiy TOPIK testlari — topik.go.kr uslubidagi vitrina */}
