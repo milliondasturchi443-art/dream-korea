@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, CheckCircle2, CalendarDays, Wallet, Hourglass, Users, StickyNote, BellRing, RefreshCw } from "lucide-react";
+import { Loader2, Search, CheckCircle2, CalendarDays, Wallet, Hourglass, Users, StickyNote, BellRing, RefreshCw, Trash2 } from "lucide-react";
 
 export type PayUser = { id: string; name: string; email: string; groupNames?: string[] };
 export type PayRow = { id: string; amount: number; method: string; month?: string | null; note?: string | null; status: string; createdAt: string; user: PayUser };
@@ -15,6 +15,8 @@ type Props = {
   onRefresh: () => void;
   onMarkPaid?: (p: PayRow) => void;
   markingId?: string;
+  onDelete?: (p: PayRow) => void;
+  deletingId?: string;
 };
 
 const STATUS_LABEL: Record<string, string> = { PENDING: "Kutilmoqda", PAID: "To'langan", CANCELLED: "Bekor qilingan", FAILED: "Muvaffaqiyatsiz" };
@@ -39,7 +41,7 @@ function methodLabel(m: string) {
   return m.charAt(0).toUpperCase() + m.slice(1);
 }
 
-export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, markingId }: Props) {
+export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, markingId, onDelete, deletingId }: Props) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"" | "PENDING" | "PAID">("");
   const [month, setMonth] = useState("");
@@ -188,6 +190,17 @@ export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, marking
                     </div>
                   ) : (
                     <Badge className="bg-slate-100 text-slate-700 border text-[11px]">{STATUS_LABEL[p.status] ?? p.status}</Badge>
+                  )}
+                  {onDelete && (
+                    <Button
+                      variant="outline" size="sm"
+                      className="h-7 px-2 text-xs border-red-200 text-red-600 hover:bg-red-50"
+                      disabled={deletingId === p.id}
+                      title="To'lovni o'chirish"
+                      onClick={() => onDelete(p)}
+                    >
+                      {deletingId === p.id ? <Loader2 className="h-3 w-3 animate-spin"/> : <Trash2 className="h-3 w-3 mr-1"/>} O&apos;chirish
+                    </Button>
                   )}
                 </div>
               </div>

@@ -29,6 +29,7 @@ export default function AdminPaymentsPage() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [markingId, setMarkingId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   async function load() {
     setLoading(true);
@@ -82,6 +83,19 @@ export default function AdminPaymentsPage() {
 
   const pendingCount = payments.filter(p => p.status === "PENDING").length;
 
+  // To'lovni o'chirish (moliyaviy yozuv — faqat admin, tasdiqlash bilan)
+  async function deletePayment(p: PayRow) {
+    if (!confirm(`Bu to'lovni o'chirishni tasdiqlaysizmi?\n${p.user.name} — ${p.amount.toLocaleString("uz-UZ")} so'm\nBu amalni qaytarib bo'lmaydi.`)) return;
+    setDeletingId(p.id);
+    try {
+      const r = await fetch(`/api/payments/${p.id}`, { method: "DELETE", headers: authHeader() });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "O'chirib bo'lmadi");
+      setPayments(prev => prev.filter(x => x.id !== p.id));
+      toast.success("To'lov o'chirildi");
+    } catch (e) { toast.error((e as Error).message); } finally { setDeletingId(""); }
+  }
+
   return (
     <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -112,7 +126,7 @@ export default function AdminPaymentsPage() {
         </p>
       </Card>
 
-      <PaymentsList payments={payments} loading={loading} onRefresh={load} onMarkPaid={markPaid} markingId={markingId} />
+      <PaymentsList payments={payments} loading={loading} onRefresh={load} onMarkPaid={markPaid} markingId={markingId} onDelete={deletePayment} deletingId={deletingId} />
     </div>
   );
 }
