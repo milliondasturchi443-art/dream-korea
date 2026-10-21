@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { darsUser } from "@/lib/dars-auth";
 import { z } from "zod";
 import * as bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 export const dynamic = "force-dynamic";
 
 const PURPOSES = ["TOPIK", "Koreada o'qish", "Ishlash", "Sayohat"] as const;
@@ -37,7 +38,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const user = await darsUser(req);
   if (!user || user.role !== "ADMIN") return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
-  const parsed = createSchema.safeParse(await req.json());
+  const parsed = createSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Ma'lumotlar noto'g'ri (Ism, telefon, kunlar, vaqt majburiy)" }, { status: 400 });
   const { name, phone, days, time, teacherId, groupId, note, address, parentName, parentPhone, startDate, purpose, plan } = parsed.data;
   if (groupId) {
@@ -74,7 +75,7 @@ async function enroll(item: { id: string; name: string; phone: string; days: str
   let tempPassword: string | null = null;
   if (!student) {
     // 2. Create account: email derived from phone (unique), random password.
-    tempPassword = Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6);
+    tempPassword = crypto.randomBytes(9).toString("base64url").slice(0, 10);
     const email = `${digits}@reception.dk`;
     try {
       student = await prisma.user.create({
@@ -120,7 +121,7 @@ async function enroll(item: { id: string; name: string; phone: string; days: str
 export async function PATCH(req: Request) {
   const user = await darsUser(req);
   if (!user || user.role !== "ADMIN") return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
-  const parsed = patchSchema.safeParse(await req.json());
+  const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Noto'g'ri so'rov" }, { status: 400 });
   try {
     const before = await prisma.reception.findUnique({ where: { id: parsed.data.id } });

@@ -1,11 +1,19 @@
 import { prisma } from "@/lib/db";
 import { buildSeedFull } from "@/lib/topik-seed";
+import { verify, readAuthToken } from "@/lib/token";
+import { isAdminEmail } from "@/lib/auth";
 export const dynamic = "force-dynamic";
+
+function requireAdmin(req: Request) {
+  const token = readAuthToken(req);
+  const d = verify(token);
+  return !!d && d.role === "ADMIN" && isAdminEmail(String(d.email ?? ""));
+}
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const admin = requireAdmin(req);
-  const wantSolutions = admin || new URL(req.url).searchParams.get("solutions") === "1";
+  // To'g'ri javoblar faqat admin uchun. Talaba tahlilni POST /api/topik/attempt javobidan oladi.
+  const wantSolutions = requireAdmin(req);
   if (id.startsWith("seed_")) {
     const test = buildSeedFull(id);
     if (!test) return Response.json({ error: "Topilmadi" }, { status: 404 });
@@ -49,14 +57,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 // ==== ADMIN: savol qo'shish / test o'chirish ====
-import { verify, readAuthToken } from "@/lib/token";
-import { isAdminEmail } from "@/lib/auth";
-
-function requireAdmin(req: Request) {
-  const token = readAuthToken(req);
-  const d = verify(token);
-  return !!d && d.role === "ADMIN" && isAdminEmail(String(d.email ?? ""));
-}
 
 // POST /api/topik/[id] — testga savol qo'shish (ADMIN)
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

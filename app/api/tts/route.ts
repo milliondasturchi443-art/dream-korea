@@ -1,4 +1,7 @@
 import { NextRequest } from "next/server";
+import { readAuth } from "@/lib/token";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/ip";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +37,10 @@ async function fetchGoogleTts(text: string): Promise<Buffer | null> {
 export async function GET(req: NextRequest) {
   const text = (req.nextUrl.searchParams.get("text") || "").trim().slice(0, 200);
   if (!text) return new Response("Bad Request", { status: 400 });
+  // Ochiq proksi bo'lmasligi uchun: faqat tizimga kirganlar + so'rov limiti
+  const auth = readAuth(req);
+  if (!auth) return new Response("Unauthorized", { status: 401 });
+  const who = String(auth.id ?? auth.email ?? clientIp(req) ?? "anon");
 
   const cached = CACHE.get(text);
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
@@ -45,6 +52,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  if (!rateLimit(`tts:${who}`, 60, 60_000)) return tooMany(60);
   const buf = await fetchGoogleTts(text);
   if (!buf) return new Response("TTS failed", { status: 502 });
 

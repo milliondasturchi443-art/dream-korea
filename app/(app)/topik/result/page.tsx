@@ -21,24 +21,13 @@ export default function ResultPage() {
         const correct = Number(d.correct ?? 0), total = Number(d.total ?? 1);
         setData({ correct, total, pct: Number(d.pct ?? Math.round((correct / total) * 100)), testId: d.testId });
         setAnswers(d.answers ?? {});
+        // Tahlil — server topshirilgandan keyin qaytargan review (to'g'ri javoblar faqat shu yerdan)
+        if (Array.isArray(d.review)) {
+          setQs(d.review.map((q: { id: unknown; text: unknown; correct: unknown }) => ({ id: String(q.id), text: String(q.text ?? ""), correct: String(q.correct ?? "") })));
+        }
       }
     } catch {}
   }, []);
-
-  // Tahlilni faqat admin ko'ra oladi. Talaba uchun — faqat o'zi belgilagan javob, to'g'risi ko'rsatilmaydi (server-correct).
-  useEffect(() => {
-    if (!data?.testId) return;
-    const token = localStorage.getItem("dk_token") || sessionStorage.getItem("dk_token");
-    fetch(`/api/topik/${encodeURIComponent(data.testId)}?solutions=1`, token ? { headers: { Authorization: `Bearer ${token}` } } : {})
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (d && Array.isArray((d as { questions?: unknown[] }).questions)) {
-          const v = d as { questions: { id: string; text: string; correct: string }[] };
-          setQs(v.questions.map(q => ({ id: String(q.id), text: q.text, correct: String(q.correct ?? "") })));
-        }
-      })
-      .catch(() => {});
-  }, [data?.testId]);
 
   if (!data) return <div className="p-8 text-center text-slate-500">Yuklanmoqda…</div>;
   const pct = data.pct ?? (data.total ? Math.round((data.correct / data.total) * 100) : 0);
@@ -96,8 +85,8 @@ export default function ResultPage() {
 
       {qs.length > 0 && data && (
         <Card className="p-5">
-          <div className="font-semibold text-slate-900">Savollar tahlili {qs.length === 0 ? "" : `(admin — correct ko'rinadi)`}</div>
-          <p className="text-xs text-slate-500 mt-1">Tahlil faqat admin ruxsati bilan (solutions=1) ko‘rinadi. Talaba uchun — faqat siz bergan javoblar.</p>
+          <div className="font-semibold text-slate-900">Savollar tahlili</div>
+          <p className="text-xs text-slate-500 mt-1">Test topshirilgandan keyin to‘g‘ri javoblar ko‘rsatiladi.</p>
           <div className="mt-3 space-y-2">
             {qs.map((q, i) => {
               const mine = answers[String(q.id)];

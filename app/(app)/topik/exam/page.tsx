@@ -107,7 +107,7 @@ function TopikExamInner() {
       });
       const d = await r.json().catch(() => ({} as Record<string, unknown>));
       if (!r.ok) throw new Error(String((d as Record<string, unknown>).error ?? "Saqlab bo'lmadi"));
-      localStorage.setItem("dk_topik_score", JSON.stringify({ correct: d.score ?? 0, total: d.total ?? questions.length, pct: d.pct ?? 0, answers: cur, testId, at: Date.now(), isSeed: d.isSeed ?? false }));
+      localStorage.setItem("dk_topik_score", JSON.stringify({ correct: d.score ?? 0, total: d.total ?? questions.length, pct: d.pct ?? 0, answers: cur, testId, at: Date.now(), isSeed: d.isSeed ?? false, review: Array.isArray(d.review) ? d.review : [] }));
       router.push("/topik/result");
     } catch (e) {
       toast.error(String((e as Error).message ?? "Xatolik"));

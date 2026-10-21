@@ -1,13 +1,16 @@
 import { prisma } from "@/lib/db";
 import { darsUser } from "@/lib/dars-auth";
+import { sealData, openData } from "@/lib/token";
+import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import crypto from "node:crypto";
 
 type ExamQ = { text: string; options: string[]; correct: number; explain?: string };
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = crypto.randomInt(i + 1);
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -15,6 +18,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 const BLOCK = 4;
 const MAX_Q = 10;
+const EXAM_TTL_MS = 2 * 3600 * 1000; // imtihon kaliti 2 soat amal qiladi
 
 async function buildQuestions(from: number) {
   const to = from + BLOCK - 1;
@@ -94,22 +98,44 @@ export async function GET(req: Request) {
       return Response.json({ error: "Avval shu blokdagi barcha 4 ta unitni yakunlang" }, { status: 403 });
     }
     const best = await prisma.darsExamBest.findUnique({ where: { userId_from: { userId: user.id, from } } });
-    return Response.json({ from, to, questions, total: questions.length, best });
+    // To'g'ri javoblar klientga ochiq yuborilmaydi — shifrlangan kalitda saqlanadi
+    const key = sealData({
+      uid: user.id,
+      from,
+      jti: crypto.randomBytes(12).toString("base64url"),
+      c: questions.map(q => q.correct),
+      e: questions.map(q => q.explain ?? ""),
+    }, EXAM_TTL_MS);
+    const publicQs = questions.map(q => ({ text: q.text, options: q.options }));
+    return Response.json({ from, to, questions: publicQs, total: questions.length, best, key });
   } catch { return Response.json({ error: "Imtihon yuklanmadi" }, { status: 503 }); }
 }
 
-// POST /api/dars/exam {from, score, total} — natijani saqlash (eng yaxshisi saqlanadi)
+// POST /api/dars/exam {from, key, answers:number[]} — ball serverda hisoblanadi (eng yaxshisi saqlanadi)
 export async function POST(req: Request) {
   try {
     const user = await darsUser(req);
     if (!user) return Response.json({ error: "Auth kerak" }, { status: 401 });
     const parsed = z.object({
       from: z.number().int().min(1),
-      score: z.number().int().min(0),
-      total: z.number().int().min(1),
-    }).safeParse(await req.json());
-    if (!parsed.success || parsed.data.score > parsed.data.total) return Response.json({ error: "Natija noto‘g‘ri" }, { status: 400 });
-    const { from, score, total } = parsed.data;
+      key: z.string().min(10).max(20_000),
+      answers: z.array(z.number().int().min(-1).max(20)).max(MAX_Q),
+    }).safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return Response.json({ error: "Natija noto‘g‘ri" }, { status: 400 });
+    const { from, key, answers } = parsed.data;
+    const sealed = openData(key);
+    const correctArr = Array.isArray(sealed?.c) ? (sealed!.c as number[]) : null;
+    const explainArr = Array.isArray(sealed?.e) ? (sealed!.e as string[]) : [];
+    if (!sealed || !correctArr || sealed.uid !== user.id || sealed.from !== from) {
+      return Response.json({ error: "Imtihon muddati o‘tgan — qayta boshlang" }, { status: 400 });
+    }
+    const total = correctArr.length;
+    if (answers.length !== total) return Response.json({ error: "Barcha savollarga javob bering" }, { status: 400 });
+    // Kalit bir martalik: javoblarni ko'rib, o'sha kalit bilan qayta topshirib bo'lmaydi
+    if (typeof sealed.jti !== "string" || !rateLimit(`exam:jti:${sealed.jti}`, 1, EXAM_TTL_MS)) {
+      return Response.json({ error: "Bu imtihon allaqachon topshirilgan — qayta boshlang" }, { status: 409 });
+    }
+    const score = correctArr.reduce((n, c, i) => n + (answers[i] === c ? 1 : 0), 0);
     const to = from + BLOCK - 1;
     const units = await prisma.darsUnit.findMany({ where: { order: { gte: from, lte: to } }, select: { id: true, videos: { select: { id: true } } } });
     if (units.length < BLOCK || !(await blockDone(user.id, units.map(u => ({ id: u.id, hasVideo: u.videos.length > 0 }))))) {
@@ -123,6 +149,6 @@ export async function POST(req: Request) {
           data: { attempts: { increment: 1 }, ...(better ? { score, total, to } : {}) },
         })
       : await prisma.darsExamBest.create({ data: { userId: user.id, from, to, score, total } });
-    return Response.json({ best, improved: better });
+    return Response.json({ best, improved: better, score, total, review: correctArr.map((c, i) => ({ correct: c, explain: explainArr[i] || "" })) });
   } catch { return Response.json({ error: "Natija saqlanmadi" }, { status: 503 }); }
 }

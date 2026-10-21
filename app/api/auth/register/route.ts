@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/db";
 import { normalizeEmail } from "@/lib/auth";
-import { sign } from "@/lib/token";
+import { signSession } from "@/lib/session";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { sendVerificationCode, generateOtp, emailVerifyEnabled } from "@/lib/email";
 import { cookies } from "next/headers";
-import { phoneKey } from "@/lib/phone";
+import { phoneKey as toPhoneKey } from "@/lib/phone";
 import { clientIp } from "@/lib/ip";
 import * as bcrypt from "bcryptjs";
 
@@ -21,23 +22,23 @@ export async function POST(req: Request) {
   const email = normalizeEmail(emailRaw);
   if (!email.includes("@")) return Response.json({ error: "Email noto‘g‘ri" }, { status: 400 });
   const verifyOn = emailVerifyEnabled();
+  // Spam-ro'yxatdan o'tish himoyasi: IP bo'yicha 5 ta / soat
+  if (!rateLimit(`register:${clientIp(req) || "unknown"}`, 5, 3600_000)) return tooMany(3600);
+  const pKey = phone ? toPhoneKey(phone) : "";
   try {
-    // Band raqam bilan ro'yxatdan o'tish mumkin emas
-    if (phone) {
-      const key = phoneKey(phone);
-      const withPhone = await prisma.user.findMany({ where: { phone: { not: null } }, select: { phone: true } });
-      if (withPhone.some(u => u.phone && phoneKey(u.phone) === key)) {
-        return Response.json({ error: "Bu telefon raqam allaqachon ro‘yxatda" }, { status: 409 });
-      }
+    // Band raqam bilan ro'yxatdan o'tish mumkin emas (indekslangan phoneKey bo'yicha)
+    if (pKey) {
+      const taken = await prisma.user.findFirst({ where: { phoneKey: pKey }, select: { id: true } });
+      if (taken) return Response.json({ error: "Bu telefon raqam allaqachon ro‘yxatda" }, { status: 409 });
     }
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return Response.json({ error: "Bu email allaqachon ro‘yxatda" }, { status: 409 });
     const hash = await bcrypt.hash(password, 10);
     const ip = clientIp(req);
-    const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, role: "STUDENT", emailVerified: verifyOn ? false : true, regIp: ip || undefined, lastIp: ip || undefined, lastIpAt: ip ? new Date() : undefined } });
+    const user = await prisma.user.create({ data: { name, email, password: hash, phone: phone || undefined, phoneKey: pKey || undefined, role: "STUDENT", emailVerified: verifyOn ? false : true, regIp: ip || undefined, lastIp: ip || undefined, lastIpAt: ip ? new Date() : undefined } });
     if (!verifyOn) {
       // Tasdiqlash vaqtincha o'chirilgan — darhol session
-      const token = sign({ email: user.email, name: user.name, role: user.role, id: user.id });
+      const token = signSession(user);
       const cs = await cookies();
       cs.set("dk_token", token, { httpOnly: true, path: "/", maxAge: 30 * 24 * 3600, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
       return Response.json({ token, email: user.email, name: user.name, role: user.role, id: user.id });

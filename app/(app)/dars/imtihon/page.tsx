@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, ClipboardCheck, Check, X, RotateCcw, Award } from "lucide-react";
 
-type ExamQ = { text: string; options: string[]; correct: number; explain?: string };
+type ExamQ = { text: string; options: string[] };
+type Review = { correct: number; explain?: string };
 type Best = { from: number; to: number; score: number; total: number; attempts: number };
 
 function pct(score: number, total: number) { return total ? Math.round(score / total * 100) : 0; }
@@ -18,6 +19,8 @@ function ImtihonInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [questions, setQuestions] = useState<ExamQ[]>([]);
+  const [examKey, setExamKey] = useState("");
+  const [review, setReview] = useState<Review[]>([]);
   const [total, setTotal] = useState(0);
   const [best, setBest] = useState<Best | null>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -25,9 +28,9 @@ function ImtihonInner() {
   const [submitting, setSubmitting] = useState(false);
 
   function load() {
-    setLoading(true); setError(""); setResult(null); setAnswers({});
-    darsRequest<{ from: number; to: number; questions: ExamQ[]; total: number; best: Best | null }>(`/api/dars/exam?from=${from}`)
-      .then(d => { setQuestions(d.questions); setTotal(d.total); setBest(d.best); })
+    setLoading(true); setError(""); setResult(null); setAnswers({}); setReview([]);
+    darsRequest<{ from: number; to: number; questions: ExamQ[]; total: number; best: Best | null; key: string }>(`/api/dars/exam?from=${from}`)
+      .then(d => { setQuestions(d.questions); setTotal(d.total); setBest(d.best); setExamKey(d.key); })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }
@@ -38,10 +41,11 @@ function ImtihonInner() {
     if (answered < total || submitting) return;
     setSubmitting(true); setError("");
     try {
-      const score = questions.reduce((n, q, i) => n + (answers[i] === q.correct ? 1 : 0), 0);
-      const d = await darsRequest<{ best: Best; improved: boolean }>("/api/dars/exam", { from, score, total });
+      const list = questions.map((_, i) => answers[i] ?? -1);
+      const d = await darsRequest<{ best: Best; improved: boolean; score: number; total: number; review: Review[] }>("/api/dars/exam", { from, key: examKey, answers: list });
       setBest(d.best);
-      setResult({ score, total, improved: d.improved });
+      setReview(d.review);
+      setResult({ score: d.score, total: d.total, improved: d.improved });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) { setError((e as Error).message); } finally { setSubmitting(false); }
   }
@@ -94,14 +98,15 @@ function ImtihonInner() {
     {result && <div className="space-y-3">
       <h2 className="text-lg font-bold">Javoblar tahlili</h2>
       {questions.map((q, i) => {
-        const ok = answers[i] === q.correct;
+        const rv = review[i];
+        const ok = rv !== undefined && answers[i] === rv.correct;
         return <Card key={i} className={`p-4 ${ok ? "border-emerald-200" : "border-red-200"}`}>
           <p className="mb-2 flex items-start gap-2 font-semibold">
             {ok ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> : <X className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />}
             {i + 1}. {q.text}
           </p>
-          <p className="text-sm text-slate-600">To‘g‘ri javob: <b>{q.options[q.correct]}</b>{!ok && answers[i] !== undefined && <span className="text-red-500"> · siz: {q.options[answers[i]]}</span>}</p>
-          {q.explain && <p className="mt-1 text-xs text-slate-400">{q.explain}</p>}
+          <p className="text-sm text-slate-600">To‘g‘ri javob: <b>{rv ? q.options[rv.correct] : "—"}</b>{!ok && answers[i] !== undefined && <span className="text-red-500"> · siz: {q.options[answers[i]]}</span>}</p>
+          {rv?.explain && <p className="mt-1 text-xs text-slate-400">{rv.explain}</p>}
         </Card>;
       })}
       <div className="flex justify-center gap-2 pb-4"><Button onClick={load}><RotateCcw className="mr-2 h-4 w-4" /> Yana bir bor</Button></div>

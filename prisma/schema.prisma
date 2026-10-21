@@ -46,6 +46,10 @@ model User {
   lastIp      String?
   lastIpAt    DateTime?
   regIp       String?
+  // Sessiyalarni bekor qilish: logout/ban'da +1 — eski tokenlar yaroqsiz bo'ladi (null = 0)
+  tokenVersion Int?
+  // Telefonning normallashtirilgan kaliti (lib/phone.ts phoneKey) — tez unikal tekshiruv
+  phoneKey    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -67,6 +71,8 @@ model User {
   writingAttempts WritingAttempt[]
   topikWritingAttempts TopikWritingAttempt[]
   receptions      Reception[]
+
+  @@index([phoneKey])
 }
 
 // Reception: front-desk student intake (name, phone, schedule, teacher)
@@ -326,6 +332,10 @@ model Payment {
   month     String?
   note      String?
   status    PaymentStatus @default(PENDING)
+  // Audit: kim yaratdi / kim "to'landi" deb belgiladi
+  createdById String?     @db.ObjectId
+  paidById    String?     @db.ObjectId
+  paidAt      DateTime?
   createdAt DateTime      @default(now())
 }
 

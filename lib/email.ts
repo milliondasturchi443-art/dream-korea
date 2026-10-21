@@ -1,5 +1,6 @@
 // Email yuborish — Gmail SMTP (asosiy, domen cheklovisiz) + Resend (zaxira)
 import nodemailer from "nodemailer";
+import { randomInt } from "node:crypto";
 
 const API = "https://api.resend.com/emails";
 
@@ -227,7 +228,7 @@ export async function sendVerificationCode(to: string, code: string): Promise<Se
   return sendEmail(to, subject, html, text);
 }
 
-// 6 xonali tasodifiy kod
+// 6 xonali tasodifiy kod (kriptografik generator)
 export function generateOtp(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
 }

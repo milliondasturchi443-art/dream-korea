@@ -5,7 +5,8 @@ services:
     plan: free
     region: oregon
     branch: main
-    buildCommand: npm install && npm run build && npm run seed || true
+    # Seed avtomatik ishlamaydi — kerak bo'lsa Render Shell'da bir marta: npm run seed
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: DATABASE_URL

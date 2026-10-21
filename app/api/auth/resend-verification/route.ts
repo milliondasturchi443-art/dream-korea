@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { normalizeEmail } from "@/lib/auth";
 import { sendVerificationCode, generateOtp, emailVerifyEnabled } from "@/lib/email";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/ip";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,10 @@ export async function POST(req: Request) {
   try { body = await req.json(); } catch {}
   const email = normalizeEmail(String(body.email ?? "").trim());
   if (!email.includes("@")) return Response.json({ error: "Email noto‘g‘ri" }, { status: 400 });
+  // Spam himoyasi: email bo'yicha 3 ta xat / 10 daqiqa, IP bo'yicha 10
+  if (!rateLimit(`resend:email:${email}`, 3, 10 * 60_000) || !rateLimit(`resend:ip:${clientIp(req) || "unknown"}`, 10, 10 * 60_000)) {
+    return tooMany(10 * 60);
+  }
   if (!emailVerifyEnabled()) return Response.json({ ok: true });
 
   try {

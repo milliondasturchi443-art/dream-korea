@@ -3,10 +3,13 @@ import * as bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Единственный админ — как запрошено. Исходный email с !# — нормализуем.
+  // Admin email/parol faqat env'dan. Parolsiz seed ishlamaydi.
   const rawAdminEmail = process.env.ADMIN_EMAIL || "dreamkorea@adminstator.kr";
   const rawAdminEmailAlt = "dreamkorea!@#@!@adminstator.kr";
-  const adminPassword = process.env.ADMIN_PASSWORD || "Woosuk0047@";
+  const adminPassword = process.env.ADMIN_PASSWORD || "";
+  if (adminPassword.length < 8) {
+    throw new Error("ADMIN_PASSWORD env (min 8 belgi) o'rnatilmagan — seed to'xtatildi");
+  }
   const adminHash = await bcrypt.hash(adminPassword, 10);
 
   function normEmail(s: string): string {

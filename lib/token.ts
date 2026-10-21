@@ -1,11 +1,50 @@
 // Yengil HMAC token — session uchun (JWTsiz, cookie'siz, localStorage bilan)
 import crypto from "node:crypto";
 
-const SECRET = process.env.AUTH_SECRET || "dreamkorea-dev-secret-change-me";
+// Production'da AUTH_SECRET majburiy (kamida 32 belgi) — aks holda token soxtalashtirilishi mumkin.
+// Tekshiruv chaqiruv paytida (lazy), build vaqtida emas.
+const DEV_SECRET = "dev-only-secret-not-for-production-use-000000";
+function secret(): string {
+  const s = process.env.AUTH_SECRET || "";
+  if (s.length >= 32) return s;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET is missing or shorter than 32 chars");
+  }
+  return DEV_SECRET;
+}
+
+export const SESSION_TTL_MS = 30 * 24 * 3600 * 1000;
+
+// AES-256-GCM — klient o'qiy olmaydigan shifrlangan token (masalan, imtihon javoblari uchun)
+function encKey(): Buffer {
+  return crypto.createHash("sha256").update("enc:" + secret()).digest();
+}
+
+export function sealData(payload: Record<string, unknown>, ttlMs: number): string {
+  const iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv("aes-256-gcm", encKey(), iv);
+  const data = Buffer.concat([c.update(JSON.stringify({ ...payload, exp: Date.now() + ttlMs }), "utf8"), c.final()]);
+  return [iv, c.getAuthTag(), data].map(b => b.toString("base64url")).join(".");
+}
+
+export function openData(token?: string | null): Record<string, unknown> | null {
+  if (!token || typeof token !== "string") return null;
+  try {
+    const [iv, tag, data] = token.split(".").map(s => Buffer.from(s, "base64url"));
+    if (!iv || !tag || !data) return null;
+    const d = crypto.createDecipheriv("aes-256-gcm", encKey(), iv);
+    d.setAuthTag(tag);
+    const out = JSON.parse(Buffer.concat([d.update(data), d.final()]).toString("utf8"));
+    if (typeof out.exp === "number" && out.exp < Date.now()) return null;
+    return out;
+  } catch {
+    return null;
+  }
+}
 
 export function sign(payload: Record<string, unknown>, ttlMs = 7 * 24 * 3600 * 1000): string {
   const body = Buffer.from(JSON.stringify({ ...payload, exp: Date.now() + ttlMs })).toString("base64url");
-  const sig = crypto.createHmac("sha256", SECRET).update(body).digest("base64url");
+  const sig = crypto.createHmac("sha256", secret()).update(body).digest("base64url");
   return `${body}.${sig}`;
 }
 
@@ -13,7 +52,7 @@ export function verify(token?: string | null): Record<string, unknown> | null {
   if (!token || typeof token !== "string") return null;
   const [body, sig] = token.split(".");
   if (!body || !sig) return null;
-  const expect = crypto.createHmac("sha256", SECRET).update(body).digest("base64url");
+  const expect = crypto.createHmac("sha256", secret()).update(body).digest("base64url");
   const a = Buffer.from(sig);
   const b = Buffer.from(expect);
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;

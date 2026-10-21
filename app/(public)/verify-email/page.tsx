@@ -36,6 +36,11 @@ export default function VerifyEmailPage() {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { toast.error(d.error ?? "Kodni tekshirib bo‘lmadi"); return; }
+      if (d.alreadyVerified) {
+        toast.success("Email allaqachon tasdiqlangan — tizimga kiring");
+        router.push(`/login?email=${encodeURIComponent(em)}`);
+        return;
+      }
       try {
         localStorage.setItem("dk_role", d.role);
         localStorage.setItem("dk_token", d.token ?? "");

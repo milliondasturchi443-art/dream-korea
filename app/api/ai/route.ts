@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { readAuth } from "@/lib/token";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ Qoidalar:
 // Rasm qabul qilamiz: faqat data:image/...;base64, ko'rinishidagi URLlar, har xabar uchun max 3 ta
 const MAX_IMAGES = 3;
 const MAX_IMG_CHARS = 2_000_000;
+const MAX_TEXT_CHARS = 4_000;
 type ChatMsg = { role: string; text: string; images?: string[] };
 
 function sanitizeImages(images: unknown): string[] {
@@ -58,12 +60,27 @@ function toContent(m: ChatMsg): string | { type: string; text?: string; image_ur
 
 export async function POST(req: Request) {
   // AI faqat tizimga kirgan foydalanuvchi uchun
-  if (!readAuth(req)) {
+  const auth = readAuth(req);
+  if (!auth) {
     return Response.json({ error: "AI dan foydalanish uchun tizimga kiring", code: "UNAUTHORIZED" }, { status: 401 });
+  }
+  // Xarajat himoyasi: foydalanuvchi boshiga 15 so'rov/daqiqa va 200/kun
+  const uid = String(auth.id ?? auth.email ?? "anon");
+  if (!rateLimit(`ai:min:${uid}`, 15, 60_000) || !rateLimit(`ai:day:${uid}`, 200, 24 * 3600_000)) {
+    return tooMany(60);
   }
   let body: { messages?: ChatMsg[] } = {};
   try { body = await req.json(); } catch {}
-  const messages = Array.isArray(body.messages) ? body.messages.slice(-10) : [];
+  const raw = Array.isArray(body.messages) ? body.messages.slice(-10) : [];
+  // Matnni cheklaymiz; rasmlar faqat oxirgi foydalanuvchi xabarida qoladi (token/hajm tejash)
+  const lastUserIdx = raw.map(m => m?.role).lastIndexOf("user");
+  const messages: ChatMsg[] = raw
+    .filter(m => m && typeof m === "object")
+    .map((m, i) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      text: String(m.text ?? "").slice(0, MAX_TEXT_CHARS),
+      ...(i === lastUserIdx ? { images: m.images } : {}),
+    }));
   const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
   const lastUser = lastUserMsg?.text?.trim() ?? "";
   const lastHasImages = sanitizeImages(lastUserMsg?.images).length > 0;

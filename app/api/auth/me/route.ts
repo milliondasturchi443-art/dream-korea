@@ -1,64 +1,29 @@
-import { prisma } from "@/lib/db";
-import { verify, sign, readAuthToken } from "@/lib/token";
-import { normalizeEmail } from "@/lib/auth";
+import { resolveSession, signSession } from "@/lib/session";
+import { verify } from "@/lib/token";
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const token = readAuthToken(req);
-  const data = verify(token);
-  if (!data) return Response.json({ error: "Token yaroqsiz" }, { status: 401 });
-  let email = String(data.email ?? "");
-  let name = String(data.name ?? "");
-  let role = String(data.role ?? "STUDENT");
-  let id = data.id ? String(data.id) : "";
-  let banned = false;
-
-  // Роль из БД — источник правды (исправляет баг когда админ меняет роль)
-  try {
-    const key = normalizeEmail(email);
-    if (key) {
-      const u = await prisma.user.findUnique({
-        where: { email: key },
-        select: { id: true, name: true, role: true, email: true, banned: true },
-      });
-      if (u) {
-        email = u.email;
-        name = u.name;
-        role = String(u.role);
-        id = u.id;
-        banned = u.banned === true;
-      }
-    } else if (id) {
-      const u = await prisma.user.findUnique({
-        where: { id },
-        select: { id: true, name: true, role: true, email: true, banned: true },
-      });
-      if (u) {
-        email = u.email;
-        name = u.name;
-        role = String(u.role);
-        id = u.id;
-        banned = u.banned === true;
-      }
+  // Ban / tokenVersion / joriy rol — barchasi lib/session.ts'da tekshiriladi
+  const { session: s, reason } = await resolveSession(req);
+  if (!s) {
+    if (reason === "BANNED") {
+      return Response.json({ error: "Hisobingiz cheklangan.", code: "BANNED" }, { status: 403 });
     }
-  } catch {}
-
-  // Ban — sessiyani darhol uzamiz (AuthGuard 403 ko'rib foydalanuvchini chiqaradi)
-  if (banned) {
-    return Response.json({ error: "Hisobingiz cheklangan.", code: "BANNED" }, { status: 403 });
+    if (reason === "DB_ERROR") {
+      return Response.json({ error: "Server vaqtincha mavjud emas" }, { status: 503 });
+    }
+    return Response.json({ error: "Token yaroqsiz", code: reason }, { status: 401 });
   }
 
-  const payload: Record<string, unknown> = { email, name, role };
-  if (id) payload.id = id;
-  const freshToken = sign(payload);
+  const freshToken = signSession(s);
   // Cookie'ni yangilaymiz — admin rol o'zgartirsa, cookie-auth ham yangi rolni ko'rsin
   try {
     const cs = await cookies();
     const cur = cs.get("dk_token")?.value || "";
     const curRole = cur ? String(verify(cur)?.role ?? "") : "";
-    if (cur && curRole !== role) {
+    if (cur && curRole !== s.role) {
       cs.set("dk_token", freshToken, {
         httpOnly: true,
         path: "/",
@@ -69,10 +34,10 @@ export async function GET(req: Request) {
     }
   } catch {}
   return Response.json({
-    email: payload.email,
-    name: payload.name,
-    role: payload.role,
-    id: payload.id ?? "",
+    email: s.email,
+    name: s.name,
+    role: s.role,
+    id: s.id,
     // Cookie orqali keldimi — klient localStorage/sessionStorage uchun taze token olsin
     token: freshToken,
   });
