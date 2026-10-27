@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { speak } from "@/lib/tts";
-import { Loader2, Trash2, Pencil, Plus, Volume2, ChevronDown, ChevronUp, BookOpen, Video, Headphones, PenLine, AlignLeft, Save, X } from "lucide-react";
+import { Loader2, Trash2, Pencil, Plus, Volume2, ChevronDown, ChevronUp, BookOpen, Video, Headphones, PenLine, AlignLeft, Save, X, Upload } from "lucide-react";
 
 type Kind = "vocab" | "video" | "grammar" | "listening" | "writing";
 type Counts = { vocab: number; videos: number; grammars: number; listenings: number; writings: number };
@@ -108,7 +108,7 @@ const SECTIONS: { kind: Kind; label: string; icon: typeof BookOpen; hint: string
   { kind: "vocab", label: "d) So‘zlar (lug‘at)", icon: BookOpen, hint: "Unit lug‘ati: koreyscha so‘z, o‘zbekcha tarjima va transliteratsiya. Shu so‘zlar keyingi mashqlarda ham ishlatiladi." },
   { kind: "video", label: "a) Videolar", icon: Video, hint: "Dars videosi (YouTube yoki boshqa havola). Talaba uni ko‘rib, keyingi bo‘limga o‘tadi." },
   { kind: "grammar", label: "b) Grammatika", icon: AlignLeft, hint: "Qoida bo‘limi: shakl (pattern), tushuntirish, misollar va variantli mashqlar (A/B/C/D) — avto-baholanadi." },
-  { kind: "listening", label: "c) Tinglash", icon: Headphones, hint: "Ovozli material: audio yoki TTS matni, transkript va savollar — talaba tinglab javob beradi." },
+  { kind: "listening", label: "c) Tinglash", icon: Headphones, hint: "Ovozli material: audio faylni telefondan yoki kompyuterdan yuklang (yoki matn orqali TTS), so‘ng savollarni variantlari bilan qo‘shing — talaba tinglab javob beradi." },
   { kind: "writing", label: "e) Yozish", icon: PenLine, hint: "Yozish topshirig‘i: vazifa (prompt), baholash mezonlari va namuna javob." },
 ];
 
@@ -120,6 +120,119 @@ function rowSummary(kind: Kind, item: Item, i: number): string {
   return `${item.title ?? ""} — ${String(item.prompt ?? "").slice(0, 60)}`;
 }
 
+// ---------- Tinglash savollari: vizual tahrirlogich (JSON'siz) ----------
+// O'ng tomondagi JSON server uchun saqlanadi — bu yerda uni oddiy formaga aylantiramiz.
+type QForm = { text: string; options: string[]; correct: number; explanation: string };
+const OPT_KEYS = "ABCDEFGH"; // A…H — ko'pi bilan 8 ta variant
+
+function parseQForm(s: string): QForm[] {
+  try {
+    const v = JSON.parse(s || "[]");
+    if (!Array.isArray(v)) return [];
+    return (v as Record<string, unknown>[]).map(q => {
+      const rawOpts = Array.isArray(q?.options) ? (q.options as { text?: unknown }[]) : [];
+      const opts = rawOpts.map(o => String(o?.text ?? ""));
+      while (opts.length < 2) opts.push(""); // kamida 2 ta variant
+      const keyIdx = typeof q?.correct === "string" ? OPT_KEYS.indexOf(q.correct.toUpperCase()) : -1;
+      return {
+        text: String(q?.text ?? ""),
+        options: opts.slice(0, OPT_KEYS.length),
+        correct: keyIdx >= 0 && keyIdx < opts.length ? keyIdx : 0,
+        explanation: String(q?.explanation ?? ""),
+      };
+    });
+  } catch { return []; }
+}
+
+// Qayta JSON'ga yig'ishda kalitlar qayta raqamlanadi: 1-variant → A, 2 → B, …
+function serQForm(qs: QForm[]): string {
+  return JSON.stringify(qs.map(q => ({
+    text: q.text,
+    options: q.options.map((t, i) => ({ key: OPT_KEYS[i], text: t })),
+    correct: OPT_KEYS[q.correct] ?? "A",
+    explanation: q.explanation,
+  })), null, 2);
+}
+
+function QuestionsEditor({ value, onChange }: { value: string; onChange: (s: string) => void }) {
+  const [qs, setQs] = useState<QForm[]>(() => parseQForm(value));
+
+  // Tashqaridan qiymat o'zgarsa (boshqa savolga o'tish) — moslash
+  useEffect(() => {
+    if (serQForm(qs) !== value) {
+      const parsed = parseQForm(value);
+      queueMicrotask(() => setQs(parsed));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  function update(next: QForm[]) { setQs(next); onChange(serQForm(next)); }
+  function setQ(i: number, patch: Partial<QForm>) { update(qs.map((q, j) => (j === i ? { ...q, ...patch } : q))); }
+  function addQ() { update([...qs, { text: "", options: ["", ""], correct: 0, explanation: "" }]); }
+  function delQ(i: number) { update(qs.filter((_, j) => j !== i)); }
+  function setOpt(qi: number, oi: number, text: string) {
+    update(qs.map((q, j) => (j === qi ? { ...q, options: q.options.map((t, k) => (k === oi ? text : t)) } : q)));
+  }
+  function addOpt(qi: number) {
+    update(qs.map((q, j) => (j === qi && q.options.length < OPT_KEYS.length ? { ...q, options: [...q.options, ""] } : q)));
+  }
+  function delOpt(qi: number, oi: number) {
+    update(qs.map((q, j) => {
+      if (j !== qi || q.options.length <= 2) return q;
+      const options = q.options.filter((_, k) => k !== oi);
+      // o'chirilgan variant to'g'ri javob bo'lsa — birinchisiga qaytaramiz
+      const correct = q.correct >= options.length ? 0 : q.correct > oi ? q.correct - 1 : q.correct;
+      return { ...q, options, correct };
+    }));
+  }
+
+  return (
+    <div className="space-y-3">
+      {qs.length === 0 && <p className="text-xs text-slate-400">Hali savol yo‘q — quyidagi tugma bilan qo‘shing</p>}
+      {qs.map((q, qi) => (
+        <div key={qi} className="space-y-2 rounded-xl border border-slate-200 bg-white p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-bold text-slate-500">Savol {qi + 1}</span>
+            <button type="button" onClick={() => delQ(qi)} aria-label="Savolni o‘chirish" className="text-slate-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+          </div>
+          <Textarea rows={2} placeholder="Savol matni — 몇 시에 일어납니까?" value={q.text} onChange={e => setQ(qi, { text: e.target.value })} />
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Variantlar — to‘g‘risini belgilang</div>
+            {q.options.map((opt, oi) => (
+              <div key={oi} className="flex items-center gap-2">
+                <label className="flex shrink-0 cursor-pointer items-center" title="To‘g‘ri javob">
+                  <input type="radio" name={`correct-${qi}`} checked={q.correct === oi} onChange={() => setQ(qi, { correct: oi })} className="h-4 w-4 accent-emerald-500" />
+                </label>
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${q.correct === oi ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{OPT_KEYS[oi]}</span>
+                <Input placeholder={`Variant ${OPT_KEYS[oi]} — 일곱 시`} value={opt} onChange={e => setOpt(qi, oi, e.target.value)} />
+                <button type="button" onClick={() => delOpt(qi, oi)} disabled={q.options.length <= 2} aria-label="Variantni o‘chirish" className="shrink-0 text-slate-300 hover:text-red-600 disabled:opacity-30"><X className="h-4 w-4" /></button>
+              </div>
+            ))}
+            {q.options.length < OPT_KEYS.length && (
+              <button type="button" onClick={() => addOpt(qi)} className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800"><Plus className="h-3.5 w-3.5" /> Variant qo‘shish</button>
+            )}
+          </div>
+          <Input placeholder="Izoh (javob tushuntirishi) — 일곱 시에 일어나요." value={q.explanation} onChange={e => setQ(qi, { explanation: e.target.value })} />
+        </div>
+      ))}
+      <Button size="sm" variant="outline" onClick={addQ}><Plus className="h-3.5 w-3.5 mr-1" /> Savol qo‘shish</Button>
+    </div>
+  );
+}
+
+// ---------- fayldan audio yuklash (PK yoki telefon) ----------
+async function uploadAudioFile(file: File): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const t = (() => { try { return sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token") || ""; } catch { return ""; } })();
+  const r = await fetch("/api/audio", { method: "POST", headers: { Authorization: `Bearer ${t}` }, body: fd });
+  const d = await r.json().catch(() => ({} as Record<string, string>));
+  if (!r.ok) return { ok: false, error: (d as { error?: string }).error || "Audio yuklab bo‘lmadi" };
+  return { ok: true, url: String((d as { url?: string }).url || "") };
+}
+
+const AUDIO_URL_RE = /(^\/api\/audio\/[a-f\d]{24}\/file$)|(\.(mp3|m4a|wav|ogg|oga|aac|opus|webm)([?#].*)?$)/i;
+
 // ---------- bitta bo'lim editori (So'zlar / Video / Grammatika / ...) ----------
 function SectionEditor({ unitId, kind, items, onChanged }: { unitId: string; kind: Kind; items: Item[]; onChanged: () => void }) {
   const meta = SECTIONS.find(s => s.kind === kind)!;
@@ -128,10 +241,36 @@ function SectionEditor({ unitId, kind, items, onChanged }: { unitId: string; kin
   const [draft, setDraft] = useState<Draft>({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [audioBusy, setAudioBusy] = useState(false);
   const Icon = meta.icon;
   const count = items.length;
 
   function set(k: string, v: string) { setDraft(d => ({ ...d, [k]: v })); }
+
+  async function onAudioPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // xuddi shu faylni qayta tanlash uchun
+    if (!file) return;
+    setAudioBusy(true); setErr("");
+    try {
+      const r = await uploadAudioFile(file);
+      if (r.ok) set("audioUrl", r.url);
+      else setErr(r.error);
+    } catch { setErr("Audio yuklashda xatolik"); } finally { setAudioBusy(false); }
+  }
+
+  async function removeAudio() {
+    const m = /^\/api\/audio\/([a-f\d]{24})\/file$/i.exec((draft.audioUrl || "").trim());
+    if (!m) { set("audioUrl", ""); return; } // tashqi havola — faqat tozalaymiz
+    if (!confirm("Yuklangan audio fayl o‘chirilsinmi?")) return;
+    setAudioBusy(true); setErr("");
+    try {
+      const t = token();
+      const r = await fetch(`/api/audio/${m[1]}`, { method: "DELETE", headers: { Authorization: `Bearer ${t}` } });
+      if (r.ok) set("audioUrl", "");
+      else setErr("O‘chirib bo‘lmadi");
+    } catch { setErr("O‘chirishda xatolik"); } finally { setAudioBusy(false); }
+  }
 
   function openAdd() {
     if (kind === "vocab" && count >= MAX_VOCAB) { setErr(`Ko‘pi bilan ${MAX_VOCAB} ta so‘z`); return; }
@@ -203,11 +342,32 @@ function SectionEditor({ unitId, kind, items, onChanged }: { unitId: string; kin
           </>)}
           {kind === "listening" && (<>
             <Input placeholder="Sarlavha * — 듣기 · Tanishuv dialogi" {...f("title")} />
-            <Input placeholder="Audio URL (ixtiyoriy)" {...f("audioUrl")} />
+            {/* Audio: fayl yuklash (PK yoki telefon) yoki tashqi havola */}
+            <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3">
+              <div className="text-xs font-semibold text-slate-700">Audio fayl</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 ${audioBusy ? "pointer-events-none opacity-60" : ""}`}>
+                  {audioBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {audioBusy ? "Yuklanmoqda…" : "Fayldan yuklash (yoki telefondan)"}
+                  <input type="file" accept="audio/*" className="hidden" onChange={onAudioPick} disabled={audioBusy} />
+                </label>
+                {(draft.audioUrl || "").trim() && (
+                  <button type="button" onClick={removeAudio} disabled={audioBusy} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500 hover:text-red-600">
+                    <Trash2 className="h-3.5 w-3.5" /> O‘chirish
+                  </button>
+                )}
+              </div>
+              <Input placeholder="Audio havolasi (yuklagandan keyin shu yerga avtomatik yoziladi — yoki YouTube/sound havolasini qo‘lda yozing)" {...f("audioUrl")} />
+              {(draft.audioUrl || "").trim() && AUDIO_URL_RE.test(draft.audioUrl!.trim()) && (
+                <audio controls preload="none" src={draft.audioUrl!.trim()} className="w-full" />
+              )}
+            </div>
             <Textarea rows={3} placeholder="TTS matni (audio yo‘q bo‘lsa ovozli o‘qiladi)" {...f("audioText")} />
             <Textarea rows={3} placeholder="Transkript (ixtiyoriy)" {...f("transcript")} />
-            <Textarea rows={5} placeholder='Savollar JSON: [{"text":"…","options":[{"key":"A","text":"…"}],"correct":"A"}]' {...f("questions")} />
-            <p className="text-[11px] text-slate-500 -mt-1">Savollar — JSON massiv (key: A/B/C…, correct — to‘g‘ri kalit)</p>
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">Savollar <span className="font-normal text-slate-400">(variantli — to‘g‘ri javobni belgilang)</span></div>
+              <QuestionsEditor value={draft.questions ?? ""} onChange={v => set("questions", v)} />
+            </div>
           </>)}
           {kind === "writing" && (<>
             <Input placeholder="Mavzu * — Yozish: Tanishuv" {...f("title")} />

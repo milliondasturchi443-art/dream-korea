@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { doLogout } from "@/lib/logout";
-import { LayoutDashboard, Users, Bell, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff, UserPlus, Newspaper, Menu, X, BookMarked, CreditCard, GraduationCap, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Users, Bell, BookOpenCheck, FileText, LogOut, Loader2, KeyRound, Eye, EyeOff, UserPlus, Newspaper, Menu, X, BookMarked, CreditCard, GraduationCap, ClipboardList, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminBase } from "@/lib/admin-base";
 import Image from "next/image";
@@ -17,6 +17,7 @@ const nav = (base: string) => [
   ["O‘quvchilar", `${base}/users`, Users],
   ["Qabul arizalari", `${base}/admissions`, FileText],
   ["Guruhlar", `${base}/groups`, Users],
+  ["Davomat", `${base}/davomat`, ClipboardCheck],
   ["To'lovlar", `${base}/payments`, CreditCard],
   ["Darslar", `${base}/dars`, GraduationCap],
   ["TOPIK testlar", `${base}/content?tab=testlar`, ClipboardList],
@@ -128,7 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [state, setState] = useState<"loading" | "authed" | "keygate">("loading");
   const [name, setName] = useState("Admin");
   const [menuOpen, setMenuOpen] = useState(false);
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => { queueMicrotask(() => setMenuOpen(false)); }, [pathname]);
 
   // Admin himoyasi: PC ham, telefon ham — faqat kalit (ADMIN_PASSWORD).
   // Email-login bilan kirsam ham kalit so'raymiz; kalit to'g'ri bo'lsa
@@ -153,7 +154,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setState("keygate");
   };
 
-  useEffect(() => { check(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { queueMicrotask(() => { check(); }); }, []);
 
   if (state === "loading") {
     return (

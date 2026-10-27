@@ -26,6 +26,64 @@ const createSchema = z.object({
 
 const include = { teacher: { select: { name: true } }, group: { select: { name: true } } } as const;
 
+// ---- Talaba hisobini avtomatik yaratish (Qabul bo'limi uchun) ----
+// Email: dreamkoreastudent0001@gmail.com — faqat oxirgi 4 raqam o'zgaradi.
+// Parol: tasodifiy 10 belgi (admin ko'rsatadi, talaba keyin o'zgartiradi).
+const STUDENT_EMAIL_PREFIX = "dreamkoreastudent";
+const STUDENT_EMAIL_DOMAIN = "gmail.com";
+
+// Keyingi bo'sh raqam: mavjud max raqam + 1 (0001, 0002, …)
+async function nextStudentEmail(): Promise<string> {
+  const users = await prisma.user.findMany({
+    where: { email: { startsWith: STUDENT_EMAIL_PREFIX } },
+    select: { email: true },
+  });
+  let max = 0;
+  for (const u of users) {
+    const m = /^dreamkoreastudent(\d+)@/i.exec(u.email || "");
+    const n = m ? parseInt(m[1], 10) : NaN;
+    if (Number.isFinite(n) && n > max) max = n;
+  }
+  return `${STUDENT_EMAIL_PREFIX}${String(max + 1).padStart(4, "0")}@${STUDENT_EMAIL_DOMAIN}`;
+}
+
+type StudentAccount = { id: string; email: string; password: string | null; existing: boolean };
+
+// Telefon bo'yicha mavjud talaba hisobini topadi (+998/bo'shliqlarni hisobga olgan holda)
+async function findStudentByPhone(phone: string) {
+  const tail = phone.replace(/\D/g, "").slice(-9);
+  return prisma.user.findFirst({
+    where: { OR: [{ phone }, ...(tail ? [{ phoneKey: tail }, { phone: { contains: tail } }] : [])] },
+    select: { id: true, email: true },
+  });
+}
+
+// Hisob yo'q bo'lsa — yangi yaratadi; bo'lsa — mavjudini qaytaradi (parol null)
+async function ensureStudentAccount(name: string, phone: string): Promise<StudentAccount | null> {
+  const existing = await findStudentByPhone(phone);
+  if (existing) return { id: existing.id, email: existing.email, password: null, existing: true };
+
+  const password = crypto.randomBytes(9).toString("base64url").slice(0, 10);
+  const hash = await bcrypt.hash(password, 10);
+  const tail = phone.replace(/\D/g, "").slice(-9) || null;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const email = await nextStudentEmail();
+    try {
+      const u = await prisma.user.create({
+        data: { name, phone, phoneKey: tail, email, password: hash, role: "STUDENT", emailVerified: true },
+        select: { id: true, email: true },
+      });
+      return { id: u.id, email: u.email, password, existing: false };
+    } catch {
+      // raqam band (parallel yozuv) — kim yutdi: mavjudni qaytaramiz, aks holda keyingi raqam
+      const byEmail = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true } });
+      if (byEmail) return { id: byEmail.id, email: byEmail.email, password: null, existing: true };
+    }
+  }
+  return null;
+}
+
 export async function GET(req: Request) {
   const user = await darsUser(req);
   if (!user || user.role !== "ADMIN") return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
@@ -55,7 +113,14 @@ export async function POST(req: Request) {
       purpose: purpose && purpose.length ? purpose.join(",") : null,
       plan: plan || null,
     } });
-    return Response.json({ ok: true, item }, { status: 201 });
+    // Talaba uchun hisob avtomatik yaratiladi: email dreamkoreastudentNNNN@gmail.com + tasodifiy parol.
+    // Hisob yaratilsa ham, qabul qilinmaguncha talaba tizimga kira olmaydi (status ≠ enrolled).
+    let account: { email: string; password: string | null; existing: boolean } | null = null;
+    try {
+      const acc = await ensureStudentAccount(name, phone);
+      if (acc) account = { email: acc.email, password: acc.password, existing: acc.existing };
+    } catch (e) { console.error("reception auto-account error", e); }
+    return Response.json({ ok: true, item, account }, { status: 201 });
   } catch { return Response.json({ error: "Saqlab bo'lmadi" }, { status: 503 }); }
 }
 
@@ -66,29 +131,11 @@ async function enroll(item: { id: string; name: string; phone: string; days: str
   type EnrollResult =
     | { ok: true; student: { id: string; email: string }; tempPassword: string | null; groupId: string; groupName: string | null; added: boolean }
     | { ok: false; error: string; student?: { id: string; email: string }; tempPassword?: string | null };
-  const digits = item.phone.replace(/\D/g, "");
-  // 1. Existing account by phone?
-  let student = await prisma.user.findFirst({
-    where: { OR: [{ phone: item.phone }, { phone: { contains: digits.slice(-9) } }] },
-    select: { id: true, email: true },
-  });
-  let tempPassword: string | null = null;
-  if (!student) {
-    // 2. Create account: email derived from phone (unique), random password.
-    tempPassword = crypto.randomBytes(9).toString("base64url").slice(0, 10);
-    const email = `${digits}@reception.dk`;
-    try {
-      student = await prisma.user.create({
-        data: { name: item.name, phone: item.phone, email, password: await bcrypt.hash(tempPassword, 10), role: "STUDENT", emailVerified: true },
-        select: { id: true, email: true },
-      });
-    } catch {
-      // email already taken (race) — try lookup once more
-      student = await prisma.user.findFirst({ where: { email }, select: { id: true, email: true } });
-      if (!student) return { ok: false, error: "Hisob yaratib bo'lmadi" } as EnrollResult;
-      tempPassword = null;
-    }
-  }
+  // 1. Qabul paytida yaratilgan hisob (yoki oldin mavjud) — telefon bo'yicha topiladi
+  const acc = await ensureStudentAccount(item.name, item.phone);
+  if (!acc) return { ok: false, error: "Hisob yaratib bo'lmadi" } as EnrollResult;
+  const student = { id: acc.id, email: acc.email };
+  const tempPassword = acc.password;
   // 3. Resolve group: chosen → teacher's first → auto-create with generated name
   let groupId = item.groupId;
   let groupName: string | null = null;

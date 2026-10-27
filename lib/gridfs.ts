@@ -22,4 +22,10 @@ export async function booksBucket(): Promise<GridFSBucket> {
   return new GridFSBucket(c.db(), { bucketName: "books" });
 }
 
+// Tinglash bo'limi uchun ovoz fayllari (mp3/m4a/… — 16MB hujjat chegarasidan katta bo'lishi mumkin)
+export async function audioBucket(): Promise<GridFSBucket> {
+  const c = await client();
+  return new GridFSBucket(c.db(), { bucketName: "audio" });
+}
+
 export { ObjectId };

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { darsRequest } from "@/lib/dars-client";
-import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check, CalendarClock } from "lucide-react";
+import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check, CalendarClock, KeyRound, Copy, X, ShieldCheck } from "lucide-react";
 
 type Teacher = { id: string; name: string; role: string };
 type Group = { id: string; name: string; teacherId?: string | null; teacher?: { name: string } | null };
@@ -27,6 +27,9 @@ const PURPOSES = ["TOPIK", "Koreada o'qish", "Ishlash", "Sayohat"];
 const PLANS = ["Til kursi", "Kolleg", "Bakalavr", "Magistr"];
 const STATUS_LABEL: Record<string, string> = { new: "Yangi", contacted: "Aloqa qilindi", enrolled: "Yozildi" };
 
+// Avtomatik yaratilgan talaba hisobi (Qabul formasidan keyin ko'rsatiladi)
+type Creds = { email: string; password: string | null; existing: boolean };
+
 function fmtDateTime(isoStr: string) {
   const d = new Date(isoStr);
   if (Number.isNaN(d.getTime())) return isoStr;
@@ -47,6 +50,8 @@ export default function ReceptionPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [creds, setCreds] = useState<Creds | null>(null);
+  const [copied, setCopied] = useState("");
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -75,7 +80,7 @@ export default function ReceptionPage() {
     finally { setLoading(false); }
   }
   useEffect(() => {
-    load();
+    queueMicrotask(() => { load(); });
     darsRequest<{ users: Teacher[] }>("/api/users").then(d => setTeachers(d.users.filter(u => u.role === "TEACHER"))).catch(() => {});
     darsRequest<{ groups: Group[] }>("/api/groups").then(d => setGroups(d.groups)).catch(() => {});
   }, []);
@@ -87,9 +92,9 @@ export default function ReceptionPage() {
   }
 
   async function submit() {
-    setBusy(true); setError(""); setNotice(null);
+    setBusy(true); setError(""); setNotice(null); setCreds(null);
     try {
-      await darsRequest("/api/reception", {
+      const r = await darsRequest<{ account?: Creds | null }>("/api/reception", {
         name, phone, days, time, teacherId: teacherId || null, groupId: groupId || null, note: note || undefined,
         address: address || undefined, parentName: parentName || undefined, parentPhone: parentPhone || undefined,
         startDate: startDate || undefined,
@@ -98,10 +103,20 @@ export default function ReceptionPage() {
       });
       setName(""); setPhone(""); setDays([]); setTime(""); setTeacherId(""); setGroupId(""); setNote("");
       setAddress(""); setParentName(""); setParentPhone(""); setStartDate(""); setPurpose([]); setPlan("");
-      setNotice({ ok: true, text: "Ro'yxatga olindi" });
+      // Hisob avtomatik yaratildi — login/parolni pastdagi kartochkada ko'rsatamiz
+      if (r.account) setCreds(r.account);
+      setNotice({ ok: true, text: r.account?.existing ? "Ro'yxatga olindi (mavjud hisob topildi)" : "Ro'yxatga olindi — talaba uchun hisob yaratildi" });
       await load();
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
+  }
+
+  async function copyText(label: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(label);
+      setTimeout(() => setCopied(""), 1600);
+    } catch {}
   }
 
   async function setStatus(id: string, status: string) {
@@ -112,7 +127,8 @@ export default function ReceptionPage() {
       if (!r.ok) { setNotice({ ok: false, text: d.error || "Xato" }); return; }
       if (d.enrolled) {
         const e = d.enrolled;
-        setNotice({ ok: true, text: `O'quvchi «${e.groupName ?? "guruh"}» guruhiga qo'shildi${e.added === false ? " (allaqachon a'zo edi)" : ""}. Login: ${e.email}${e.tempPassword ? ` · Vaqtinchalik parol: ${e.tempPassword} (talabaga bering)` : ""}` });
+        if (e.email) setCreds({ email: e.email, password: e.tempPassword ?? null, existing: !e.tempPassword });
+        setNotice({ ok: true, text: `O'quvchi «${e.groupName ?? "guruh"}» guruhiga qo'shildi${e.added === false ? " (allaqachon a'zo edi)" : ""}` });
       } else if (d.warn) {
         setNotice({ ok: false, text: d.warn + (d.created?.email ? ` · Login: ${d.created.email}` : "") });
       }
@@ -130,11 +146,64 @@ export default function ReceptionPage() {
   return (
     <div className="mx-auto max-w-[1200px] p-4 lg:p-6 space-y-5">
       <div>
-        <h1 className="flex items-center gap-2 text-[22px] font-bold text-slate-900"><UserPlus className="h-6 w-6 text-[#2563eb]" /> O'quvchi qo'shish (Reception)</h1>
-        <p className="text-sm text-slate-500">Qabulga kelgan o'quvchini yozing: F.I.Sh., telefon, dars kunlari va vaqti, o'qituvchi va guruh. «Yozildi» tugmasi — o'quvchi avtomatik guruhga qo'shiladi.</p>
+        <h1 className="flex items-center gap-2 text-[22px] font-bold text-slate-900"><UserPlus className="h-6 w-6 text-[#2563eb]" /> O&apos;quvchi qo&apos;shish (Reception)</h1>
+        <p className="text-sm text-slate-500">Qabulga kelgan o&apos;quvchini yozing: F.I.Sh., telefon, dars kunlari va vaqti, o&apos;qituvchi va guruh. «Yozildi» tugmasi — o&apos;quvchi avtomatik guruhga qo&apos;shiladi.</p>
       </div>
 
       {notice && <Card className={`p-4 text-sm ${notice.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`} role="status">{notice.text}</Card>}
+
+      {/* ——— Avtomatik yaratilgan talaba hisobi: login + parol ——— */}
+      {creds && (
+        <Card className="border-emerald-200 bg-emerald-50/70 p-5 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2 font-bold text-emerald-900">
+              <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              Talaba hisobi tayyor {creds.existing && <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">mavjud hisob topildi</span>}
+            </div>
+            <button onClick={() => setCreds(null)} aria-label="Yopish" className="text-emerald-700/60 hover:text-emerald-900"><X className="h-4 w-4" /></button>
+          </div>
+          <p className="text-xs text-emerald-800 -mt-1">
+            {creds.password
+              ? "Quyidagi login va parolni talabaga bering (yoki ota-onaga yuboring). Birinchi kirishda parolni o‘zgartirishni maslahat bering."
+              : "Bu telefon raqamga oldin hisob yaratilgan — parol avval berilgan, yangi yaratilmadi."}
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-emerald-200 bg-white p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Login (email)</div>
+                  <div className="truncate font-mono text-sm font-semibold text-slate-900" title={creds.email}>{creds.email}</div>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => copyText("email", creds.email)}>
+                  {copied === "email" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied === "email" ? "Nusxalandi" : "Nusxalash"}
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-xl border border-emerald-200 bg-white p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex items-center gap-1"><KeyRound className="h-3 w-3" /> Parol</div>
+                  {creds.password ? (
+                    <div className="truncate font-mono text-sm font-semibold text-slate-900" title={creds.password}>{creds.password}</div>
+                  ) : (
+                    <div className="text-sm text-slate-500">avval berilgan (ko‘rsatilmaydi)</div>
+                  )}
+                </div>
+                {creds.password && (
+                  <Button size="sm" variant="outline" onClick={() => copyText("pass", creds.password!)}>
+                    {copied === "pass" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied === "pass" ? "Nusxalandi" : "Nusxalash"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] text-emerald-700/80">
+            Login formati: dreamkoreastudent0001@gmail.com — raqamlar ketma-ket oshadi (faqat oxirgi 4 ta raqam o‘zgaradi).
+          </p>
+        </Card>
+      )}
 
       <Card className="p-5 space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -199,7 +268,7 @@ export default function ReceptionPage() {
               ))}
             </div>
           </div>
-          <label className="space-y-1 text-sm font-medium text-slate-700">O'qituvchi
+          <label className="space-y-1 text-sm font-medium text-slate-700">O&apos;qituvchi
             <select value={teacherId} onChange={e => { setTeacherId(e.target.value); setGroupId(""); }}
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
               <option value="">— Tanlanmagan —</option>
@@ -209,7 +278,7 @@ export default function ReceptionPage() {
           <label className="space-y-1 text-sm font-medium text-slate-700">Guruh
             <select value={groupId} onChange={e => setGroupId(e.target.value)}
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
-              <option value="">— Avtomatik (o'qituvchining birinchi guruhi) —</option>
+              <option value="">— Avtomatik (o&apos;qituvchining birinchi guruhi) —</option>
               {teacherGroups.map(g => <option key={g.id} value={g.id}>{g.name}{g.teacher ? ` · ${g.teacher.name}` : ""}</option>)}
             </select>
           </label>
@@ -262,14 +331,14 @@ export default function ReceptionPage() {
 
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
         <Button onClick={submit} disabled={busy || !valid} className="w-full sm:w-auto">
-          {busy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />} Ro'yxatga olish
+          {busy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />} Ro&apos;yxatga olish
         </Button>
       </Card>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-900">Ro'yxat ({items.length})</h2>
+        <h2 className="text-sm font-semibold text-slate-900">Ro&apos;yxat ({items.length})</h2>
         {loading && <div className="flex items-center gap-2 text-sm text-slate-500 p-4"><Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda…</div>}
-        {!loading && !items.length && <Card className="p-8 text-center text-sm text-slate-500">Hozircha yozilmagan o'quvchi yo'q</Card>}
+        {!loading && !items.length && <Card className="p-8 text-center text-sm text-slate-500">Hozircha yozilmagan o&apos;quvchi yo&apos;q</Card>}
         {!loading && items.map(it => (
           <Card key={it.id} className="p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
