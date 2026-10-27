@@ -30,6 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [userName, setUserName] = useState("");
   const [initials, setInitials] = useState("DK");
+  const [avatar, setAvatar] = useState("");
   const [role, setRole] = useState("");
   const [viewAsStudent, setViewAsStudent] = useState(false);
   useEffect(() => {
@@ -41,6 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setInitials(u.name.split(/\s+/).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase());
       }
       if (u.role) setRole(String(u.role));
+      if (u.avatar) setAvatar(u.avatar);
     } catch {}
     // Подтягиваем актуальную роль из БД (исправляет смену роли без перелогина).
     // Шлём Bearer-токен, чтобы работало даже если cookie устарел.
@@ -53,12 +55,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           setRole(String(d.role || ""));
           const cur = JSON.parse(localStorage.getItem("dk_user")||"{}");
           if(cur.role !== d.role || cur.name !== d.name){
-            localStorage.setItem("dk_user", JSON.stringify({ email:d.email, name:d.name, role:d.role, id:d.id }));
+            localStorage.setItem("dk_user", JSON.stringify({ email:d.email, name:d.name, role:d.role, id:d.id, avatar:d.avatar || cur.avatar || "" }));
             if(d.token){ try{localStorage.setItem("dk_token", d.token);}catch{}
               try{sessionStorage.setItem("dk_token", d.token);}catch{} }
             setUserName(d.name);
             setInitials(d.name.split(/\s+/).map((w:string)=>w[0]).slice(0,2).join("").toUpperCase());
           }
+          if (d.avatar) setAvatar(d.avatar);
+          else if (cur?.avatar) setAvatar(cur.avatar);
         }catch{}
       }
     }).catch(()=>{});
@@ -76,11 +80,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setRole(d.role);
         localStorage.setItem("dk_token", d.token);
         localStorage.setItem("dk_role", d.role);
-        localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id }));
+        localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id, avatar: d.avatar || "" }));
         if (d.name) {
           setUserName(d.name);
           setInitials(d.name.split(/\s+/).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase());
         }
+        if (d.avatar) setAvatar(d.avatar);
       } catch {}
     })();
   }, []);
@@ -104,7 +109,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Bell className="h-5 w-5" />
           </Link>
           <Link href="/profile" className="flex items-center gap-2 pl-2">
-            <div className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">{initials}</div>
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm">{initials}</div>
+            )}
             <span className="text-sm font-medium hidden xl:block">{userName || "Profil"}</span>
           </Link>
           <button onClick={onLogout} aria-label="Chiqish" className="p-2 rounded-full hover:bg-white/10"><LogOut className="h-4 w-4" /></button>
@@ -119,7 +129,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
         <div className="flex items-center gap-1">
           <Link href="/notifications" className="p-2.5 min-h-[44px] min-w-[44px] grid place-items-center"><Bell className="h-5 w-5" /></Link>
-          <Link href="/profile" className="h-9 w-9 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm shrink-0">{initials}</Link>
+          <Link href="/profile" className={avatar ? "h-9 w-9 rounded-full overflow-hidden shrink-0" : "h-9 w-9 rounded-full bg-[#2563eb] grid place-items-center font-bold text-sm shrink-0"}>
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
+            ) : initials}
+          </Link>
         </div>
       </div>
 

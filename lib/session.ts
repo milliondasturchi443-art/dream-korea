@@ -11,6 +11,7 @@ export type Session = {
   role: Role;
   tokenVersion: number;
   envAdmin: boolean;     // ADMIN_EMAIL egasi
+  avatar: string | null; // avatar URL yoki null
 };
 
 export type SessionFail = "NO_TOKEN" | "NOT_FOUND" | "BANNED" | "REVOKED" | "DB_ERROR";
@@ -19,7 +20,7 @@ const ROLES = new Set<Role>(["STUDENT", "TEACHER", "ADMIN"]);
 const asRole = (v: unknown): Role => (ROLES.has(v as Role) ? (v as Role) : "STUDENT");
 const OBJECT_ID = /^[a-f\d]{24}$/i;
 
-const userSelect = { id: true, email: true, name: true, role: true, banned: true, tokenVersion: true } as const;
+const userSelect = { id: true, email: true, name: true, role: true, banned: true, tokenVersion: true, avatar: true } as const;
 
 export async function resolveSession(req: Request): Promise<{ session: Session | null; reason?: SessionFail }> {
   const d = readAuth(req);
@@ -30,7 +31,7 @@ export async function resolveSession(req: Request): Promise<{ session: Session |
   const tv = typeof d.tv === "number" ? d.tv : 0;
   const claimsEnvAdmin = d.role === "ADMIN" && !!email && isAdminEmail(email);
 
-  let u: { id: string; email: string; name: string; role: string; banned: boolean; tokenVersion: number | null } | null = null;
+  let u: { id: string; email: string; name: string; role: string; banned: boolean; tokenVersion: number | null; avatar: string | null } | null = null;
   try {
     if (id) u = await prisma.user.findUnique({ where: { id }, select: userSelect });
     else if (email) u = await prisma.user.findUnique({ where: { email }, select: userSelect });
@@ -42,7 +43,7 @@ export async function resolveSession(req: Request): Promise<{ session: Session |
   if (!u) {
     // Env-admin DB'da bo'lmasligi mumkin (seed ishlatilmagan) — token imzosi yetarli
     if (claimsEnvAdmin) {
-      return { session: { id: "", email: ADMIN_EMAIL, name: String(d.name ?? "Administrator"), role: "ADMIN", tokenVersion: 0, envAdmin: true } };
+      return { session: { id: "", email: ADMIN_EMAIL, name: String(d.name ?? "Administrator"), role: "ADMIN", tokenVersion: 0, envAdmin: true, avatar: null } };
     }
     return { session: null, reason: "NOT_FOUND" };
   }
@@ -58,6 +59,7 @@ export async function resolveSession(req: Request): Promise<{ session: Session |
       role: envAdmin ? "ADMIN" : asRole(u.role),
       tokenVersion: u.tokenVersion ?? 0,
       envAdmin,
+      avatar: u.avatar,
     },
   };
 }
@@ -80,9 +82,10 @@ export async function requireAdmin(req: Request): Promise<Session | null> {
 }
 
 /** Sessiya tokeni (30 kun) — tokenVersion bilan */
-export function signSession(u: { id?: string | null; email: string; name: string; role: string; tokenVersion?: number | null }): string {
+export function signSession(u: { id?: string | null; email: string; name: string; role: string; tokenVersion?: number | null; avatar?: string | null }): string {
   const payload: Record<string, unknown> = { email: u.email, name: u.name, role: u.role, tv: u.tokenVersion ?? 0 };
   if (u.id) payload.id = u.id;
+  if (u.avatar) payload.avatar = u.avatar;
   return sign(payload, SESSION_TTL_MS);
 }
 

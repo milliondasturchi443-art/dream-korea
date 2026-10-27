@@ -38,6 +38,7 @@ export async function GET(req: Request) {
     name: s.name,
     role: s.role,
     id: s.id,
+    avatar: s.avatar,
     // Cookie orqali keldimi — klient localStorage/sessionStorage uchun taze token olsin
     token: freshToken,
   });

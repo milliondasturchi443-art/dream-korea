@@ -19,7 +19,7 @@ const nav = [
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const [me, setMe] = useState<{ name: string; role: string } | null>(null);
+  const [me, setMe] = useState<{ name: string; role: string; avatar?: string } | null>(null);
 
   useEffect(() => {
     // menyu marshrut o'zgarganda yopilsin (async — eslint set-state-in-effect uchun)
@@ -31,16 +31,16 @@ export function SiteHeader() {
       const raw = localStorage.getItem("dk_user");
       if (raw) {
         const u = JSON.parse(raw);
-        if (u?.email) setMe({ name: u.name || "Foydalanuvchi", role: u.role || "STUDENT" });
+        if (u?.email) setMe({ name: u.name || "Foydalanuvchi", role: u.role || "STUDENT", avatar: u.avatar || undefined });
       }
     } catch {}
     fetch("/api/auth/me")
       .then(r => (r.ok ? r.json() : null))
       .then(d => {
         if (d?.email) {
-          setMe({ name: d.name || "Foydalanuvchi", role: d.role || "STUDENT" });
+          setMe({ name: d.name || "Foydalanuvchi", role: d.role || "STUDENT", avatar: d.avatar || undefined });
           try {
-            localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id }));
+            localStorage.setItem("dk_user", JSON.stringify({ email: d.email, name: d.name, role: d.role, id: d.id, avatar: d.avatar || "" }));
             if (d.token) {
               try { localStorage.setItem("dk_token", d.token); } catch {}
               try { sessionStorage.setItem("dk_token", d.token); } catch {}
@@ -73,7 +73,12 @@ export function SiteHeader() {
           {me ? (
             <div className="flex items-center gap-2">
               <div className="hidden sm:flex items-center gap-2 rounded-full bg-white border border-slate-200 shadow-sm pl-1 pr-3 py-1">
-                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white grid place-items-center text-[11px] font-bold leading-none shrink-0">{initials}</div>
+                {me.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={me.avatar} alt="" className="h-7 w-7 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white grid place-items-center text-[11px] font-bold leading-none shrink-0">{initials}</div>
+                )}
                 <span className="text-sm font-medium text-slate-800 max-w-[140px] truncate">{me.name}</span>
               </div>
               <Link href={cabHref}><Button size="sm" className="shadow-sm">Kabinet</Button></Link>
@@ -104,7 +109,12 @@ export function SiteHeader() {
             {me ? (
               <>
                 <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white grid place-items-center text-xs font-bold shrink-0">{initials}</div>
+                  {me.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={me.avatar} alt="" className="h-8 w-8 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white grid place-items-center text-xs font-bold shrink-0">{initials}</div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-slate-900 truncate leading-none">{me.name}</div>
                     <div className="text-[11px] text-slate-500 leading-none mt-0.5">{me.role === "ADMIN" ? "Admin" : me.role === "TEACHER" ? "Ustoz" : "Talaba"}</div>

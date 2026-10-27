@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidUZ, telHref } from "@/lib/phone";
 import { SITE_PHONE_DISPLAY } from "@/lib/site";
 import { doLogout } from "@/lib/logout";
-import { BookOpen, LogOut, Loader2 } from "lucide-react";
+import { BookOpen, LogOut, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { getCompleted } from "@/lib/lesson-progress";
 
@@ -25,6 +25,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [role, setRole] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
@@ -33,6 +36,7 @@ export default function ProfilePage() {
       setEmail(u.email || "");
       setPhone(u.phone || "");
       setRole(String(u.role || "STUDENT"));
+      if (u.avatar) setAvatar(u.avatar);
     } catch {}
     // Роль из БД — источник правды (если админ сменил роль)
     let tk = "";
@@ -43,8 +47,9 @@ export default function ProfilePage() {
           setRole(String(d.role));
           try {
             const cur = JSON.parse(localStorage.getItem("dk_user") || "{}");
-            localStorage.setItem("dk_user", JSON.stringify({ ...cur, name: d.name || cur.name, email: d.email || cur.email, role: d.role, id: d.id || cur.id }));
+            localStorage.setItem("dk_user", JSON.stringify({ ...cur, name: d.name || cur.name, email: d.email || cur.email, role: d.role, id: d.id || cur.id, avatar: d.avatar || cur.avatar }));
             if (d.name) setName(d.name);
+            if (d.avatar) setAvatar(d.avatar);
           } catch {}
         }
       }).catch(() => {});
@@ -75,6 +80,32 @@ export default function ProfilePage() {
     } finally { setSaving(false); }
   }
 
+  async function uploadAvatar(file: File) {
+    if (!/^image\//i.test(file.type)) { toast.error("Faqat rasm tanlang (JPG, PNG…)"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Rasm juda katta — 5 MB dan kichik bo‘lsin"); return; }
+    setUploading(true);
+    try {
+      const token = localStorage.getItem("dk_token") || "";
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/avatar", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Yuklab bo‘lmadi");
+      setAvatar(d.url);
+      try {
+        const u = JSON.parse(localStorage.getItem("dk_user") || "{}");
+        localStorage.setItem("dk_user", JSON.stringify({ ...u, avatar: d.url }));
+      } catch {}
+      toast.success("Rasm saqlandi");
+    } catch (e) {
+      toast.error((e as Error).message || "Yuklab bo‘lmadi");
+    } finally { setUploading(false); }
+  }
+
   function logout() { doLogout(); toast.success("Chiqdingiz"); router.push("/login"); }
 
   const initials = (name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
@@ -91,7 +122,30 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-[900px] p-4 lg:p-6 space-y-5">
       <Card className="p-4 sm:p-5 flex gap-3 sm:gap-4 items-center overflow-hidden">
-        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#2563eb] grid place-items-center text-white font-black text-lg sm:text-xl shrink-0">{initials}</div>
+        <div className="relative shrink-0">
+          {avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatar} alt="" className="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover border border-slate-200" />
+          ) : (
+            <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-[#2563eb] grid place-items-center text-white font-black text-lg sm:text-xl">{initials}</div>
+          )}
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            title="Rasmni o‘zgartirish"
+            aria-label="Rasmni o‘zgartirish"
+            className="absolute -bottom-0.5 -right-0.5 h-8 w-8 rounded-full bg-[#0f1b3d] text-white border-2 border-white grid place-items-center hover:bg-[#2563eb] transition-colors shadow-sm"
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = ""; }}
+          />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="font-bold text-slate-900 truncate">{name || "Foydalanuvchi"}</div>
           <div className="text-xs text-slate-500 truncate">{email}{phone ? <> · <a href={telHref(phone)} className="font-medium text-[#2563eb] hover:underline">{phone}</a></> : null}</div>

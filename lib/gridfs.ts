@@ -28,4 +28,10 @@ export async function audioBucket(): Promise<GridFSBucket> {
   return new GridFSBucket(c.db(), { bucketName: "audio" });
 }
 
+// Foydalanuvchi avatarlari (rasm fayllar)
+export async function avatarBucket(): Promise<GridFSBucket> {
+  const c = await client();
+  return new GridFSBucket(c.db(), { bucketName: "avatars" });
+}
+
 export { ObjectId };
