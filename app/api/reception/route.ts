@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { darsUser } from "@/lib/dars-auth";
+import { encryptPassword } from "@/lib/vault";
 import { z } from "zod";
 import * as bcrypt from "bcryptjs";
 import crypto from "node:crypto";
@@ -71,7 +72,7 @@ async function ensureStudentAccount(name: string, phone: string): Promise<Studen
     const email = await nextStudentEmail();
     try {
       const u = await prisma.user.create({
-        data: { name, phone, phoneKey: tail, email, password: hash, role: "STUDENT", emailVerified: true },
+        data: { name, phone, phoneKey: tail, email, password: hash, vaultPassword: encryptPassword(password), role: "STUDENT", emailVerified: true },
         select: { id: true, email: true },
       });
       return { id: u.id, email: u.email, password, existing: false };

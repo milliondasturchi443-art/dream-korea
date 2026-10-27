@@ -50,6 +50,9 @@ model User {
   tokenVersion Int?
   // Telefonning normallashtirilgan kaliti (lib/phone.ts phoneKey) — tez unikal tekshiruv
   phoneKey    String?
+  // Talaba parolining shifrlangan nusxasi (AES-256-GCM, kalit AUTH_SECRET'dan).
+  // Faqat "Cluster EMRK daniylar" ombori uchun — kirish alohida himoya kodi bilan.
+  vaultPassword String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

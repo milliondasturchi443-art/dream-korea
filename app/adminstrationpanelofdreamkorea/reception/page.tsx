@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { darsRequest } from "@/lib/dars-client";
-import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check, CalendarClock, KeyRound, Copy, X, ShieldCheck } from "lucide-react";
+import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check, CalendarClock, KeyRound, Copy, X, ShieldCheck, Lock, Database } from "lucide-react";
 
 type Teacher = { id: string; name: string; role: string };
 type Group = { id: string; name: string; teacherId?: string | null; teacher?: { name: string } | null };
@@ -52,6 +52,29 @@ export default function ReceptionPage() {
   const [busy, setBusy] = useState(false);
   const [creds, setCreds] = useState<Creds | null>(null);
   const [copied, setCopied] = useState("");
+
+  // ——— Cluster EMRK danniylar (vault) ———
+  const [vaultOpen, setVaultOpen] = useState(false);
+  const [vaultCodeInput, setVaultCodeInput] = useState("");
+  const [vaultLoading, setVaultLoading] = useState(false);
+  const [vaultUnlocked, setVaultUnlocked] = useState<{ name: string; phone: string; email: string; password: string }[] | null>(null);
+  const [vaultErr, setVaultErr] = useState("");
+
+  async function openVault() {
+    setVaultOpen(true); setVaultErr(""); setVaultUnlocked(null); setVaultCodeInput("");
+  }
+  function closeVault() { setVaultOpen(false); setVaultErr(""); setVaultUnlocked(null); setVaultCodeInput(""); }
+
+  async function submitVaultCode() {
+    setVaultLoading(true); setVaultErr("");
+    try {
+      const r = await fetch("/api/reception/vault", { method: "POST", headers: await authHeaders(), body: JSON.stringify({ code: vaultCodeInput.trim() }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setVaultErr(d.error || "Xato"); return; }
+      setVaultUnlocked(d.items || []);
+    } catch { setVaultErr("Xatolik yuz berdi"); }
+    finally { setVaultLoading(false); }
+  }
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -149,6 +172,84 @@ export default function ReceptionPage() {
         <h1 className="flex items-center gap-2 text-[22px] font-bold text-slate-900"><UserPlus className="h-6 w-6 text-[#2563eb]" /> O&apos;quvchi qo&apos;shish (Reception)</h1>
         <p className="text-sm text-slate-500">Qabulga kelgan o&apos;quvchini yozing: F.I.Sh., telefon, dars kunlari va vaqti, o&apos;qituvchi va guruh. «Yozildi» tugmasi — o&apos;quvchi avtomatik guruhga qo&apos;shiladi.</p>
       </div>
+
+      {/* ——— Cluster EMRK danniylar: himoya kodli ombor ——— */}
+      <Card className="flex items-center justify-between gap-3 p-4 border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-indigo-600/10 text-indigo-700"><Database className="h-5 w-5" /></span>
+          <div>
+            <div className="text-sm font-bold text-slate-800">Cluster EMRK danniylar</div>
+            <div className="text-xs text-slate-500">Barcha ro&apos;yxatdan o&apos;tgan o&apos;quvchilarning login va parollari — himoya kodi bilan ochiladi.</div>
+          </div>
+        </div>
+        <Button variant="outline" onClick={openVault} className="shrink-0"><Lock className="h-4 w-4 mr-1" /> Ochish</Button>
+      </Card>
+
+      {/* Vault modal */}
+      {vaultOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
+          <div className="relative mt-4 w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-indigo-600" />
+                <h2 className="text-lg font-bold text-slate-900">Cluster EMRK danniylar</h2>
+              </div>
+              <button onClick={closeVault} aria-label="Yopish" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
+            </div>
+            {!vaultUnlocked ? (
+              <div className="mt-4 space-y-3">
+                <p className="text-sm text-slate-600 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">Himoya kodini kiriting — shundagina barcha login va parollar ko&apos;rinadi.</p>
+                <div className="flex gap-2">
+                  <Input type="password" inputMode="numeric" value={vaultCodeInput} onChange={e => setVaultCodeInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") submitVaultCode(); }}
+                    placeholder="Himoya kod" className="text-lg tracking-widest" autoFocus />
+                  <Button onClick={submitVaultCode} disabled={vaultLoading || vaultCodeInput.trim().length < 8}>
+                    {vaultLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4 mr-1" />} Kirish
+                  </Button>
+                </div>
+                {vaultErr && <p role="alert" className="text-sm text-red-600">{vaultErr}</p>}
+              </div>
+            ) : (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm text-slate-600">Jami {vaultUnlocked.length} o&apos;quvchi — bitta raqamga nusxalab olish uchun ustki telefonni bosing.</p>
+                {vaultUnlocked.length === 0 && <p className="text-sm text-slate-500 p-4 text-center">Hozircha ro&apos;yxatdan o&apos;tgan o&apos;quvchi yo&apos;q</p>}
+                <div className="max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      <tr>
+                        <th className="p-2.5">F.I.Sh.</th>
+                        <th className="p-2.5">Telefon</th>
+                        <th className="p-2.5">Login (email)</th>
+                        <th className="p-2.5">Parol</th>
+                        <th className="p-2.5"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {vaultUnlocked.map(s => (
+                        <tr key={s.email} className="align-top">
+                          <td className="p-2.5 font-medium text-slate-800">{s.name || "—"}</td>
+                          <td className="p-2.5 text-slate-600">{s.phone || "—"}</td>
+                          <td className="p-2.5 font-mono text-[13px] text-slate-700">{s.email}</td>
+                          <td className="p-2.5 font-mono text-[13px] text-slate-700">{s.password || "—"}</td>
+                          <td className="p-2.5 text-right">
+                            {s.email && (
+                              <Button size="sm" variant="outline" onClick={() => copyText(`vault-${s.email}`, `${s.name} · ${s.email}\n${s.password}`)}>
+                                {copied === `vault-${s.email}` ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                                {copied === `vault-${s.email}` ? "Nusxalandi" : "Nusxalash"}
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button onClick={closeVault} className="w-full rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Yopish</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {notice && <Card className={`p-4 text-sm ${notice.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`} role="status">{notice.text}</Card>}
 
