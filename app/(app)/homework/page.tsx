@@ -56,7 +56,7 @@ export default function StudentHomeworkPage() {
   return (
     <div className="mx-auto max-w-[1000px] p-4 lg:p-6 space-y-5">
       <div>
-        <h1 className="text-[22px] font-bold text-slate-900 flex items-center gap-2"><BookOpen className="h-6 w-6 text-violet-600"/> Uy vazifalari</h1>
+        <h1 className="text-[22px] font-bold text-slate-900 flex items-center gap-2"><BookOpen className="h-6 w-6 text-violet-600"/> Uy vazifalarim</h1>
         <p className="text-sm text-slate-500">Guruhingiz, ustozingiz va uy vazifalari</p>
       </div>
 

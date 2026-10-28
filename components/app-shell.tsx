@@ -143,10 +143,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="space-y-1 flex-1">
             {[
               ...studentNav,
-              // To'lovlarim / Uy vazifalarim / Davomat — faqat STUDENT
+              // To'lovlarim / Uy vazifalarim — faqat STUDENT
+              // Davomat — faqat ADMIN (устник видит учеников)
               ...(role === "STUDENT" ? [
                 { href: "/homework", label: "Uy vazifalarim", icon: ClipboardList },
-                { href: "/attendance", label: "Davomat", icon: CalendarCheck },
                 { href: "/payment", label: "To'lovlarim", icon: CreditCard },
               ] : []),
               // Ustoz kabineti — faqat TEACHER (talabalarga ko'rinmaydi); "Talaba ko'rinishi" rejimida yashiriladi
