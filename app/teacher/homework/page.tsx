@@ -8,7 +8,7 @@ import { Loader2, BookOpen, Plus, Users, CheckCircle2, Circle } from "lucide-rea
 import { toast } from "sonner";
 
 type Group = { id:string; name:string; members?: { user:{ id:string; name:string; email:string } }[] };
-type HW = { id:string; title:string; description:string|null; dueDate:string|null; createdAt:string; group:{ id:string; name:string }; teacher?:{ id:string; name:string }; dones?: { studentId:string }[] };
+type HW = { id:string; title:string; description:string|null; dueDate:string|null; createdAt:string; group:{ id:string; name:string } | null; teacher?:{ id:string; name:string }; dones?: { studentId:string }[]; studentId?: string | null };
 function authHeader():Record<string,string>{ try{ const t=sessionStorage.getItem("dk_token")||localStorage.getItem("dk_token")||""; return t?{Authorization:`Bearer ${t}`}:{};}catch{ return {}; } }
 
 export default function TeacherHomeworkPage(){
@@ -97,7 +97,7 @@ export default function TeacherHomeworkPage(){
       {loading ? <div className="flex items-center gap-2 text-sm text-slate-500 p-4"><Loader2 className="h-4 w-4 animate-spin"/> Yuklanmoqda…</div> : items.length===0 ? <Card className="p-8 text-center text-sm text-slate-500">Hali vazifa yo'q</Card> : (
         <div className="space-y-2">
           {items.map(h=> {
-            const members=membersOf(h.group.id);
+            const members=membersOf(h.group?.id ?? "");
             const doneSet=new Set((h.dones??[]).map(d=>d.studentId));
             const doneCount=members.filter(m=>doneSet.has(m.id)).length;
             const isOpen=expanded===h.id;
@@ -107,7 +107,7 @@ export default function TeacherHomeworkPage(){
                 <div className="min-w-0">
                   <div className="text-sm font-semibold">{h.title}</div>
                   {h.description && <div className="text-xs text-slate-600 mt-1">{h.description}</div>}
-                  <div className="text-xs text-slate-500 mt-1">{new Date(h.createdAt).toLocaleDateString("uz-UZ")} · {h.group.name}{h.teacher ? ` · ${h.teacher.name}` : ""}</div>
+                  <div className="text-xs text-slate-500 mt-1">{new Date(h.createdAt).toLocaleDateString("uz-UZ")} · {h.group?.name ?? "Shaxsiy"}{h.teacher ? ` · ${h.teacher.name}` : ""}</div>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   {h.dueDate && <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[11px]">Topshirish: {h.dueDate}</Badge>}

@@ -6,7 +6,7 @@ import { Loader2, BookOpen, Users, GraduationCap, CalendarDays, BarChart3, Check
 
 type Member = { user: { id: string; name: string; email: string } };
 type Group = { id: string; name: string; teacher?: { id: string; name: string } | null; members?: Member[] };
-type HW = { id: string; title: string; description?: string | null; dueDate?: string | null; createdAt: string; group?: { id: string; name: string }; teacher?: { id: string; name: string }; dones?: { studentId: string }[] };
+type HW = { id: string; title: string; description?: string | null; dueDate?: string | null; createdAt: string; group?: { id: string; name: string }; teacher?: { id: string; name: string }; dones?: { studentId: string }[]; studentId?: string | null };
 type TStats = { groups: number; students: number; homework: number; attendance: number; groupNames: string[] };
 
 function authHeader(): Record<string, string> {
@@ -121,7 +121,9 @@ export default function StudentHomeworkPage() {
                   <Card key={x.id} className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold">{x.title}</div>
+                        <div className="text-sm font-semibold flex items-center gap-2">{x.title}
+                          {x.studentId === myId && <Badge className="bg-violet-50 text-violet-700 border border-violet-200 text-[10px] shrink-0">Shaxsiy</Badge>}
+                        </div>
                         {x.description && <div className="text-xs text-slate-600 mt-1">{x.description}</div>}
                         <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2">
                           {x.group && <span className="flex items-center gap-1"><Users className="h-3 w-3"/> {x.group.name}</span>}

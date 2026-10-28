@@ -67,7 +67,8 @@ model User {
   taughtGroups   Group[]
   groupMembers   GroupMember[]
   attendances    Attendance[]
-  homeworks      Homework[]
+  homeworks      Homework[] @relation("TeacherHomeworks") // ustoz chiqargan vazifalar
+  personalHomeworks Homework[] @relation("StudentHomeworks") // unga shaxsiy berilgan vazifalar
   homeworkDones  HomeworkDone[]
   darsProgress   DarsProgress[]
   darsExamBests  DarsExamBest[]
@@ -289,10 +290,13 @@ model Attendance {
 
 model Homework {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  groupId     String   @db.ObjectId
-  group       Group    @relation(fields: [groupId], references: [id])
+  groupId     String?  @db.ObjectId // shaxsiy vazifada bo'sh qolishi mumkin
+  group       Group?   @relation(fields: [groupId], references: [id])
+  // Shaxsiy uy vazifasi: faqat bitta o'quvchiga yuboriladi (admin qabul sahifasidan)
+  studentId   String?  @db.ObjectId
+  student     User?    @relation("StudentHomeworks", fields: [studentId], references: [id])
   teacherId   String   @db.ObjectId
-  teacher     User     @relation(fields: [teacherId], references: [id])
+  teacher     User     @relation("TeacherHomeworks", fields: [teacherId], references: [id])
   title       String
   description String?
   dueDate     String?

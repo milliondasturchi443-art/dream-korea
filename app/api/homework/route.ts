@@ -37,16 +37,23 @@ export async function GET(req: Request) {
       const mine = groupId ? [groupId] : own;
       if (mine.length === 0) return Response.json({ items: [] });
       // teacher ichida ham teacher include qilinadi — aks holda sahifada h.teacher.name TypeError (qulaydi)
-      const items = await prisma.homework.findMany({ where: { groupId: { in: mine } } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } }, dones: { select: { studentId: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
+      // shaxsiy (studentId li) vazifalar ustoz ro'yxatida ko'rinmaydi — ularni admin boshqaradi
+      const items = await prisma.homework.findMany({ where: { groupId: { in: mine }, studentId: null } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } }, dones: { select: { studentId: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
       return Response.json({ items });
     }
-    // STUDENT — faqat a'zo bo'lgan guruhlar
+    // STUDENT — guruhdagi umumiy vazifalar + o'ziga shaxsiy berilgan vazifalar
     const memberships = await prisma.groupMember.findMany({ where: { userId: auth.id }, select: { groupId: true } });
     const myIds = new Set(memberships.map(m => m.groupId));
-    if (groupId && !myIds.has(groupId)) return Response.json({ error: "Bu guruhga ruxsat yo'q" }, { status: 403 });
-    const ids = groupId ? [groupId] : [...myIds];
-    if (ids.length === 0) return Response.json({ items: [] });
-    const items = await prisma.homework.findMany({ where: { groupId: { in: ids } } as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } }, dones: { select: { studentId: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
+    const where: Record<string, unknown> = {
+      OR: [
+        // umumiy guruh vazifalari (boshqaning shaxsiysi ko'rinmaydi)
+        ...(myIds.size ? [{ groupId: { in: [...myIds] }, studentId: null }] : []),
+        // faqat o'zimga shaxsiy berilgan (guruhidan qat'i nazar)
+        { studentId: auth.id },
+      ],
+    };
+    if (groupId) where.AND = [{ groupId }]; // ?groupId param — faqat shu guruh bo'yicha
+    const items = await prisma.homework.findMany({ where: where as never, include: { group: { select: { id: true, name: true } }, teacher: { select: { id: true, name: true } }, dones: { select: { studentId: true } } }, orderBy: { createdAt: "desc" }, take: 100 });
     return Response.json({ items });
   } catch (e) { console.error("GET homework", e); return Response.json({ items: [] }); }
 }

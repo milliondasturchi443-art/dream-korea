@@ -1,21 +1,21 @@
 import { prisma } from "@/lib/db";
 import { darsUser } from "@/lib/dars-auth";
-import { encryptPassword } from "@/lib/vault";
+import { ensureStudentAccount, findStudentByPhone, normalizeReceptionTime } from "@/lib/reception-student";
 import { z } from "zod";
-import * as bcrypt from "bcryptjs";
-import crypto from "node:crypto";
 export const dynamic = "force-dynamic";
 
 const PURPOSES = ["TOPIK", "Koreada o'qish", "Ishlash", "Sayohat"] as const;
 const PLANS = ["Til kursi", "Kolleg", "Bakalavr", "Magistr"] as const;
+const DAYS = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"] as const;
+const OBJECTID = /^[a-f\d]{24}$/i;
 
 const createSchema = z.object({
   name: z.string().trim().min(2).max(150),
   phone: z.string().trim().min(7).max(30),
-  days: z.array(z.enum(["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"])).min(1),
-  time: z.string().trim().regex(/^\d{2}:\d{2}( ?- ?\d{2}:\d{2})?$/), // "15:00" yoki "10:00 - 12:00"
-  teacherId: z.string().regex(/^[a-f\d]{24}$/i).optional().nullable(),
-  groupId: z.string().regex(/^[a-f\d]{24}$/i).optional().nullable(),
+  days: z.array(z.enum(DAYS)).min(1),
+  time: z.string().trim().min(3).max(20), // "13:30" yoki "10:00 - 12:00" — normalizeReceptionTime tekshiradi
+  teacherId: z.string().regex(OBJECTID).optional().nullable(),
+  groupId: z.string().regex(OBJECTID).optional().nullable(),
   note: z.string().max(500).optional(),
   address: z.string().trim().max(300).optional(),
   parentName: z.string().trim().max(150).optional(),
@@ -25,71 +25,33 @@ const createSchema = z.object({
   plan: z.enum(PLANS).optional(),
 });
 
+// PATCH: holat o'zgarishi (status) VA/yoki to'liq tahrirlash — barcha maydonlar ixtiyoriy
+const patchSchema = z.object({
+  id: z.string().regex(OBJECTID),
+  status: z.enum(["new", "contacted", "enrolled"]).optional(),
+  name: z.string().trim().min(2).max(150).optional(),
+  phone: z.string().trim().min(7).max(30).optional(),
+  days: z.array(z.enum(DAYS)).min(1).optional(),
+  time: z.string().trim().min(3).max(20).optional(),
+  teacherId: z.string().regex(OBJECTID).nullable().optional(),
+  groupId: z.string().regex(OBJECTID).nullable().optional(),
+  note: z.string().max(500).nullable().optional(),
+  address: z.string().trim().max(300).nullable().optional(),
+  parentName: z.string().trim().max(150).nullable().optional(),
+  parentPhone: z.string().trim().max(30).nullable().optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  purpose: z.array(z.enum(PURPOSES)).optional(),
+  plan: z.enum(PLANS).nullable().optional(),
+});
+
 const include = { teacher: { select: { name: true } }, group: { select: { name: true } } } as const;
-
-// ---- Talaba hisobini avtomatik yaratish (Qabul bo'limi uchun) ----
-// Email: dreamkoreastudent0001@gmail.com — faqat oxirgi 4 raqam o'zgaradi.
-// Parol: tasodifiy 10 belgi (admin ko'rsatadi, talaba keyin o'zgartiradi).
-const STUDENT_EMAIL_PREFIX = "dreamkoreastudent";
-const STUDENT_EMAIL_DOMAIN = "gmail.com";
-
-// Keyingi bo'sh raqam: mavjud max raqam + 1 (0001, 0002, …)
-async function nextStudentEmail(): Promise<string> {
-  const users = await prisma.user.findMany({
-    where: { email: { startsWith: STUDENT_EMAIL_PREFIX } },
-    select: { email: true },
-  });
-  let max = 0;
-  for (const u of users) {
-    const m = /^dreamkoreastudent(\d+)@/i.exec(u.email || "");
-    const n = m ? parseInt(m[1], 10) : NaN;
-    if (Number.isFinite(n) && n > max) max = n;
-  }
-  return `${STUDENT_EMAIL_PREFIX}${String(max + 1).padStart(4, "0")}@${STUDENT_EMAIL_DOMAIN}`;
-}
-
-type StudentAccount = { id: string; email: string; password: string | null; existing: boolean };
-
-// Telefon bo'yicha mavjud talaba hisobini topadi (+998/bo'shliqlarni hisobga olgan holda)
-async function findStudentByPhone(phone: string) {
-  const tail = phone.replace(/\D/g, "").slice(-9);
-  return prisma.user.findFirst({
-    where: { OR: [{ phone }, ...(tail ? [{ phoneKey: tail }, { phone: { contains: tail } }] : [])] },
-    select: { id: true, email: true },
-  });
-}
-
-// Hisob yo'q bo'lsa — yangi yaratadi; bo'lsa — mavjudini qaytaradi (parol null)
-async function ensureStudentAccount(name: string, phone: string): Promise<StudentAccount | null> {
-  const existing = await findStudentByPhone(phone);
-  if (existing) return { id: existing.id, email: existing.email, password: null, existing: true };
-
-  const password = crypto.randomBytes(9).toString("base64url").slice(0, 10);
-  const hash = await bcrypt.hash(password, 10);
-  const tail = phone.replace(/\D/g, "").slice(-9) || null;
-
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const email = await nextStudentEmail();
-    try {
-      const u = await prisma.user.create({
-        data: { name, phone, phoneKey: tail, email, password: hash, vaultPassword: encryptPassword(password), role: "STUDENT", emailVerified: true },
-        select: { id: true, email: true },
-      });
-      return { id: u.id, email: u.email, password, existing: false };
-    } catch {
-      // raqam band (parallel yozuv) — kim yutdi: mavjudni qaytaramiz, aks holda keyingi raqam
-      const byEmail = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true } });
-      if (byEmail) return { id: byEmail.id, email: byEmail.email, password: null, existing: true };
-    }
-  }
-  return null;
-}
 
 export async function GET(req: Request) {
   const user = await darsUser(req);
   if (!user || user.role !== "ADMIN") return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   try {
-    const items = await prisma.reception.findMany({ include, orderBy: { createdAt: "desc" }, take: 200 });
+    // 300+ talaba ham ko'rinsin — limit kengaytirildi
+    const items = await prisma.reception.findMany({ include, orderBy: { createdAt: "desc" }, take: 1000 });
     return Response.json({ items });
   } catch { return Response.json({ error: "Yuklab bo'lmadi" }, { status: 503 }); }
 }
@@ -100,6 +62,9 @@ export async function POST(req: Request) {
   const parsed = createSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Ma'lumotlar noto'g'ri (Ism, telefon, kunlar, vaqt majburiy)" }, { status: 400 });
   const { name, phone, days, time, teacherId, groupId, note, address, parentName, parentPhone, startDate, purpose, plan } = parsed.data;
+  // Vaqt aynan kiriterilganidek saqlanadi (13:30 → 13:30); xato format — 400
+  const timeNorm = normalizeReceptionTime(time);
+  if (!timeNorm) return Response.json({ error: "Dars vaqti noto'g'ri (masalan 13:30 yoki 10:00 - 12:00)" }, { status: 400 });
   if (groupId) {
     const g = await prisma.group.findUnique({ where: { id: groupId }, select: { teacherId: true } });
     if (!g) return Response.json({ error: "Guruh topilmadi" }, { status: 404 });
@@ -107,7 +72,7 @@ export async function POST(req: Request) {
   }
   try {
     const item = await prisma.reception.create({ data: {
-      name, phone, days: days.join(","), time,
+      name, phone, days: days.join(","), time: timeNorm,
       teacherId: teacherId ?? null, groupId: groupId ?? null, note: note ?? null,
       address: address || null, parentName: parentName || null, parentPhone: parentPhone || null,
       startDate: startDate || null,
@@ -124,8 +89,6 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, item, account }, { status: 201 });
   } catch { return Response.json({ error: "Saqlab bo'lmadi" }, { status: 503 }); }
 }
-
-const patchSchema = z.object({ id: z.string().regex(/^[a-f\d]{24}$/i), status: z.enum(["new", "contacted", "enrolled"]) });
 
 // Enroll: find-or-create student by phone, add to teacher's group.
 async function enroll(item: { id: string; name: string; phone: string; days: string; teacherId: string | null; groupId: string | null }) {
@@ -171,17 +134,90 @@ export async function PATCH(req: Request) {
   if (!user || user.role !== "ADMIN") return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Noto'g'ri so'rov" }, { status: 400 });
+  const { id, status } = parsed.data;
   try {
-    const before = await prisma.reception.findUnique({ where: { id: parsed.data.id } });
+    const before = await prisma.reception.findUnique({ where: { id } });
     if (!before) return Response.json({ error: "Topilmadi" }, { status: 404 });
-    const item = await prisma.reception.update({ where: { id: before.id }, data: { status: parsed.data.status }, include });
-    if (parsed.data.status === "enrolled" && before.status !== "enrolled") {
-      const r = await enroll({ id: before.id, name: before.name, phone: before.phone, days: before.days, teacherId: before.teacherId, groupId: before.groupId });
-      const item2 = await prisma.reception.findUnique({ where: { id: before.id }, include });
-      if (!r.ok) return Response.json({ ok: true, item: item2, warn: r.error, created: r.student ? { email: r.student.email, tempPassword: r.tempPassword } : undefined });
-      return Response.json({ ok: true, item: item2, enrolled: { email: r.student.email, tempPassword: r.tempPassword, added: r.added, groupName: r.groupName } });
+
+    // ——— Tahrirlash: faqat yuborilgan maydonlar yangilanadi (qolgani o'zgarmaydi) ———
+    const data: Record<string, unknown> = {};
+    if (parsed.data.name !== undefined) data.name = parsed.data.name;
+    if (parsed.data.phone !== undefined) data.phone = parsed.data.phone;
+    if (parsed.data.days !== undefined) data.days = parsed.data.days.join(",");
+    if (parsed.data.note !== undefined) data.note = parsed.data.note;
+    if (parsed.data.address !== undefined) data.address = parsed.data.address;
+    if (parsed.data.parentName !== undefined) data.parentName = parsed.data.parentName;
+    if (parsed.data.parentPhone !== undefined) data.parentPhone = parsed.data.parentPhone;
+    if (parsed.data.startDate !== undefined) data.startDate = parsed.data.startDate;
+    if (parsed.data.purpose !== undefined) data.purpose = parsed.data.purpose.length ? parsed.data.purpose.join(",") : null;
+    if (parsed.data.plan !== undefined) data.plan = parsed.data.plan;
+    if (parsed.data.status !== undefined) data.status = parsed.data.status;
+    if (parsed.data.time !== undefined) {
+      const t = normalizeReceptionTime(parsed.data.time);
+      if (!t) return Response.json({ error: "Dars vaqti noto'g'ri (masalan 13:30 yoki 10:00 - 12:00)" }, { status: 400 });
+      data.time = t; // aynan shunday saqlanadi — vaqt mintaqasi konvertatsiya qilinmaydi
     }
-    return Response.json({ ok: true, item });
+    if (parsed.data.groupId !== undefined) {
+      const gid = parsed.data.groupId;
+      if (gid) {
+        const g = await prisma.group.findUnique({ where: { id: gid }, select: { teacherId: true } });
+        if (!g) return Response.json({ error: "Guruh topilmadi" }, { status: 404 });
+        const tid = parsed.data.teacherId !== undefined ? parsed.data.teacherId : before.teacherId;
+        if (tid && g.teacherId && g.teacherId !== tid) return Response.json({ error: "Guruh tanlangan o'qituvchiga tegishli emas" }, { status: 400 });
+        // ustoz ko'rsatilmagan bo'lsa — guruh ustozi bilan sinxronlaymiz (kartochkada ham ko'rinadi)
+        if (parsed.data.teacherId === undefined) data.teacherId = g.teacherId ?? null;
+      } else {
+        data.groupId = null;
+      }
+      data.groupId = gid;
+    }
+    if (parsed.data.teacherId !== undefined) data.teacherId = parsed.data.teacherId;
+
+    const hasChanges = Object.keys(data).length > 0;
+    if (!hasChanges && !status) return Response.json({ ok: true, item: before });
+
+    const item = await prisma.reception.update({ where: { id }, data, include });
+    let warn: string | undefined;
+    let enrolled: { email: string; tempPassword: string | null; added: boolean; groupName: string | null } | undefined;
+
+    if (status === "enrolled" && before.status !== "enrolled") {
+      // "Yozildi" — talaba guruhga qo'shiladi (avval tahrirlangan ma'lumotlar bazada)
+      const r = await enroll({ id, name: item.name, phone: item.phone, days: item.days, teacherId: item.teacherId, groupId: item.groupId });
+      const item2 = await prisma.reception.findUnique({ where: { id }, include });
+      if (!r.ok) return Response.json({ ok: true, item: item2, warn: r.error, created: r.student ? { email: r.student.email, tempPassword: r.tempPassword } : undefined });
+      enrolled = { email: r.student.email, tempPassword: r.tempPassword, added: r.added, groupName: r.groupName };
+      return Response.json({ ok: true, item: item2, enrolled });
+    }
+
+    // ——— Guruhni almashtirish: o'quvchi allaqachon "yozilgan" bo'lsa — a'zolik yangi guruhga ko'chiriladi ———
+    if (before.status === "enrolled" && parsed.data.groupId !== undefined && (before.groupId ?? null) !== (item.groupId ?? null)) {
+      try {
+        // telefon o'zgargan bo'lsa — avval talaba hisobining telefonini yangilaymiz (eski telefon bo'yicha topamiz)
+        if (parsed.data.phone !== undefined && parsed.data.phone !== before.phone) {
+          const oldAcc = await findStudentByPhone(before.phone);
+          if (oldAcc) {
+            const tail = parsed.data.phone.replace(/\D/g, "").slice(-9) || null;
+            await prisma.user.update({ where: { id: oldAcc.id }, data: { phone: parsed.data.phone, phoneKey: tail } }).catch(() => {});
+          }
+        }
+        const acc = await ensureStudentAccount(item.name, item.phone);
+        if (!acc) {
+          warn = "O'quvchi hisobi topilmadi — guruh o'zgarmadi";
+        } else {
+          if (before.groupId) await prisma.groupMember.deleteMany({ where: { groupId: before.groupId, userId: acc.id } }).catch(() => {});
+          if (item.groupId) {
+            try { await prisma.groupMember.create({ data: { groupId: item.groupId, userId: acc.id } }); }
+            catch { /* allaqachon a'zo */ }
+          }
+        }
+      } catch (e) {
+        console.error("reception group move", e);
+        warn = "Guruhni almashtirib bo'lmadi";
+      }
+    }
+
+    const final = await prisma.reception.findUnique({ where: { id }, include });
+    return Response.json({ ok: true, item: final, warn });
   } catch { return Response.json({ error: "Saqlab bo'lmadi" }, { status: 503 }); }
 }
 

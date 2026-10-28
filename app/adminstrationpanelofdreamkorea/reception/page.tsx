@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { darsRequest } from "@/lib/dars-client";
-import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check, CalendarClock, KeyRound, Copy, X, ShieldCheck, Lock, Database } from "lucide-react";
+import { UserPlus, Loader2, Phone, CalendarDays, Clock, GraduationCap, Trash2, Users, Home, Heart, MapPin, Check, CalendarClock, KeyRound, Copy, X, ShieldCheck, Lock, Database, Pencil, NotebookPen, Search } from "lucide-react";
 
 type Teacher = { id: string; name: string; role: string };
 type Group = { id: string; name: string; teacherId?: string | null; teacher?: { name: string } | null };
@@ -12,6 +12,8 @@ type Item = {
   id: string; name: string; phone: string; days: string; time: string; note?: string | null; status: string; createdAt: string;
   address?: string | null; parentName?: string | null; parentPhone?: string | null; startDate?: string | null;
   purpose?: string | null; plan?: string | null;
+  teacherId?: string | null;
+  groupId?: string | null;
   teacher?: { name: string } | null;
   group?: { name: string } | null;
 };
@@ -21,8 +23,29 @@ const PRESETS: { label: string; days: string[] }[] = [
   { label: "Dush–Chor–Jum", days: ["Dushanba", "Chorshanba", "Juma"] },
   { label: "Ses–Pay–Shan", days: ["Seshanba", "Payshanba", "Shanba"] },
 ];
-const TIME_PRESETS = ["10:00 - 12:00", "13:30 - 15:30", "15:30 - 17:30"];
-const TIME_RE = /^\d{2}:\d{2}( ?- ?\d{2}:\d{2})?$/;
+const TIME_PRESETS = [
+  { from: "10:00", to: "12:00" },
+  { from: "13:30", to: "15:30" },
+  { from: "15:30", to: "17:30" },
+];
+// Vaqt — doim HH:MM (2 soat:2 daqiqa). Kirish: brauzerning o'z vaqt tanlagichi (telefonda g'ildirak).
+const TIME_RE = /^\d{2}:\d{2}$/;
+
+// Bazadagi "13:30" / "10:00 - 12:00" / eski "1:30" → ikkita qiymat (kirish maydonlari uchun)
+function parseTime(v: string): { from: string; to: string } {
+  const m = /^\s*(\d{1,2}:\d{2})\s*(?:[-–]\s*(\d{1,2}:\d{2}))?\s*$/.exec(v || "");
+  const pad = (s?: string) => (s ? (s.length === 4 ? `0${s}` : s) : "");
+  return { from: pad(m?.[1]), to: pad(m?.[2]) };
+}
+
+// Tahrirlash uchun forma (barcha maydonlar)
+type EditDraft = {
+  id: string; name: string; phone: string; days: string[];
+  timeFrom: string; timeTo: string;
+  teacherId: string; groupId: string;
+  address: string; parentName: string; parentPhone: string; startDate: string;
+  purpose: string[]; plan: string; note: string;
+};
 const PURPOSES = ["TOPIK", "Koreada o'qish", "Ishlash", "Sayohat"];
 const PLANS = ["Til kursi", "Kolleg", "Bakalavr", "Magistr"];
 const STATUS_LABEL: Record<string, string> = { new: "Yangi", contacted: "Aloqa qilindi", enrolled: "Yozildi" };
@@ -79,7 +102,8 @@ export default function ReceptionPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [days, setDays] = useState<string[]>([]);
-  const [time, setTime] = useState("");
+  const [timeFrom, setTimeFrom] = useState("");
+  const [timeTo, setTimeTo] = useState("");
   const [teacherId, setTeacherId] = useState("");
   const [groupId, setGroupId] = useState("");
   const [note, setNote] = useState("");
@@ -89,6 +113,20 @@ export default function ReceptionPage() {
   const [startDate, setStartDate] = useState("");
   const [purpose, setPurpose] = useState<string[]>([]);
   const [plan, setPlan] = useState("");
+
+  // ——— Ro'yxatda qidiruv (300+ talaba) ———
+  const [q, setQ] = useState("");
+
+  // ——— Tahrirlash (ro'yxatdagi mavjud o'quvchi) ———
+  const [edit, setEdit] = useState<EditDraft | null>(null);
+  const [editBusy, setEditBusy] = useState(false);
+  const [editErr, setEditErr] = useState("");
+
+  // ——— Uy vazifasi yuborish (shaxsiy, admin → o'quvchi) ———
+  const [hwFor, setHwFor] = useState<Item | null>(null);
+  const [hwForm, setHwForm] = useState({ title: "", desc: "", due: "" });
+  const [hwBusy, setHwBusy] = useState(false);
+  const [hwErr, setHwErr] = useState("");
 
   function togglePurpose(p: string) {
     setPurpose(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
@@ -118,13 +156,14 @@ export default function ReceptionPage() {
     setBusy(true); setError(""); setNotice(null); setCreds(null);
     try {
       const r = await darsRequest<{ account?: Creds | null }>("/api/reception", {
-        name, phone, days, time, teacherId: teacherId || null, groupId: groupId || null, note: note || undefined,
+        name, phone, days, time: timeTo ? `${timeFrom} - ${timeTo}` : timeFrom,
+        teacherId: teacherId || null, groupId: groupId || null, note: note || undefined,
         address: address || undefined, parentName: parentName || undefined, parentPhone: parentPhone || undefined,
         startDate: startDate || undefined,
         purpose: purpose.length ? purpose : undefined,
         plan: plan || undefined,
       });
-      setName(""); setPhone(""); setDays([]); setTime(""); setTeacherId(""); setGroupId(""); setNote("");
+      setName(""); setPhone(""); setDays([]); setTimeFrom(""); setTimeTo(""); setTeacherId(""); setGroupId(""); setNote("");
       setAddress(""); setParentName(""); setParentPhone(""); setStartDate(""); setPurpose([]); setPlan("");
       // Hisob avtomatik yaratildi — login/parolni pastdagi kartochkada ko'rsatamiz
       if (r.account) setCreds(r.account);
@@ -164,7 +203,88 @@ export default function ReceptionPage() {
     try { await fetch(`/api/reception?id=${id}`, { method: "DELETE", headers: await authHeaders() }); await load(); } catch {}
   }
 
-  const valid = name.trim().length >= 2 && phone.trim().length >= 7 && days.length > 0 && TIME_RE.test(time.trim());
+  // ——— Tahrirlash: kartochkadagi «✎» — barcha maydonlar o'zgartiriladi ———
+  function openEdit(it: Item) {
+    const t = parseTime(it.time);
+    setEdit({
+      id: it.id,
+      name: it.name, phone: it.phone,
+      days: it.days.split(",").filter(Boolean),
+      timeFrom: t.from, timeTo: t.to,
+      teacherId: it.teacherId ?? "", groupId: it.groupId ?? "",
+      address: it.address ?? "", parentName: it.parentName ?? "", parentPhone: it.parentPhone ?? "",
+      startDate: it.startDate ?? "",
+      purpose: it.purpose ? it.purpose.split(",").filter(Boolean) : [],
+      plan: it.plan ?? "", note: it.note ?? "",
+    });
+    setEditErr("");
+  }
+
+  async function saveEdit() {
+    if (!edit) return;
+    if (edit.name.trim().length < 2 || edit.phone.trim().length < 7 || edit.days.length === 0 || !TIME_RE.test(edit.timeFrom)) {
+      setEditErr("Ism, telefon, dars kunlari va vaqtni to'g'ri kiriting");
+      return;
+    }
+    setEditBusy(true); setEditErr("");
+    try {
+      const r = await fetch("/api/reception", {
+        method: "PATCH", headers: await authHeaders(),
+        body: JSON.stringify({
+          id: edit.id,
+          name: edit.name.trim(), phone: edit.phone.trim(), days: edit.days,
+          time: edit.timeTo ? `${edit.timeFrom} - ${edit.timeTo}` : edit.timeFrom,
+          teacherId: edit.teacherId || null,
+          groupId: edit.groupId || null,
+          note: edit.note.trim() || null,
+          address: edit.address.trim() || null,
+          parentName: edit.parentName.trim() || null,
+          parentPhone: edit.parentPhone.trim() || null,
+          startDate: edit.startDate || null,
+          purpose: edit.purpose,
+          plan: edit.plan || null,
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setEditErr(d.error || "Saqlab bo'lmadi"); return; }
+      setEdit(null);
+      setNotice(d.warn ? { ok: false, text: d.warn } : { ok: true, text: "O'zgartirishlar saqlandi va bazaga yozildi" });
+      await load();
+    } catch { setEditErr("Xatolik yuz berdi"); }
+    finally { setEditBusy(false); }
+  }
+
+  // ——— Uy vazifasi yuborish: admin → tanlangan o'quvchiga (guruhidan qat'i nazar) ———
+  async function sendHw() {
+    if (!hwFor) return;
+    if (hwForm.title.trim().length < 2) { setHwErr("Mavzu kiriting"); return; }
+    setHwBusy(true); setHwErr("");
+    try {
+      const r = await fetch("/api/reception/homework", {
+        method: "POST", headers: await authHeaders(),
+        body: JSON.stringify({
+          receptionId: hwFor.id,
+          title: hwForm.title.trim(),
+          description: hwForm.desc.trim() || undefined,
+          dueDate: hwForm.due || undefined,
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setHwErr(d.error || "Yuborib bo'lmadi"); return; }
+      const to = hwFor.name;
+      setHwFor(null); setHwForm({ title: "", desc: "", due: "" });
+      setNotice({ ok: true, text: `Uy vazifasi «${to}» ga yuborildi${d.account?.email ? ` · Login: ${d.account.email}` : ""}` });
+    } catch { setHwErr("Xatolik yuz berdi"); }
+    finally { setHwBusy(false); }
+  }
+
+  const valid = name.trim().length >= 2 && phone.trim().length >= 7 && days.length > 0 && TIME_RE.test(timeFrom);
+
+  // ——— Ro'yxatda qidiruv: ism, telefon, kun, vaqt, guruh, ustoz bo'yicha ———
+  const qq = q.trim().toLowerCase();
+  const filtered = qq
+    ? items.filter(it => [it.name, it.phone, it.days, it.time, it.group?.name ?? "", it.teacher?.name ?? "", it.note ?? ""].join(" ").toLowerCase().includes(qq))
+    : items;
 
   return (
     <div className="mx-auto max-w-[1200px] p-4 lg:p-6 space-y-5">
@@ -247,6 +367,159 @@ export default function ReceptionPage() {
                 <button onClick={closeVault} className="w-full rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Yopish</button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ——— Tahrirlash modalkasi: barcha maydonlar ——— */}
+      {edit && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
+          <div className="relative mt-4 w-full max-w-2xl rounded-2xl bg-white p-5 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Pencil className="h-5 w-5 text-blue-600" />
+                <h2 className="text-lg font-bold text-slate-900">O&apos;quvchini tahrirlash</h2>
+              </div>
+              <button onClick={() => setEdit(null)} aria-label="Yopish" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm font-medium text-slate-700">F.I.Sh.
+                <Input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} />
+              </label>
+              <label className="space-y-1 text-sm font-medium text-slate-700">Telefon
+                <Input value={edit.phone} onChange={e => setEdit({ ...edit, phone: e.target.value })} inputMode="tel" />
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-700"><CalendarDays className="h-4 w-4" /> Dars kunlari</div>
+              <div className="flex flex-wrap gap-2">
+                {ALL_DAYS.map(d => (
+                  <button key={d} type="button"
+                    onClick={() => setEdit({ ...edit, days: edit.days.includes(d) ? edit.days.filter(x => x !== d) : [...edit.days, d] })}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${edit.days.includes(d) ? "border-blue-500 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1 text-sm font-medium text-slate-700">
+                <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-[#2563eb]" /> Dars vaqti</span>
+                <div className="flex items-center gap-2">
+                  <Input type="time" value={edit.timeFrom} onChange={e => setEdit({ ...edit, timeFrom: e.target.value })} className="w-[130px]" aria-label="Boshlanish vaqti" />
+                  <span className="text-slate-400">—</span>
+                  <Input type="time" value={edit.timeTo} onChange={e => setEdit({ ...edit, timeTo: e.target.value })} className="w-[130px]" aria-label="Tugash vaqti" />
+                </div>
+              </div>
+              <label className="space-y-1 text-sm font-medium text-slate-700">Kurs boshlash sanasi
+                <Input type="date" value={edit.startDate} onChange={e => setEdit({ ...edit, startDate: e.target.value })} />
+              </label>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm font-medium text-slate-700">O&apos;qituvchi
+                <select value={edit.teacherId} onChange={e => setEdit({ ...edit, teacherId: e.target.value, groupId: "" })}
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                  <option value="">— Tanlanmagan —</option>
+                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </label>
+              <label className="space-y-1 text-sm font-medium text-slate-700">Guruh <span className="text-xs font-normal text-slate-400">(almashtirish uchun boshqasini tanlang)</span>
+                <select value={edit.groupId} onChange={e => setEdit({ ...edit, groupId: e.target.value })}
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                  <option value="">— Tanlanmagan —</option>
+                  {groups.filter(g => !edit.teacherId || g.teacherId === edit.teacherId).map(g => <option key={g.id} value={g.id}>{g.name}{g.teacher ? ` · ${g.teacher.name}` : ""}</option>)}
+                </select>
+              </label>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm font-medium text-slate-700">Yashash manzili
+                <Input value={edit.address} onChange={e => setEdit({ ...edit, address: e.target.value })} />
+              </label>
+              <label className="space-y-1 text-sm font-medium text-slate-700">Ota-ona F.I.Sh.
+                <Input value={edit.parentName} onChange={e => setEdit({ ...edit, parentName: e.target.value })} />
+              </label>
+              <label className="space-y-1 text-sm font-medium text-slate-700">Ota-ona telefoni
+                <Input value={edit.parentPhone} onChange={e => setEdit({ ...edit, parentPhone: e.target.value })} inputMode="tel" />
+              </label>
+              <label className="space-y-1 text-sm font-medium text-slate-700">Reja
+                <select value={edit.plan} onChange={e => setEdit({ ...edit, plan: e.target.value })}
+                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                  <option value="">— Tanlanmagan —</option>
+                  {PLANS.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-slate-700">Til o&apos;rganish maqsadi</div>
+              <div className="flex flex-wrap gap-2">
+                {PURPOSES.map(p => (
+                  <button key={p} type="button" aria-pressed={edit.purpose.includes(p)}
+                    onClick={() => setEdit({ ...edit, purpose: edit.purpose.includes(p) ? edit.purpose.filter(x => x !== p) : [...edit.purpose, p] })}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${edit.purpose.includes(p) ? "border-blue-500 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                    {edit.purpose.includes(p) && <Check className="h-3.5 w-3.5" />}{p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <label className="space-y-1 text-sm font-medium text-slate-700">Izoh
+              <Input value={edit.note} onChange={e => setEdit({ ...edit, note: e.target.value })} />
+            </label>
+
+            {editErr && <p role="alert" className="text-sm text-red-600">{editErr}</p>}
+
+            <div className="flex gap-2 border-t border-slate-200 pt-4">
+              <Button onClick={saveEdit} disabled={editBusy}>
+                {editBusy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />} Saqlash
+              </Button>
+              <Button variant="outline" onClick={() => setEdit(null)} disabled={editBusy}>Bekor qilish</Button>
+            </div>
+            {edit.groupId && (
+              <p className="text-xs text-slate-400">Eslatma: guruh o&apos;zgarsa, «yozilgan» o&apos;quvchi avtomatik yangi guruhga ko&apos;chiriladi.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ——— Uy vazifasi yuborish modalkasi (shaxsiy) ——— */}
+      {hwFor && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
+          <div className="relative mt-10 w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <NotebookPen className="h-5 w-5 text-violet-600" />
+                  <h2 className="text-lg font-bold text-slate-900">Uy vazifasi yuborish</h2>
+                </div>
+                <p className="text-sm text-slate-500 mt-1">O&apos;quvchi: <span className="font-semibold text-slate-700">{hwFor.name}</span> · {hwFor.phone}</p>
+              </div>
+              <button onClick={() => setHwFor(null)} aria-label="Yopish" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
+            </div>
+            <p className="text-xs rounded-xl border border-violet-100 bg-violet-50/60 p-3 text-slate-600">
+              Vazifa faqat shu o&apos;quvchiga yuboriladi — guruhdagi boshqa o&apos;quvchilarga ko&apos;rinmaydi. O&apos;quvchiga bildirishnoma va email ham boradi.
+            </p>
+            <label className="space-y-1 text-sm font-medium text-slate-700">Mavzu *
+              <Input value={hwForm.title} onChange={e => setHwForm({ ...hwForm, title: e.target.value })} placeholder="Mas: 3-dars — Lug'atdan 20 ta so'z" />
+            </label>
+            <label className="space-y-1 text-sm font-medium text-slate-700">Tavsif
+              <Input value={hwForm.desc} onChange={e => setHwForm({ ...hwForm, desc: e.target.value })} placeholder="Nima qilishi kerak (ixtiyoriy)" />
+            </label>
+            <label className="space-y-1 text-sm font-medium text-slate-700">Topshirish sanasi
+              <Input type="date" value={hwForm.due} onChange={e => setHwForm({ ...hwForm, due: e.target.value })} />
+            </label>
+            {hwErr && <p role="alert" className="text-sm text-red-600">{hwErr}</p>}
+            <div className="flex gap-2 border-t border-slate-200 pt-4">
+              <Button onClick={sendHw} disabled={hwBusy} className="bg-violet-600 hover:bg-violet-700">
+                {hwBusy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <NotebookPen className="h-4 w-4 mr-1" />} Yuborish
+              </Button>
+              <Button variant="outline" onClick={() => setHwFor(null)} disabled={hwBusy}>Bekor qilish</Button>
+            </div>
           </div>
         </div>
       )}
@@ -356,15 +629,20 @@ export default function ReceptionPage() {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="space-y-1 text-sm font-medium text-slate-700">Dars vaqti
-            <Input value={time} onChange={e => setTime(e.target.value)} placeholder="10:00 - 12:00" inputMode="numeric" />
+            <div className="flex items-center gap-2">
+              <Input type="time" value={timeFrom} onChange={e => setTimeFrom(e.target.value)} className="w-[130px]" aria-label="Boshlanish vaqti" />
+              <span className="text-slate-400">—</span>
+              <Input type="time" value={timeTo} onChange={e => setTimeTo(e.target.value)} className="w-[130px]" aria-label="Tugash vaqti" />
+            </div>
           </label>
           <div className="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">
             <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-[#2563eb]" /> Tez tanlash</span>
             <div className="flex flex-wrap gap-2 pt-0.5">
               {TIME_PRESETS.map(t => (
-                <button key={t} type="button" onClick={() => setTime(t)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${time === t ? "border-blue-500 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
-                  {t}
+                <button key={t.from + t.to} type="button"
+                  onClick={() => { setTimeFrom(t.from); setTimeTo(t.to); }}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${timeFrom === t.from && timeTo === t.to ? "border-blue-500 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                  {t.from} - {t.to}
                 </button>
               ))}
             </div>
@@ -437,10 +715,18 @@ export default function ReceptionPage() {
       </Card>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-900">Ro&apos;yxat ({items.length})</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-slate-900">Ro&apos;yxat ({qq ? `${filtered.length} / ${items.length}` : items.length})</h2>
+          {items.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Qidirish: ism, telefon, guruh…" className="pl-9 w-[240px] h-9" />
+            </div>
+          )}
+        </div>
         {loading && <div className="flex items-center gap-2 text-sm text-slate-500 p-4"><Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda…</div>}
-        {!loading && !items.length && <Card className="p-8 text-center text-sm text-slate-500">Hozircha yozilmagan o&apos;quvchi yo&apos;q</Card>}
-        {!loading && items.map(it => (
+        {!loading && !filtered.length && <Card className="p-8 text-center text-sm text-slate-500">{qq ? "Qidiruv bo'yicha topilmadi" : "Hozircha yozilmagan o'quvchi yo'q"}</Card>}
+        {!loading && filtered.map(it => (
           <Card key={it.id} className="p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
@@ -477,9 +763,15 @@ export default function ReceptionPage() {
                 )}
                 {it.note && <p className="mt-1 text-xs text-slate-400">{it.note}</p>}
               </div>
-              <div className="flex shrink-0 gap-1.5">
+              <div className="flex shrink-0 gap-1.5 flex-wrap justify-end">
                 {it.status === "new" && <Button size="sm" variant="outline" onClick={() => setStatus(it.id, "contacted")}>Aloqa qilindi</Button>}
                 {it.status !== "enrolled" && <Button size="sm" onClick={() => setStatus(it.id, "enrolled")}>Yozildi</Button>}
+                <button onClick={() => { setHwFor(it); setHwErr(""); setHwForm({ title: "", desc: "", due: "" }); }}
+                  className="rounded-lg border border-slate-200 p-2 text-slate-400 hover:text-violet-600 hover:border-violet-300"
+                  title="Uy vazifasi yuborish" aria-label="Uy vazifasi yuborish"><NotebookPen className="h-4 w-4" /></button>
+                <button onClick={() => openEdit(it)}
+                  className="rounded-lg border border-slate-200 p-2 text-slate-400 hover:text-blue-600 hover:border-blue-300"
+                  title="Tahrirlash" aria-label="Tahrirlash"><Pencil className="h-4 w-4" /></button>
                 <button onClick={() => remove(it.id)} className="rounded-lg border border-slate-200 p-2 text-slate-400 hover:text-red-600" aria-label="O'chirish"><Trash2 className="h-4 w-4" /></button>
               </div>
             </div>

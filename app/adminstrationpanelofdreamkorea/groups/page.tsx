@@ -102,6 +102,23 @@ export default function AdminGroupsPage(){
     }catch(e){ toast.error((e as Error).message); }
   }
 
+  // O'quvchini boshqa guruhga ko'chirish: avval yangi guruhga qo'shamiz, keyin eskisidan chiqaramiz
+  async function moveMember(fromGroupId:string, userId:string, toGroupId:string){
+    if(!toGroupId) return;
+    setAdding(fromGroupId);
+    try{
+      const h=authHeader();
+      const r=await fetch(`/api/groups/${toGroupId}/members`,{ method:"POST", headers:{ "Content-Type":"application/json", ...h }, body:JSON.stringify({ userId }) });
+      const d=await r.json();
+      if(!r.ok) throw new Error(d.error||"Qo'shib bo'lmadi");
+      const r2=await fetch(`/api/groups/${fromGroupId}/members?userId=${encodeURIComponent(userId)}`,{ method:"DELETE", headers:h });
+      if(!r2.ok){ const d2=await r2.json().catch(()=>({})); throw new Error(d2.error||"Eskidan chiqarib bo'lmadi"); }
+      toast.success("O'quvchi boshqa guruhga ko'chirildi");
+      await loadGroups();
+    }catch(e){ toast.error((e as Error).message); await loadGroups(); }
+    finally{ setAdding(""); }
+  }
+
   async function addByEmail(groupId:string){
     const email = prompt("O'quvchi emailini kiriting:");
     if(!email) return;
@@ -178,7 +195,14 @@ export default function AdminGroupsPage(){
                       <div className="text-sm font-medium text-slate-900 truncate">{m.user.name}</div>
                       <div className="text-[11px] text-slate-500 truncate">{m.user.email}{m.user.phone ? ` · ${m.user.phone}` : ""}</div>
                     </div>
-                    <button onClick={()=>removeMember(g.id,m.user.id)} className="text-xs text-red-600 hover:underline shrink-0">chiqarish</button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <select value="" onChange={e=>{ const v=e.target.value; if(v) moveMember(g.id, m.user.id, v); e.target.value=""; }}
+                        title="Guruhini almashtirish" className="h-7 max-w-[130px] rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-600">
+                        <option value="">→ Guruh</option>
+                        {groups.filter(x=>x.id!==g.id).map(x=> <option key={x.id} value={x.id}>{x.name}</option>)}
+                      </select>
+                      <button onClick={()=>removeMember(g.id,m.user.id)} className="text-xs text-red-600 hover:underline">chiqarish</button>
+                    </div>
                   </div>
                 ))}
               </div>
