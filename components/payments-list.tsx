@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, CheckCircle2, CalendarDays, Wallet, Hourglass, Users, StickyNote, BellRing, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Search, CheckCircle2, CalendarDays, Wallet, Hourglass, Users, StickyNote, BellRing, RefreshCw, Trash2, Filter } from "lucide-react";
 
 export type PayUser = { id: string; name: string; email: string; groupNames?: string[] };
 export type PayRow = { id: string; amount: number; method: string; month?: string | null; note?: string | null; status: string; createdAt: string; user: PayUser };
@@ -45,6 +45,7 @@ export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, marking
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"" | "PENDING" | "PAID">("");
   const [month, setMonth] = useState("");
+  const [group, setGroup] = useState("");
 
   const searched = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -57,6 +58,14 @@ export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, marking
       || (p.user.groupNames ?? []).join(" ").toLowerCase().includes(t)
     );
   }, [payments, q]);
+
+  const groups = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of payments) {
+      for (const g of p.user.groupNames ?? []) set.add(g);
+    }
+    return [...set].sort();
+  }, [payments]);
 
   const months = useMemo(() => {
     const set = new Set<string>();
@@ -74,8 +83,10 @@ export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, marking
   }, [searched]);
 
   const filtered = useMemo(() => searched.filter(p =>
-    (status ? p.status === status : true) && (month ? (p.month ?? "") === month : true)
-  ), [searched, status, month]);
+    (status ? p.status === status : true)
+    && (month ? (p.month ?? "") === month : true)
+    && (group ? (p.user.groupNames ?? []).includes(group) : true)
+  ), [searched, status, month, group]);
 
   return (
     <div className="space-y-4">
@@ -83,8 +94,13 @@ export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, marking
       <Card className="p-4 flex gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"/>
-          <Input placeholder="Ism / email / guruh / oy / summa / izoh qidirish..." className="pl-9" value={q} onChange={e => setQ(e.target.value)} />
+          <Input placeholder="Ism / email / guruh qidirish..." className="pl-9" value={q} onChange={e => setQ(e.target.value)} />
         </div>
+        {(q || status || month || group) && (
+          <Button variant="outline" onClick={() => { setQ(""); setStatus(""); setMonth(""); setGroup(""); }} className="whitespace-nowrap">
+            Tozalash
+          </Button>
+        )}
         <Button variant="outline" onClick={onRefresh}><RefreshCw className="h-4 w-4 mr-1"/> Yangilash</Button>
       </Card>
 
@@ -128,6 +144,15 @@ export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, marking
             {label}
           </button>
         ))}
+        {groups.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <Filter className="h-4 w-4 text-slate-400"/>
+            <select value={group} onChange={e => setGroup(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs">
+              <option value="">Barcha guruhlar</option>
+              {groups.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+        )}
         {months.length > 0 && (
           <select value={month} onChange={e => setMonth(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs">
             <option value="">Barcha oylar</option>
@@ -142,7 +167,7 @@ export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, marking
         <Card className="p-10 text-center">
           <Wallet className="h-10 w-10 text-slate-300 mx-auto mb-2"/>
           <div className="text-sm font-medium text-slate-600">To&apos;lovlar yo&apos;q</div>
-          <div className="text-xs text-slate-400 mt-1">{q || status || month ? "Filtrlarni o&apos;zgartirib ko&apos;ring" : "Hozircha ro&apos;yxat bo&apos;sh"}</div>
+          <div className="text-xs text-slate-400 mt-1">{q || status || month || group ? "Filtrlarni o&apos;zgartirib ko&apos;ring" : "Hozircha ro&apos;yxat bo&apos;sh"}</div>
         </Card>
       ) : (
         <div className="space-y-2">
