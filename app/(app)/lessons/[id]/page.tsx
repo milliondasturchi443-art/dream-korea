@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type Lesson = { id: string; order: number; title: string; duration: string; videoUrl?: string; content?: string };
 
-export default function LessonPage() {
+function LessonInner() {
   const params = useParams<{ id: string }>();
   const lessonId = params.id;
   const search = useSearchParams();
@@ -177,3 +177,12 @@ export default function LessonPage() {
     </div>
   );
 }
+
+function LessonSuspense() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Yuklanmoqda…</div>}>
+      <LessonInner />
+    </Suspense>
+  );
+}
+export default LessonSuspense;

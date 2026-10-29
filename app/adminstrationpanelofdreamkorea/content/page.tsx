@@ -1,5 +1,5 @@
 "use client";
-import { createElement, useCallback, useEffect, useState } from "react";
+import { createElement, Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ function CardIconPreview({ name, className }: { name: string; className?: string
   return createElement(cardIcon(name), { className });
 }
 
-export default function AdminContentPage() {
+function AdminContentInner() {
   const [tab, setTab] = useState<TabId>("kurslar");
   const router = useRouter();
   const pathname = usePathname();
@@ -659,3 +659,12 @@ export default function AdminContentPage() {
     </div>
   );
 }
+
+function AdminContentSuspense() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Yuklanmoqda…</div>}>
+      <AdminContentInner />
+    </Suspense>
+  );
+}
+export default AdminContentSuspense;

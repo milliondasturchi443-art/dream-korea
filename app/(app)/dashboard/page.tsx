@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -12,7 +12,7 @@ import { getCompleted } from "@/lib/lesson-progress";
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; lessons: number; color: string };
 
-export default function DashboardPage() {
+function DashboardInner() {
   const [role, setRole] = useState("");
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [userName, setUserName] = useState("Talaba");
@@ -192,5 +192,13 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Yuklanmoqda…</div>}>
+      <DashboardInner />
+    </Suspense>
   );
 }
