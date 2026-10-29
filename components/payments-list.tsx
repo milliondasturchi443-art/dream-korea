@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, CheckCircle2, CalendarDays, Wallet, Hourglass, Users, StickyNote, BellRing, RefreshCw, Trash2, Filter } from "lucide-react";
+import { Loader2, Search, X, CheckCircle2, CalendarDays, Wallet, Hourglass, Users, StickyNote, BellRing, RefreshCw, Trash2, Filter } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type PayUser = { id: string; name: string; email: string; groupNames?: string[] };
 export type PayRow = { id: string; amount: number; method: string; month?: string | null; note?: string | null; status: string; createdAt: string; user: PayUser };
@@ -91,17 +92,55 @@ export function PaymentsList({ payments, loading, onRefresh, onMarkPaid, marking
   return (
     <div className="space-y-4">
       {/* Qidirish + yangilash */}
-      <Card className="p-4 flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"/>
-          <Input placeholder="Ism / email / guruh qidirish..." className="pl-9" value={q} onChange={e => setQ(e.target.value)} />
-        </div>
-        {(q || status || month || group) && (
-          <Button variant="outline" onClick={() => { setQ(""); setStatus(""); setMonth(""); setGroup(""); }} className="whitespace-nowrap">
-            Tozalash
+      <Card className="p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"/>
+            <Input
+              placeholder="O‘quvchi ismi yoki emailini yozing…"
+              aria-label="O‘quvchi bo‘yicha qidirish"
+              className="pl-9 pr-9"
+              value={q}
+              onChange={e => setQ(e.target.value)}
+            />
+            {q && (
+              <button
+                type="button"
+                onClick={() => setQ("")}
+                aria-label="Qidiruvni tozalash"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="h-4 w-4"/>
+              </button>
+            )}
+          </div>
+          {(q || status || month || group) && (
+            <Button variant="outline" onClick={() => { setQ(""); setStatus(""); setMonth(""); setGroup(""); }} className="whitespace-nowrap">
+              Filtrlarni tozalash
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={onRefresh}
+            disabled={loading}
+            title="Ma’lumotlarni yangilash"
+            aria-label="Ma’lumotlarni yangilash"
+            className="px-3"
+          >
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")}/>
+            <span className="ml-1.5 hidden sm:inline">{loading ? "Yangilanmoqda…" : "Yangilash"}</span>
           </Button>
-        )}
-        <Button variant="outline" onClick={onRefresh}><RefreshCw className="h-4 w-4 mr-1"/> Yangilash</Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+          <span>
+            {filtered.length === payments.length
+              ? `Jami ${payments.length} ta yozuv`
+              : `${payments.length} tadan ${filtered.length} tasi ko‘rsatilgan`}
+          </span>
+          {(q || status || month || group) && (
+            <span className="text-slate-400">— filtrlar ustida</span>
+          )}
+        </div>
       </Card>
 
       {/* Statistika */}
