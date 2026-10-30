@@ -178,7 +178,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* mobile bottom nav — floating glass pill (mac'tak uslubi): faol band qora pillcha + neon chiziq */}
       <nav aria-label="Pastki navigatsiya" className="md:hidden fixed bottom-0 inset-x-0 z-30 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto flex w-full max-w-[520px] items-center justify-between rounded-[26px] border border-white/50 bg-white/30 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.9),inset_0_-1px_0_rgba(255,255,255,.4),0_18px_40px_-16px_rgba(15,27,61,.55)] backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-[520px] items-center justify-between rounded-[26px] border border-white/60 bg-white/75 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.95),0_18px_40px_-16px_rgba(15,27,61,.4)] backdrop-blur-md">
           {[
             { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
             { href: "/dars", icon: BookOpen, label: "Darslar" },
@@ -191,15 +191,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             const active = pathname === i.href;
             return (
               <Fragment key={i.label}>
-                {idx > 0 && <span aria-hidden="true" className="h-7 w-px shrink-0 bg-white/60" />}
+                {idx > 0 && <span aria-hidden="true" className="h-7 w-px shrink-0 bg-slate-300/80" />}
                 <Link
                   href={i.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 py-1.5 text-[10px] font-semibold whitespace-nowrap transition active:scale-95",
                     active
-                      ? "bg-[#0b1220]/92 text-white shadow-[0_10px_22px_-10px_rgba(11,18,32,.95)] nav-pop"
-                      : "text-white/95 [text-shadow:0_1px_3px_rgba(15,27,61,.55)] hover:bg-white/25"
+                      ? "bg-[#2563eb] text-white shadow-[0_10px_22px_-10px_rgba(37,99,235,.9)] nav-pop"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   )}
                 >
                   <i.icon className="h-5 w-5" />
