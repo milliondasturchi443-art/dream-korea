@@ -145,7 +145,8 @@ a, button { -webkit-tap-highlight-color: transparent; }
   --dk-nav-h: 56px;
   --dk-safe-b: env(safe-area-inset-bottom, 0px);
   --dk-safe-t: env(safe-area-inset-top, 0px);
-  --dk-bottom-nav: calc(var(--dk-nav-h) + var(--dk-safe-b));
+  /* pastki pill-nav: p-1.5*2 + min-h-44 + pb 8px = 64px */
+  --dk-bottom-nav: calc(64px + var(--dk-safe-b));
   /* FAB/chat offsets — mobile: above bottom-nav; desktop: no bottom nav */
   --dk-fab-bottom: calc(var(--dk-bottom-nav) + 12px);
   --dk-chat-bottom: calc(var(--dk-bottom-nav) + 76px);

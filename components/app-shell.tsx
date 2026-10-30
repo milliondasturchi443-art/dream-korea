@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { doLogout } from "@/lib/logout";
@@ -176,24 +176,40 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* mobile bottom nav — safe-area + 44px min tap */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 glass border-t border-t-white/70 flex items-center justify-around py-1 z-30 safe-bottom" style={{ minHeight: "var(--dk-nav-h)" }}>
-        {[
-          { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
-          { href: "/dars", icon: BookOpen, label: "Darslar" },
-          { href: "/topik", icon: FileText, label: "TOPIK" },
-          { href: "/vocabulary", icon: Library, label: "Lug'at" },
-          // Ustoz kabineti — faqat TEACHER (Lug'at va Profil orasida)
-          ...(role === "TEACHER" && !viewAsStudent ? [{ href: "/teacher", icon: GraduationCap, label: "Ustoz" }] : []),
-          { href: "/profile", icon: User, label: "Profil" },
-        ].map(i => {
-          const active = pathname === i.href;
-          return (
-            <Link key={i.label} href={i.href} className={cn("flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 rounded-xl text-[10px] font-medium min-h-[44px] min-w-[44px] whitespace-nowrap active:scale-90 transition-transform", active ? "text-[#2563eb] bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_8px_20px_-12px_rgba(15,27,61,.35)] nav-pop" : "text-slate-500")}>
-              <i.icon className="h-5 w-5" /> {i.label}
-            </Link>
-          );
-        })}
+      {/* mobile bottom nav — floating glass pill (mac'tak uslubi): faol band qora pillcha + neon chiziq */}
+      <nav aria-label="Pastki navigatsiya" className="md:hidden fixed bottom-0 inset-x-0 z-30 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto flex w-full max-w-[520px] items-center justify-between rounded-[26px] border border-white/50 bg-white/30 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.9),inset_0_-1px_0_rgba(255,255,255,.4),0_18px_40px_-16px_rgba(15,27,61,.55)] backdrop-blur-md">
+          {[
+            { href: "/dashboard", icon: LayoutDashboard, label: "Asosiy" },
+            { href: "/dars", icon: BookOpen, label: "Darslar" },
+            { href: "/topik", icon: FileText, label: "TOPIK" },
+            { href: "/vocabulary", icon: Library, label: "Lug'at" },
+            // Ustoz kabineti — faqat TEACHER (Lug'at va Profil orasida)
+            ...(role === "TEACHER" && !viewAsStudent ? [{ href: "/teacher", icon: GraduationCap, label: "Ustoz" }] : []),
+            { href: "/profile", icon: User, label: "Profil" },
+          ].map((i, idx) => {
+            const active = pathname === i.href;
+            return (
+              <Fragment key={i.label}>
+                {idx > 0 && <span aria-hidden="true" className="h-7 w-px shrink-0 bg-white/60" />}
+                <Link
+                  href={i.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 py-1.5 text-[10px] font-semibold whitespace-nowrap transition active:scale-95",
+                    active
+                      ? "bg-[#0b1220]/92 text-white shadow-[0_10px_22px_-10px_rgba(11,18,32,.95)] nav-pop"
+                      : "text-white/95 [text-shadow:0_1px_3px_rgba(15,27,61,.55)] hover:bg-white/25"
+                  )}
+                >
+                  <i.icon className="h-5 w-5" />
+                  {i.label}
+                  {active && <span aria-hidden="true" className="absolute -bottom-1 h-1 w-8 rounded-full bg-[#93c5fd] shadow-[0_0_10px_3px_rgba(147,197,253,.95)]" />}
+                </Link>
+              </Fragment>
+            );
+          })}
+        </div>
       </nav>
       <AiFab />
     </div>
