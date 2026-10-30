@@ -34,12 +34,12 @@ function displayTitle(u: Unit) {
 
 // Unit mavzusi bo'yicha navbatdagi rangli tema (mac'takdagi kabi)
 const THEMES = [
-  { icon: Sprout, ico: "from-emerald-400 to-green-600", card: "from-emerald-50 via-green-50 to-white", ring: "ring-emerald-200/70", bar: "from-emerald-400 to-green-500", btn: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200", badge: "text-emerald-700", blob: "bg-emerald-200/40" },
-  { icon: MessageCircle, ico: "from-violet-400 to-purple-600", card: "from-violet-50 via-purple-50 to-white", ring: "ring-violet-200/70", bar: "from-violet-400 to-purple-500", btn: "bg-violet-100 text-violet-800 hover:bg-violet-200", badge: "text-violet-700", blob: "bg-violet-200/40" },
-  { icon: UtensilsCrossed, ico: "from-amber-400 to-orange-500", card: "from-amber-50 via-orange-50 to-white", ring: "ring-amber-200/70", bar: "from-amber-400 to-orange-500", btn: "bg-amber-100 text-amber-800 hover:bg-amber-200", badge: "text-amber-700", blob: "bg-amber-200/40" },
-  { icon: CalendarDays, ico: "from-sky-400 to-blue-600", card: "from-sky-50 via-blue-50 to-white", ring: "ring-sky-200/70", bar: "from-sky-400 to-blue-500", btn: "bg-sky-100 text-sky-800 hover:bg-sky-200", badge: "text-sky-700", blob: "bg-sky-200/40" },
-  { icon: Music, ico: "from-rose-400 to-pink-600", card: "from-rose-50 via-pink-50 to-white", ring: "ring-rose-200/70", bar: "from-rose-400 to-pink-500", btn: "bg-rose-100 text-rose-800 hover:bg-rose-200", badge: "text-rose-700", blob: "bg-rose-200/40" },
-  { icon: Plane, ico: "from-teal-400 to-cyan-600", card: "from-teal-50 via-cyan-50 to-white", ring: "ring-teal-200/70", bar: "from-teal-400 to-cyan-500", btn: "bg-teal-100 text-teal-800 hover:bg-teal-200", badge: "text-teal-700", blob: "bg-teal-200/40" },
+  { icon: Sprout, ico: "from-emerald-400 to-green-600", card: "from-emerald-50 via-green-50 to-white", ring: "ring-emerald-200/70", bar: "from-emerald-400 to-green-500", btn: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200", badge: "text-emerald-700", blob: "bg-emerald-200/40", stroke: "#10b981" },
+  { icon: MessageCircle, ico: "from-violet-400 to-purple-600", card: "from-violet-50 via-purple-50 to-white", ring: "ring-violet-200/70", bar: "from-violet-400 to-purple-500", btn: "bg-violet-100 text-violet-800 hover:bg-violet-200", badge: "text-violet-700", blob: "bg-violet-200/40", stroke: "#8b5cf6" },
+  { icon: UtensilsCrossed, ico: "from-amber-400 to-orange-500", card: "from-amber-50 via-orange-50 to-white", ring: "ring-amber-200/70", bar: "from-amber-400 to-orange-500", btn: "bg-amber-100 text-amber-800 hover:bg-amber-200", badge: "text-amber-700", blob: "bg-amber-200/40", stroke: "#f59e0b" },
+  { icon: CalendarDays, ico: "from-sky-400 to-blue-600", card: "from-sky-50 via-blue-50 to-white", ring: "ring-sky-200/70", bar: "from-sky-400 to-blue-500", btn: "bg-sky-100 text-sky-800 hover:bg-sky-200", badge: "text-sky-700", blob: "bg-sky-200/40", stroke: "#0ea5e9" },
+  { icon: Music, ico: "from-rose-400 to-pink-600", card: "from-rose-50 via-pink-50 to-white", ring: "ring-rose-200/70", bar: "from-rose-400 to-pink-500", btn: "bg-rose-100 text-rose-800 hover:bg-rose-200", badge: "text-rose-700", blob: "bg-rose-200/40", stroke: "#f43f5e" },
+  { icon: Plane, ico: "from-teal-400 to-cyan-600", card: "from-teal-50 via-cyan-50 to-white", ring: "ring-teal-200/70", bar: "from-teal-400 to-cyan-500", btn: "bg-teal-100 text-teal-800 hover:bg-teal-200", badge: "text-teal-700", blob: "bg-teal-200/40", stroke: "#14b8a6" },
 ];
 
 export default function DarsPage() {
@@ -132,12 +132,13 @@ export default function DarsPage() {
       </Card>
     )}
 
-    <ol className="relative space-y-4 py-2">
+    <ol className="relative space-y-9 py-2">
       {data.units.map((unit, index) => {
         const p = data.progress.find(p => p.unitId === unit.id);
         const unlocked = data.units.slice(0, index).every(u => data.progress.some(p => p.unitId === u.id && p.stars > 0));
         const percent = percentOf(unit, p);
         const th = THEMES[index % THEMES.length]!;
+        const prevTh = THEMES[(index - 1 + THEMES.length) % THEMES.length]!;
         const Icon = th.icon;
         const isDone = percent === 100;
 
@@ -171,7 +172,20 @@ export default function DarsPage() {
         }
 
         return [
-          <li key={unit.id} className={unlocked ? "" : "opacity-70"}>
+          <li key={unit.id} className={`relative ${unlocked ? "" : "opacity-70"}`}>
+            {/* Unitlar orasidagi gradient chiziq (mac'takdagi kabi) */}
+            {index > 0 && (
+              <svg aria-hidden="true" className="pointer-events-none absolute -top-9 left-0 z-10 h-9 w-16" viewBox="0 0 64 36" fill="none">
+                <defs>
+                  <linearGradient id={`dk-conn-${index}`} x1="32" y1="0" x2="32" y2="36" gradientUnits="userSpaceOnUse">
+                    <stop stopColor={prevTh.stroke} />
+                    <stop offset="1" stopColor={th.stroke} />
+                  </linearGradient>
+                </defs>
+                <path d="M48 0 C48 12 8 10 8 18 C8 26 48 24 48 36" stroke={`url(#dk-conn-${index})`} strokeWidth="3.5" strokeLinecap="round" />
+                <circle cx="8" cy="18" r="4.5" fill={th.stroke} stroke="white" strokeWidth="2.5" />
+              </svg>
+            )}
             <Card className={`group relative overflow-hidden border-0 bg-gradient-to-r ${th.card} p-4 ring-1 sm:p-5 ${unlocked ? `${th.ring} transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg` : "ring-slate-200"}`}>
               {/* bezak — poyalchalar */}
               <div aria-hidden className={`pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full ${th.blob} blur-2xl`} />
