@@ -19,12 +19,12 @@ type ApiCourse = { id: string; title: string; level: string; lessons: number };
 /* — bo'lim sarlavhasi: kvadrat ikonka + qalin matn + gradient chiziq — */
 function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
   return (
-    <div className="mb-3 flex items-center gap-2.5">
+    <div className="mb-4 flex items-center gap-4">
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white shadow-[0_8px_18px_-8px_rgba(37,99,235,.9)]">
         <Icon className="h-[18px] w-[18px]" />
       </span>
       <h2 className="text-[17px] font-extrabold tracking-tight text-slate-900">{title}</h2>
-      <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-slate-300 via-slate-200 to-transparent" />
+      <span aria-hidden="true" className="ml-auto h-px w-12 flex-1 bg-gradient-to-r from-slate-300 via-slate-200 to-transparent" />
     </div>
   );
 }
