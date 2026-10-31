@@ -1,4 +1,4 @@
-const CACHE = "dk-shell-v1";
+const CACHE = "dk-shell-v2";
 const OFFLINE = "/offline.html";
 
 self.addEventListener("install", (event) => {
@@ -51,20 +51,20 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Page navigations (app open / hard load): stale-while-revalidate
+  // Page navigations: network-first (always show latest deploy), cache = offline fallback
   if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
     event.respondWith(
-      caches.open(CACHE).then(async (cache) => {
-        const cached = await cache.match(req, { ignoreSearch: true });
-        const network = fetch(req)
-          .then((resp) => {
-            if (resp && resp.ok) cache.put(req, resp.clone());
-            return resp;
-          })
-          .catch(() => cached || cache.match(OFFLINE));
-        // Serve cache instantly if we have it; revalidate in background
-        return cached || network;
-      })
+      fetch(req)
+        .then((resp) => {
+          if (resp && resp.ok) {
+            const copy = resp.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return resp;
+        })
+        .catch(() =>
+          caches.open(CACHE).then((cache) => cache.match(req, { ignoreSearch: true })).then((c) => c || caches.match(OFFLINE))
+        )
     );
   }
 });
