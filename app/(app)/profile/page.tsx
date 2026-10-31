@@ -4,13 +4,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { isValidUZ, telHref } from "@/lib/phone";
+import { formatUZ, isValidUZ, telHref } from "@/lib/phone";
 import { SITE_PHONE_DISPLAY } from "@/lib/site";
 import { doLogout } from "@/lib/logout";
 import {
   LogOut, Loader2, Camera, BadgeCheck, ShieldHalf, Target,
-  UserRound, AtSign, Phone, ChevronRight, Save, BarChart3, FileBadge, UserRoundCog,
+  UserRound, AtSign, Phone, ChevronRight, Save, BarChart3, UserRoundCog,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCompleted } from "@/lib/lesson-progress";
@@ -97,7 +96,10 @@ export default function ProfilePage() {
     fetch("/api/courses").then(r => r.json()).then(d => { if (Array.isArray(d.courses)) setCourses(d.courses); }).catch(() => {});
     setLoaded(true);
     const sc = localStorage.getItem("dk_topik_score");
-    if (sc !== null) setTopikScore(Number(sc));
+    if (sc !== null) {
+      const n = Number(sc);
+      if (Number.isFinite(n) && n >= 0) setTopikScore(n);
+    }
   }, []);
 
   async function save() {
@@ -245,12 +247,20 @@ export default function ProfilePage() {
 
           <FieldRow icon={Phone}>
             <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Telefon</label>
-            <PhoneInput
-              value={phone}
-              onValueChange={setPhone}
-              placeholder="+998 94 328 05 13"
-              className="mt-0.5 h-9 border-0 bg-transparent px-0 shadow-none focus:ring-0 text-base font-semibold text-slate-900"
-            />
+            <div className="relative mt-0.5">
+              <span aria-hidden="true" className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 rounded-lg bg-[#eef4fd] px-2 py-0.5 text-[11px] font-extrabold tracking-wide text-[#2563eb]">
+                UZ
+              </span>
+              <Input
+                inputMode="tel"
+                autoComplete="tel"
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(formatUZ(e.target.value))}
+                placeholder="+998 94 328 05 13"
+                className="mt-0.5 h-9 border-0 bg-transparent pl-10 pr-0 shadow-none focus:ring-0 focus:outline-none text-base font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400"
+              />
+            </div>
             {phone && !isValidUZ(phone) && (
               <a href={telHref(SITE_PHONE_DISPLAY)} target="_blank" rel="noopener noreferrer"
                  className="mt-1 inline-flex text-xs font-semibold text-[#2563eb] hover:underline">
@@ -307,20 +317,6 @@ export default function ProfilePage() {
               )}
             </>
           )}
-        </div>
-      </section>
-
-      {/* ——— Sertifikatlar ——— */}
-      <section className="anim-fade-up" style={{ animationDelay: "180ms" }}>
-        <SectionTitle icon={FileBadge} title="Sertifikatlar" />
-        <div className="glass flex items-center gap-4 rounded-[28px] p-5">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#eef4fd] text-[#2563eb]">
-            <FileBadge className="h-7 w-7" />
-          </span>
-          <div>
-            <p className="font-extrabold text-slate-900">Sertifikatlar tez orada</p>
-            <p className="mt-0.5 text-sm text-slate-500">Kursni yakunlagach sertifikat olasiz — shu yerda ko‘rinadi.</p>
-          </div>
         </div>
       </section>
 
