@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     }
     await initializePaymentMonth(month);
     const [students, accounts, payments] = await financialTransaction(async tx => Promise.all([
-      tx.user.findMany({ where: { role: "STUDENT" }, select: studentSelect, orderBy: { name: "asc" } }),
+      tx.user.findMany({ where: { role: "STUDENT", OR: [{ archivedAt: null }, { archivedAt: { isSet: false } }] }, select: studentSelect, orderBy: { name: "asc" } }),
       tx.paymentMonth.findMany(),
       tx.payment.findMany({ orderBy: { createdAt: "desc" }, include: { user: { select: { name: true } } } }),
     ]));

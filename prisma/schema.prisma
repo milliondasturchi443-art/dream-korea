@@ -50,6 +50,9 @@ model User {
   tokenVersion Int?
   monthlyFee Int?
   lessonHours Float?
+  // Arxiv: dublikat/o'chirilgan o'quvchi ro'yxatlardan yashiriladi, lekin
+  // moliyaviy tarix (Payment) saqlanib qoladi. NULL — faol hisob.
+  archivedAt DateTime?
   // Telefonning normallashtirilgan kaliti (lib/phone.ts phoneKey) — tez unikal tekshiruv
   phoneKey    String?
   // Talaba parolining shifrlangan nusxasi (AES-256-GCM, kalit AUTH_SECRET'dan).

@@ -4,13 +4,6 @@ import { isAdminEmail } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-function requireAdmin(req: Request) {
-  const token = readAuthToken(req);
-  const d = verify(token);
-  if (!d || d.role !== "ADMIN" || !isAdminEmail(String(d.email ?? ""))) return null;
-  return d;
-}
-
 // GET /api/users?q= — ro'yxat (ADMIN o'qiydi, TEACHER faqat o'qiydi)
 export async function GET(req: Request) {
   const token = readAuthToken(req);
@@ -23,6 +16,10 @@ export async function GET(req: Request) {
     return Response.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
   const q = (new URL(req.url).searchParams.get("q") || "").trim().toLowerCase();
+  // Arxivlangan hisoblar standart holatda ko'rinmaydi (dublikat/o'chirilgan
+  // o'quvchilar boshqa sahifalarda tanlovga tushmasin). Admin ularni faqat
+  // ?archived=1 bilan ko'radi.
+  const includeArchived = new URL(req.url).searchParams.get("archived") === "1" && role === "ADMIN" && emailOk;
   try {
     // TEACHER — faqat o'zi dars beradigan guruhlar a'zolarini ko'ra oladi
     let scopedIds: Set<string> | null = null;
@@ -47,10 +44,12 @@ export async function GET(req: Request) {
     const users = await prisma.user.findMany({
       select: {
         id: true, name: true, email: true, phone: true, role: true, topikLevel: true, createdAt: true,
-        banned: true, bannedAt: true, bannedReason: true, lastIp: true, lastIpAt: true, regIp: true,
+        banned: true, bannedAt: true, bannedReason: true, lastIp: true, lastIpAt: true, regIp: true, archivedAt: true,
         _count: { select: { lessonProgress: true, testAttempts: true, enrollments: true } },
       },
-      where: scopedIds ? { id: { in: [...scopedIds] } } : undefined,
+      where: scopedIds
+        ? { id: { in: [...scopedIds] }, ...(includeArchived ? {} : { OR: [{ archivedAt: null }, { archivedAt: { isSet: false } }] }) }
+        : includeArchived ? undefined : { OR: [{ archivedAt: null }, { archivedAt: { isSet: false } }] },
       orderBy: { createdAt: "desc" },
       take: scopedIds ? 300 : 300,
     });

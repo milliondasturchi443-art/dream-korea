@@ -35,7 +35,7 @@ export async function financialTransaction<T>(run: (tx: Prisma.TransactionClient
 }
 
 export async function initializePaymentMonth(billingMonth: string) {
-  const students = await prisma.user.findMany({ where: { role: "STUDENT" }, select: studentSelect });
+  const students = await prisma.user.findMany({ where: { role: "STUDENT", OR: [{ archivedAt: null }, { archivedAt: { isSet: false } }] }, select: studentSelect });
   const existing = await prisma.paymentMonth.findMany({ where: { billingMonth }, select: { userId: true } });
   const have = new Set(existing.map(row => row.userId));
   // Lazy, durable month opening: each student gets an independent snapshot.

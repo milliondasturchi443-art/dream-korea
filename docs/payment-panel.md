@@ -14,6 +14,24 @@
 - Financial entries are not deleted. **Bekor qilish** preserves the original and records a reason in `ActivityLog`; incorrect entries can then be replaced. Refunds prevent invalid cancellation of spent receipts.
 - Teachers retain read access to their students' receipt/reminder list, but financial writes are administrator-only.
 
+## Students, duplicates and archiving
+
+Deleting a student is intentionally conservative, because the same account can own real money.
+
+| Action | Behaviour |
+|---|---|
+| `DELETE /api/users/[id]` | Works only when the student has **no** `Payment`. Empty `PaymentMonth` rows do not block it: the panel creates them automatically, so they are not financial history. Related progress rows are removed in one transaction. |
+| `DELETE` on an account with payments | Returns `409` with `code: HAS_FINANCIAL_HISTORY`. Nothing is deleted. |
+| `PATCH /api/users/[id] { archived: true }` | Sets `User.archivedAt`. The student disappears from lists and from the payment panel, but every `Payment` stays intact and is still included in history and totals. |
+| `POST /api/users/[id]/merge { targetId }` | Moves all `Payment` and `PaymentMonth` rows to the target student, then removes the duplicate account. Writes an `ActivityLog` entry `STUDENT_MERGED`. |
+
+Archived accounts are hidden by default. The admin users page requests `/api/users?archived=1` and shows an "Arxivni ko'rsatish" toggle.
+
+**Important MongoDB detail:** `archivedAt: null` does **not** match documents where the field is missing, and every pre-existing student lacks that field. Every archive filter therefore uses
+`OR: [{ archivedAt: null }, { archivedAt: { isSet: false } }]`. Using only `null` silently hides the entire student body.
+
+Deleting a teacher is blocked while they still own groups or homework (`code: TEACHER_HAS_ASSIGNMENTS`), so groups never end up without a teacher.
+
 ## Deployment
 
 1. Take the normal MongoDB backup/snapshot before releasing financial changes.
