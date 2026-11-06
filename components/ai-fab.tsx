@@ -57,6 +57,14 @@ export function AiFab() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  // Dragging the floating button must not drag/scroll the page underneath it.
+  useEffect(() => {
+    if (!dragging) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [dragging]);
+
   // Saqlangan pozitsiyani tiklash + oynani o'zgarsa chegarada ushlab turish
   useEffect(() => {
     queueMicrotask(() => {
@@ -79,6 +87,8 @@ export function AiFab() {
 
   function onFabPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
     if (e.button !== 0 && e.pointerType === "mouse") return;
+    e.preventDefault();
+    e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     dragRef.current = {
       id: e.pointerId,
@@ -94,6 +104,8 @@ export function AiFab() {
   function onFabPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
     const d = dragRef.current;
     if (!d || d.id !== e.pointerId) return;
+    e.preventDefault();
+    e.stopPropagation();
     const dx = e.clientX - d.startX;
     const dy = e.clientY - d.startY;
     if (!d.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
@@ -105,6 +117,8 @@ export function AiFab() {
   }
 
   function onFabPointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
     const d = dragRef.current;
     dragRef.current = null;
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
@@ -181,6 +195,7 @@ export function AiFab() {
         onPointerMove={onFabPointerMove}
         onPointerUp={onFabPointerUp}
         onPointerCancel={onFabPointerCancel}
+        onContextMenu={e => e.preventDefault()}
         onClick={e => { if (e.detail === 0) setOpen(v => !v); }}
         aria-label={open ? "AI yopish" : "Axrorbek AI ochish"}
         className={`fixed z-40 h-14 w-14 rounded-full bg-[#2563eb] text-white shadow-[0_8px_24px_-6px_rgba(37,99,235,.55)] grid place-items-center select-none transition-[box-shadow,transform] duration-150 ${dragging ? "cursor-grabbing shadow-[0_12px_32px_-6px_rgba(37,99,235,.7)] scale-110" : "cursor-grab active:scale-95"}`}
