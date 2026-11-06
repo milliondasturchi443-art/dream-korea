@@ -8,7 +8,7 @@ export const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value =
 }, "Sana noto‘g‘ri");
 export const operationSchema = z.object({
   requestId: z.string().uuid(),
-  action: z.enum(["PAYMENT", "REFUND", "TARIFF", "VOID", "CONFIRM", "ASSIGN", "REMINDER"]),
+  action: z.enum(["PAYMENT", "REFUND", "TARIFF", "VOID", "CONFIRM", "ASSIGN", "REMINDER", "EDIT"]),
   userId: z.string().regex(/^[a-f\d]{24}$/i),
   billingMonth: monthSchema,
   tuition: moneySchema.optional(),

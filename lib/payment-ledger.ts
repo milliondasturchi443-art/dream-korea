@@ -118,6 +118,24 @@ export async function mutateLedger(input: z.infer<typeof operationSchema>, actor
           if (!input.note) throw new PaymentError("Bekor qilish sababini kiriting");
           if (p.status === "PAID" && p.operationType !== "REFUND" && totals.net < p.amount) throw new PaymentError("Avval qaytarishlarni tekshiring: qoldiq manfiy bo‘lishi mumkin", 409);
           await tx.payment.update({ where: { id: p.id }, data: { voidedAt: new Date() } });
+        } else if (input.action === "EDIT") {
+          if (p.operationType === "REFUND" || p.status !== "PAID") throw new PaymentError("Faqat tasdiqlangan to‘lovni o‘zgartirish mumkin", 409);
+          if (input.amount === undefined || !input.operationDate) throw new PaymentError("Summa va operatsiya sanasi kerak");
+          const otherPayments = monthly.filter(other => other.id !== p.id);
+          const otherTotals = accountTotals(account.tuition, otherPayments);
+          if (otherTotals.net + input.amount < 0) throw new PaymentError("To‘lov summasi qaytarilgan mablag‘dan kam bo‘lishi mumkin emas", 409);
+          await tx.payment.update({ where: { id: p.id }, data: {
+            amount: input.amount,
+            operationDate: input.operationDate,
+            paidAt: new Date(`${input.operationDate}T00:00:00Z`),
+            note: input.note || null,
+          } });
+          await tx.activityLog.create({ data: { action: "PAYMENT_EDIT", meta: {
+            actorId, paymentId: p.id, userId: input.userId, billingMonth: input.billingMonth,
+            oldAmount: p.amount, newAmount: input.amount,
+            oldOperationDate: p.operationDate, newOperationDate: input.operationDate,
+            oldNote: p.note, newNote: input.note || null,
+          } } });
         } else {
           if (p.status !== "PENDING" || !input.operationDate) throw new PaymentError("Faqat kutilayotgan to‘lovni sana bilan tasdiqlash mumkin");
           if (account.tuition === null) throw new PaymentError("Avval oylik narxni belgilang");

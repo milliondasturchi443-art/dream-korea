@@ -35,8 +35,15 @@ async function main() {
   assert.equal((await totals("2026-10")).debt, 250000);
   await op({ action: "PAYMENT", amount: 250000, operationDate: "2026-10-15" });
   assert.equal((await totals("2026-10")).debt, 0);
+  const editable = await prisma.payment.findFirstOrThrow({ where: { userId: s.id, amount: 250000, operationType: "PAYMENT" } });
+  await op({ action: "EDIT", paymentId: editable.id, amount: 300000, operationDate: "2026-10-16", note: "Corrected receipt" });
+  const edited = await prisma.payment.findUniqueOrThrow({ where: { id: editable.id } });
+  assert.equal(edited.amount, 300000);
+  assert.equal(edited.operationDate, "2026-10-16");
+  assert.equal(edited.note, "Corrected receipt");
+  assert.equal((await totals("2026-10")).net, 500000);
   await op({ action: "REFUND", amount: 150000, operationDate: "2026-10-20" });
-  assert.equal((await totals("2026-10")).net, 300000);
+  assert.equal((await totals("2026-10")).net, 350000);
   await op({ action: "TARIFF", tuition: 420000, billingMonth: "2026-11", lessonHours: 12 });
   assert.equal((await totals("2026-11")).received, 0);
   assert.equal((await totals("2026-11")).debt, 420000);
