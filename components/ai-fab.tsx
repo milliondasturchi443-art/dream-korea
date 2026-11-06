@@ -13,6 +13,7 @@ const prompts = [
 
 const FAB_POS_KEY = "dk_fab_pos";
 const FAB_SIZE = 56;
+const FAB_MARGIN = 16;
 const DRAG_THRESHOLD = 6;
 
 type FabPos = { left: number; top: number };
@@ -21,8 +22,8 @@ function clampFab(left: number, top: number): FabPos {
   const vw = typeof window !== "undefined" ? window.innerWidth : 360;
   const vh = typeof window !== "undefined" ? window.innerHeight : 740;
   return {
-    left: Math.min(Math.max(left, 8), Math.max(8, vw - FAB_SIZE - 8)),
-    top: Math.min(Math.max(top, 8), Math.max(8, vh - FAB_SIZE - 8)),
+    left: Math.min(Math.max(left, FAB_MARGIN), Math.max(FAB_MARGIN, vw - FAB_SIZE - FAB_MARGIN)),
+    top: Math.min(Math.max(top, FAB_MARGIN), Math.max(FAB_MARGIN, vh - FAB_SIZE - FAB_MARGIN)),
   };
 }
 
@@ -118,7 +119,7 @@ export function AiFab() {
     setPos(p => {
       if (!p) return p;
       const vw = window.innerWidth;
-      const snapped = clampFab(p.left + FAB_SIZE / 2 < vw / 2 ? 8 : vw - FAB_SIZE - 8, p.top);
+       const snapped = clampFab(p.left + FAB_SIZE / 2 < vw / 2 ? FAB_MARGIN : vw - FAB_SIZE - FAB_MARGIN, p.top);
       savePos(snapped);
       return snapped;
     });
@@ -170,7 +171,7 @@ export function AiFab() {
   // FAB pozitsiyasi: saqlangan bo'lsa — undan, aks holda o'ng pastki burchak
   const fabStyle: React.CSSProperties = pos
     ? { left: pos.left, top: pos.top, right: "auto", bottom: "auto" }
-    : { right: 16, bottom: "var(--dk-fab-bottom)" };
+     : { right: "var(--dk-fab-right)", bottom: "var(--dk-fab-bottom)" };
 
   return (
     <>
@@ -195,14 +196,14 @@ export function AiFab() {
           style={
             pos
               ? {
-                  left: pos.left + FAB_SIZE / 2 > (typeof window !== "undefined" ? window.innerWidth : 360) / 2
-                    ? Math.max(12, pos.left + FAB_SIZE - Math.min(400, (typeof window !== "undefined" ? window.innerWidth : 360) - 24))
-                    : pos.left,
+                   left: pos.left + FAB_SIZE / 2 > (typeof window !== "undefined" ? window.innerWidth : 360) / 2
+                     ? Math.max(FAB_MARGIN, pos.left + FAB_SIZE - Math.min(400, (typeof window !== "undefined" ? window.innerWidth : 360) - FAB_MARGIN * 2))
+                     : Math.min(pos.left, Math.max(FAB_MARGIN, (typeof window !== "undefined" ? window.innerWidth : 360) - FAB_MARGIN * 2 - Math.min(400, (typeof window !== "undefined" ? window.innerWidth : 360) - FAB_MARGIN * 2))),
                   bottom: Math.max(12, (typeof window !== "undefined" ? window.innerHeight : 740) - pos.top + 12),
                   height: "min(520px, calc(100dvh - 220px))",
                 }
               : {
-                  right: 12,
+                   right: "var(--dk-fab-right)",
                   bottom: "var(--dk-chat-bottom)",
                   height: "min(520px, calc(100dvh - 220px))",
                 }

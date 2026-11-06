@@ -145,20 +145,25 @@ a, button { -webkit-tap-highlight-color: transparent; }
   --dk-nav-h: 56px;
   --dk-safe-b: env(safe-area-inset-bottom, 0px);
   --dk-safe-t: env(safe-area-inset-top, 0px);
+  --dk-safe-r: env(safe-area-inset-right, 0px);
   /* pastki pill-nav: p-1.5*2 + min-h-44 + pb 8px = 64px */
   --dk-bottom-nav: calc(64px + var(--dk-safe-b));
   /* FAB/chat offsets — mobile: above bottom-nav; desktop: no bottom nav */
-  --dk-fab-bottom: calc(var(--dk-bottom-nav) + 12px);
-  --dk-chat-bottom: calc(var(--dk-bottom-nav) + 76px);
+  --dk-fab-right: max(16px, var(--dk-safe-r));
+  --dk-fab-bottom: calc(var(--dk-bottom-nav) + 24px);
+  --dk-chat-bottom: calc(var(--dk-bottom-nav) + 88px);
+  --dk-fab-clearance: calc(var(--dk-bottom-nav) + 96px);
 }
 @media (min-width: 768px) {
   :root {
+    --dk-fab-right: 24px;
     --dk-fab-bottom: 24px;
     --dk-chat-bottom: 96px;
+    --dk-fab-clearance: 0px;
   }
 }
 /* main content padding for mobile bottom nav */
-.dk-main { padding-bottom: var(--dk-bottom-nav); }
+.dk-main { padding-bottom: var(--dk-fab-clearance); }
 @media (min-width: 768px) { .dk-main { padding-bottom: 0; } }
 
 /* custom scrollbar for sidebar */
