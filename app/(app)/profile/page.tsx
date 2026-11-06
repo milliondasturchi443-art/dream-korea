@@ -19,7 +19,7 @@ type ApiCourse = { id: string; title: string; level: string; lessons: number };
 /* — bo'lim sarlavhasi: kvadrat ikonka + qalin matn + gradient chiziq — */
 function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
   return (
-    <div className="mb-4 flex items-center gap-5">
+    <div className="mb-4 flex items-center gap-5 pl-2">
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white shadow-[0_8px_18px_-8px_rgba(37,99,235,.9)]">
         <Icon className="h-[18px] w-[18px]" />
       </span>
@@ -161,7 +161,7 @@ export default function ProfilePage() {
   if (!loaded) return <div className="mx-auto max-w-[760px] p-6 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Yuklanmoqda…</div>;
 
   return (
-    <div className="mx-auto max-w-[760px] space-y-7 pb-10 pt-4 md:pt-8">
+    <div className="mx-auto max-w-[760px] space-y-7 px-5 pb-10 pt-4 md:px-6 md:pt-8">
       {/* ——— Hero kartochka: katta avatar + ism + rollar pill ——— */}
       <div className="glass rounded-[28px] p-5 anim-fade-up">
         <div className="flex items-center gap-4">
