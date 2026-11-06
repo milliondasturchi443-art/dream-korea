@@ -9,7 +9,7 @@ import { SITE_PHONE_DISPLAY } from "@/lib/site";
 import { doLogout } from "@/lib/logout";
 import {
   LogOut, Loader2, Camera, BadgeCheck, ShieldHalf, Target,
-  UserRound, AtSign, Phone, ChevronRight, Save, BarChart3,
+  UserRound, AtSign, Phone, ChevronRight, Save, BarChart3, UserRoundCog,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCompleted } from "@/lib/lesson-progress";
@@ -17,9 +17,12 @@ import { getCompleted } from "@/lib/lesson-progress";
 type ApiCourse = { id: string; title: string; level: string; lessons: number };
 
 /* — bo'lim sarlavhasi: kvadrat ikonka + qalin matn + gradient chiziq — */
-function SectionTitle({ title }: { title: string }) {
+function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
   return (
-    <div className="mb-4 flex items-center gap-5 px-1">
+    <div className="mb-4 flex items-center gap-5 px-4">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white shadow-[0_8px_18px_-8px_rgba(37,99,235,.9)]">
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
       <h2 className="text-[17px] font-extrabold tracking-tight text-slate-900">{title}</h2>
       <span aria-hidden="true" className="ml-auto h-px w-12 flex-1 bg-gradient-to-r from-slate-300 via-slate-200 to-transparent" />
     </div>
@@ -218,7 +221,7 @@ export default function ProfilePage() {
 
       {/* ——— Profil ma'lumotlari ——— */}
       <section className="anim-fade-up" style={{ animationDelay: "60ms" }}>
-        <SectionTitle title="Profil ma’lumotlari" />
+        <SectionTitle icon={UserRoundCog} title="Profil ma’lumotlari" />
         <div className="glass space-y-3 rounded-[28px] p-4">
           <FieldRow icon={UserRound}>
             <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">F.I.Sh.</label>
@@ -319,7 +322,7 @@ export default function ProfilePage() {
 
       {/* ——— Akkaunt ——— */}
       <section className="anim-fade-up" style={{ animationDelay: "240ms" }}>
-        <SectionTitle title="Akkaunt" />
+        <SectionTitle icon={UserRound} title="Akkaunt" />
         <button
           onClick={logout}
           className="glass flex w-full items-center gap-4 rounded-[28px] p-4 text-left transition hover:bg-rose-50/80"
