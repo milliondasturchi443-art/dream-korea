@@ -66,6 +66,12 @@ export default function BooksPage() {
 
   const openBook = books.find(b => b.id === openId);
 
+  function openBookFile(file: string) {
+    const bridge = (window as Window & { AndroidBooks?: { open: (url: string) => void } }).AndroidBooks;
+    if (bridge?.open) bridge.open(file);
+    else window.open(file, "_blank", "noopener,noreferrer");
+  }
+
   useEffect(() => {
     if (!openId) return;
     queueMicrotask(() => setTip(Math.floor(Math.random() * TIPS.length)));
@@ -160,7 +166,7 @@ export default function BooksPage() {
                   </div>
                 )}
                 <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
-                  <Button size="sm" onClick={() => setOpenId(b.id)}>{st?.sec ? "Davom etish" : "O‘qish"}</Button>
+                  <Button size="sm" onClick={() => openBookFile(b.file)}>{st?.sec ? "Davom etish" : "O‘qish"}</Button>
                   <a href={b.file} target="_blank" rel="noopener noreferrer" download={b.file.startsWith("/") ? true : undefined} className="inline-flex items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50">
                     <Download className="h-4 w-4" /> PDF
                   </a>
