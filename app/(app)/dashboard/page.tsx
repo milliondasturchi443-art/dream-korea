@@ -23,6 +23,7 @@ function DashboardInner() {
   const [userName, setUserName] = useState("Talaba");
   const [loading, setLoading] = useState(true);
   const [skillProgress, setSkillProgress] = useState<SkillProgress>({ dars: 0, reading: 0, listening: 0, writing: 0 });
+  const [darsStats, setDarsStats] = useState({ done: 0, total: 0 });
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -101,8 +102,10 @@ function DashboardInner() {
         const writingScores = writingAttempts.filter(a => typeof a.score === "number").map(a => Number(a.score));
         const darsRows = Array.isArray(dars?.progress) ? dars.progress : [];
         const darsTotal = Array.isArray(units?.units) ? units.units.length : 0;
+        const darsDone = darsRows.filter(p => (p.stars ?? 0) > 0).length;
+        setDarsStats({ done: darsDone, total: darsTotal });
         setSkillProgress({
-          dars: darsTotal ? Math.round(darsRows.filter(p => (p.stars ?? 0) > 0).length / darsTotal * 100) : 0,
+          dars: darsTotal ? Math.round(darsDone / darsTotal * 100) : 0,
           reading: average(attempts.filter(a => a.test?.type?.toLowerCase() === "reading")),
           listening: average(attempts.filter(a => a.test?.type?.toLowerCase() === "listening")),
           writing: writingScores.length ? Math.round(writingScores.reduce((sum, score) => sum + score, 0) / writingScores.length) : 0,
@@ -113,6 +116,9 @@ function DashboardInner() {
 
   const totalLessons = courses.reduce((s, c) => s + c.lessons, 0);
   const totalDone = courses.reduce((s, c) => s + getCompleted(c.id).length, 0);
+  const overallTotal = darsStats.total || totalLessons;
+  const overallDone = darsStats.total ? darsStats.done : totalDone;
+  const overallPercent = overallTotal ? Math.round(overallDone / overallTotal * 100) : 0;
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-5 p-4 lg:p-6">
@@ -147,16 +153,16 @@ function DashboardInner() {
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-lg font-extrabold text-slate-900">Umumiy progress <span className="rounded-full bg-blue-100/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700">LIVE</span></div>
               <div className="mt-1 text-xs text-slate-500">
-                {loading ? "Yuklanmoqda…" : `${totalDone} / ${totalLessons} dars yakunlandi`}
+                {loading ? "Yuklanmoqda…" : `${overallDone} / ${overallTotal} dars yakunlandi`}
               </div>
               <Progress
-                value={totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}
+                value={overallPercent}
                 className="mt-4 h-3 w-[320px] max-w-full bg-blue-100/70 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-400"
               />
             </div>
             <div className="flex items-center gap-3">
               <div className="grid h-[76px] w-[76px] place-items-center rounded-full border-[7px] border-blue-100/80 border-t-blue-500 border-r-cyan-400 text-sm font-extrabold text-blue-700 shadow-[0_0_28px_rgba(37,99,235,.12)]">
-                {totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}%
+                {overallPercent}%
               </div>
               {courses[0] && (
                 <Link href={`/courses/${courses[0].id}`}>

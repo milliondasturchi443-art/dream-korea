@@ -48,6 +48,7 @@ export function AiFab() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [canDrag, setCanDrag] = useState(false);
+  const [typingElsewhere, setTypingElsewhere] = useState(false);
 
   // /ai sahifasida FAB kerak emas (o'z chati bor) — ikkita tugma ustma-ust kelmasin
   const hide = pathname === "/ai" || pathname?.startsWith("/ai?");
@@ -65,6 +66,23 @@ export function AiFab() {
     update();
     media.addEventListener?.("change", update);
     return () => media.removeEventListener?.("change", update);
+  }, []);
+
+  useEffect(() => {
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) setTypingElsewhere(true);
+    };
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget as HTMLElement | null;
+      if (!next || !["INPUT", "TEXTAREA", "SELECT"].includes(next.tagName)) setTypingElsewhere(false);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+    };
   }, []);
 
   // Dragging the floating button must not drag/scroll the page underneath it.
@@ -197,7 +215,7 @@ export function AiFab() {
     } finally { setLoading(false); }
   }
 
-  if (hide) return null;
+  if (hide || (typingElsewhere && !open)) return null;
 
   // FAB pozitsiyasi: saqlangan bo'lsa — undan, aks holda o'ng pastki burchak
   const fabStyle: React.CSSProperties = canDrag && pos

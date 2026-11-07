@@ -46,7 +46,7 @@ export default function BooksPage() {
   const [books, setBooks] = useState<Book[]>(booksData);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => { setState(loadState()); setMounted(true); }, []);
+  useEffect(() => { queueMicrotask(() => { setState(loadState()); setMounted(true); }); }, []);
 
   // Admin qo'shgan kitoblar (API) + ichki kitoblar; API ishlamasa — ichki kitoblar qoladi
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function BooksPage() {
 
   useEffect(() => {
     if (!openId) return;
-    setTip(Math.floor(Math.random() * TIPS.length));
+    queueMicrotask(() => setTip(Math.floor(Math.random() * TIPS.length)));
     tickRef.current = setInterval(() => {
       setState(prev => {
         const cur = prev[openId] || { sec: 0, done: false };
@@ -161,7 +161,7 @@ export default function BooksPage() {
                 )}
                 <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
                   <Button size="sm" onClick={() => setOpenId(b.id)}>{st?.sec ? "Davom etish" : "O‘qish"}</Button>
-                  <a href={b.file} download className="inline-flex items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50">
+                  <a href={b.file} target="_blank" rel="noopener noreferrer" download={b.file.startsWith("/") ? true : undefined} className="inline-flex items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50">
                     <Download className="h-4 w-4" /> PDF
                   </a>
                 </div>
@@ -195,7 +195,7 @@ export default function BooksPage() {
                 </div>
               )}
             </div>
-            <iframe src={openBook.file} title={openBook.title} className="flex-1 w-full border-0 min-h-0" />
+            <iframe src={`${openBook.file}#toolbar=1&navpanes=0`} title={openBook.title} className="flex-1 w-full border-0 min-h-0" />
             <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
               <p className="flex items-center gap-1.5 text-xs text-slate-500"><Lightbulb className="h-3.5 w-3.5" /> {TIPS[tip]}</p>
               <div className="flex items-center gap-2">
