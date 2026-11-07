@@ -92,7 +92,14 @@ function DashboardInner() {
       <div className="anim-fade-up relative isolate overflow-hidden rounded-[32px] border border-white/45 bg-gradient-to-br from-[#0d1f4d]/75 via-[#173b83]/60 to-[#2563eb]/45 p-6 text-white shadow-[0_24px_60px_-24px_rgba(37,99,235,.42)] backdrop-blur-xl sm:p-8">
         <div className="absolute -right-16 -top-24 -z-10 h-64 w-64 rounded-full bg-blue-500/18 blur-2xl" />
         <div className="absolute -bottom-32 right-24 -z-10 h-64 w-64 rounded-full bg-cyan-400/12 blur-3xl" />
-        <div className="absolute right-6 top-6 hidden h-24 w-24 rotate-12 rounded-[28px] border border-white/15 bg-white/10 backdrop-blur-sm sm:block" />
+        <div aria-hidden="true" className="pointer-events-none absolute right-5 top-1/2 hidden h-40 w-56 -translate-y-1/2 sm:block">
+          <div className="absolute right-5 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full border border-cyan-200/20 bg-cyan-300/10 shadow-[0_0_55px_rgba(103,232,249,.16)]" />
+          <div className="absolute right-14 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full border border-white/15" />
+          <div className="absolute right-16 top-1/2 -translate-y-[46%] text-[54px] font-black leading-none tracking-[-.16em] text-white/15">한글</div>
+          <div className="absolute right-0 top-5 h-px w-32 rotate-[28deg] bg-gradient-to-r from-transparent via-cyan-200/45 to-transparent" />
+          <div className="absolute bottom-6 right-2 h-px w-40 -rotate-[18deg] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+          <div className="absolute right-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-cyan-200/70 shadow-[0_0_14px_rgba(103,232,249,.9)]" />
+        </div>
         <div className="relative max-w-2xl">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[.18em] text-blue-100">
             <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,.9)]" /> Dream Korea
