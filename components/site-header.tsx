@@ -31,7 +31,7 @@ export function SiteHeader() {
       const raw = localStorage.getItem("dk_user");
       if (raw) {
         const u = JSON.parse(raw);
-        if (u?.email) setMe({ name: u.name || "Foydalanuvchi", role: u.role || "STUDENT", avatar: u.avatar || undefined });
+        if (u?.email) queueMicrotask(() => setMe({ name: u.name || "Foydalanuvchi", role: u.role || "STUDENT", avatar: u.avatar || undefined }));
       }
     } catch {}
     fetch("/api/auth/me")
@@ -100,34 +100,36 @@ export function SiteHeader() {
         </div>
       </div>
       {open && (
-        <div className="lg:hidden border-t border-t-white/70 glass px-4 py-4 space-y-3">
-          <a href={telHref(SITE_PHONE_E164)} className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-semibold text-emerald-700">
-            <Phone className="h-4 w-4" /> {SITE_PHONE_DISPLAY} — Qo‘ng‘iroq
-          </a>
-          {nav.map(i => <Link key={i.label} href={i.href} className="block py-2 text-sm font-medium" onClick={() => setOpen(false)}>{i.label}</Link>)}
-          <div className="flex flex-col gap-2 pt-2">
-            {me ? (
-              <>
-                <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5">
-                  {me.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={me.avatar} alt="" className="h-8 w-8 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white grid place-items-center text-xs font-bold shrink-0">{initials}</div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-slate-900 truncate leading-none">{me.name}</div>
-                    <div className="text-[11px] text-slate-500 leading-none mt-0.5">{me.role === "ADMIN" ? "Admin" : me.role === "TEACHER" ? "Ustoz" : "Talaba"}</div>
+        <div className="lg:hidden fixed inset-0 top-[64px] z-50 bg-slate-950/25 backdrop-blur-[2px]" onClick={() => setOpen(false)}>
+          <div className="border-t border-t-white/70 glass px-4 py-4 shadow-2xl space-y-3" onClick={e => e.stopPropagation()}>
+            <a href={telHref(SITE_PHONE_E164)} className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-semibold text-emerald-700">
+              <Phone className="h-4 w-4" /> {SITE_PHONE_DISPLAY} — Qo‘ng‘iroq
+            </a>
+            {nav.map(i => <Link key={i.label} href={i.href} className="block py-2 text-sm font-medium" onClick={() => setOpen(false)}>{i.label}</Link>)}
+            <div className="flex flex-col gap-2 pt-2">
+              {me ? (
+                <>
+                  <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5">
+                    {me.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={me.avatar} alt="" className="h-8 w-8 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white grid place-items-center text-xs font-bold shrink-0">{initials}</div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-slate-900 truncate leading-none">{me.name}</div>
+                      <div className="text-[11px] text-slate-500 leading-none mt-0.5">{me.role === "ADMIN" ? "Admin" : me.role === "TEACHER" ? "Ustoz" : "Talaba"}</div>
+                    </div>
                   </div>
+                  <Link href={cabHref} onClick={() => setOpen(false)}><Button className="w-full">Kabinetga o‘tish</Button></Link>
+                </>
+              ) : (
+                <div className="flex gap-2">
+                  <Link href="/login" className="flex-1" onClick={() => setOpen(false)}><Button variant="outline" className="w-full">Kirish</Button></Link>
+                  <Link href="/register" className="flex-1" onClick={() => setOpen(false)}><Button className="w-full">Ro‘yxatdan o‘tish</Button></Link>
                 </div>
-                <Link href={cabHref} onClick={() => setOpen(false)}><Button className="w-full">Kabinetga o‘tish</Button></Link>
-              </>
-            ) : (
-              <div className="flex gap-2">
-                <Link href="/login" className="flex-1" onClick={() => setOpen(false)}><Button variant="outline" className="w-full">Kirish</Button></Link>
-                <Link href="/register" className="flex-1" onClick={() => setOpen(false)}><Button className="w-full">Ro‘yxatdan o‘tish</Button></Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
