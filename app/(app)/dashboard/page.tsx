@@ -89,29 +89,29 @@ function DashboardInner() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-5 p-4 lg:p-6">
-      <div className="anim-fade-up rounded-[28px] border border-orange-200/70 bg-gradient-to-br from-[#fff1dc] via-[#ffe5c2] to-[#ffd39e] p-5 shadow-[0_18px_44px_-24px_rgba(234,88,12,.45)] sm:p-7">
-        <h1 className="text-[24px] font-extrabold tracking-tight text-[#29221d] sm:text-[30px]">
+      <div className="anim-fade-up rounded-[28px] border border-blue-300/40 bg-gradient-to-br from-[#132e68] via-[#1d4ed8] to-[#2563eb] p-5 text-white shadow-[0_18px_44px_-24px_rgba(37,99,235,.7)] sm:p-7">
+        <h1 className="text-[24px] font-extrabold tracking-tight sm:text-[30px]">
           Assalomu alaykum, {userName}! 👋
         </h1>
-        <p className="mt-1 text-sm text-[#795548] sm:text-base">Bugungi o‘qish rejangizni davom ettiring</p>
+        <p className="mt-1 text-sm text-blue-100 sm:text-base">Bugungi o‘qish rejangizni davom ettiring</p>
       </div>
 
       {/* real progress over all courses */}
       <div className="anim-fade-up" style={{ animationDelay: "0.05s" }}>
-        <Card className="border-orange-200/70 bg-gradient-to-br from-[#fff8ed] to-[#ffe6c5] p-5 shadow-[0_18px_44px_-24px_rgba(234,88,12,.4)] sm:p-6">
+        <Card className="border-blue-200 bg-gradient-to-br from-white to-blue-50 p-5 shadow-[0_18px_44px_-24px_rgba(37,99,235,.35)] sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="text-lg font-extrabold text-[#29221d]">Umumiy progress</div>
-              <div className="mt-1 text-xs text-[#795548]">
+              <div className="text-lg font-extrabold text-slate-900">Umumiy progress</div>
+              <div className="mt-1 text-xs text-slate-500">
                 {loading ? "Yuklanmoqda…" : `${totalDone} / ${totalLessons} dars yakunlandi`}
               </div>
               <Progress
                 value={totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}
-                className="mt-3 w-[280px] max-w-full bg-orange-100 [&>div]:bg-orange-500"
+                className="mt-3 w-[280px] max-w-full bg-blue-100 [&>div]:bg-[#2563eb]"
               />
             </div>
             <div className="flex items-center gap-3">
-              <div className="grid h-16 w-16 place-items-center rounded-full border-[6px] border-orange-100 border-t-orange-500 text-sm font-extrabold text-orange-600">
+              <div className="grid h-16 w-16 place-items-center rounded-full border-[6px] border-blue-100 border-t-[#2563eb] text-sm font-extrabold text-[#2563eb]">
                 {totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}%
               </div>
               {courses[0] && (
@@ -122,16 +122,16 @@ function DashboardInner() {
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
-             <div className="rounded-2xl bg-white/45 p-3">
-               <div className="text-xs text-[#795548]">Kurslar</div>
+             <div className="rounded-2xl bg-blue-50 p-3">
+               <div className="text-xs text-slate-500">Kurslar</div>
               <div className="font-bold">{courses.length}</div>
             </div>
-             <div className="rounded-2xl bg-white/45 p-3">
-               <div className="text-xs text-[#795548]">Yakunlangan darslar</div>
+             <div className="rounded-2xl bg-emerald-50 p-3">
+               <div className="text-xs text-slate-500">Yakunlangan darslar</div>
               <div className="font-bold">{totalDone}</div>
             </div>
-             <div className="rounded-2xl bg-white/45 p-3">
-               <div className="text-xs text-[#795548]">TOPIK oxirgi ball</div>
+             <div className="rounded-2xl bg-violet-50 p-3">
+               <div className="text-xs text-slate-500">TOPIK oxirgi ball</div>
               <div className="font-bold">{topikScore !== null ? topikScore : "—"}</div>
             </div>
           </div>
@@ -140,12 +140,12 @@ function DashboardInner() {
 
       {/* quick actions */}
       <div>
-         <h2 className="text-lg font-extrabold text-[#29221d]">⚡ Tezkor amallar</h2>
+         <h2 className="text-lg font-extrabold text-slate-900">⚡ Tezkor amallar</h2>
         <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
           {quickActions.map(a => (
             <Link key={a.label} href={a.href} className="group">
-               <Card className="flex h-full flex-col items-center gap-2 rounded-2xl border-orange-200/70 bg-orange-50/70 p-4 text-center transition hover:border-orange-300 hover:shadow-md">
-                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-orange-100 text-orange-600 transition-colors group-hover:bg-orange-500 group-hover:text-white">
+               <Card className="flex h-full flex-col items-center gap-2 rounded-2xl border-blue-100 bg-white p-4 text-center transition hover:border-blue-300 hover:shadow-md">
+                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2563eb] transition-colors group-hover:bg-[#2563eb] group-hover:text-white">
                   <a.icon className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-medium text-slate-700 leading-tight">{a.label}</span>

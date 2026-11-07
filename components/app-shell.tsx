@@ -93,7 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       {/* top navy bar - desktop */}
-      <div className="hidden md:flex h-[56px] glass-dark text-white items-center px-6 justify-between sticky top-0 z-30">
+      <div className="hidden md:flex h-[56px] bg-gradient-to-r from-[#0b1738] via-[#12295d] to-[#1d4ed8] text-white items-center px-6 justify-between sticky top-0 z-30 shadow-[0_8px_24px_-16px_rgba(15,27,61,.8)]">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
@@ -122,7 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* mobile top */}
-      <div className="md:hidden glass-dark text-white flex items-center justify-between px-4 sticky top-0 z-30 safe-top" style={{ height: "var(--dk-nav-h)" }}>
+      <div className="md:hidden bg-gradient-to-r from-[#0b1738] via-[#12295d] to-[#1d4ed8] text-white flex items-center justify-between px-4 sticky top-0 z-30 safe-top shadow-[0_8px_24px_-16px_rgba(15,27,61,.8)]" style={{ height: "var(--dk-nav-h)" }}>
         <Link href="/dashboard" className="flex items-center gap-2 font-bold">
           <Image src="/logo.png" alt="DK" width={28} height={28} className="rounded-lg bg-white p-0.5" />
           DREAM KOREA
