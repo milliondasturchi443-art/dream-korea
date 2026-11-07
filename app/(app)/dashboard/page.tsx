@@ -89,9 +89,9 @@ function DashboardInner() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-5 p-4 lg:p-6">
-      <div className="anim-fade-up relative isolate overflow-hidden rounded-[32px] border border-blue-300/40 bg-[#0d1f4d] p-6 text-white shadow-[0_24px_60px_-24px_rgba(37,99,235,.65)] sm:p-8">
-        <div className="absolute -right-16 -top-24 -z-10 h-64 w-64 rounded-full bg-blue-500/30 blur-2xl" />
-        <div className="absolute -bottom-32 right-24 -z-10 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="anim-fade-up relative isolate overflow-hidden rounded-[32px] border border-white/45 bg-gradient-to-br from-[#0d1f4d]/75 via-[#173b83]/60 to-[#2563eb]/45 p-6 text-white shadow-[0_24px_60px_-24px_rgba(37,99,235,.42)] backdrop-blur-xl sm:p-8">
+        <div className="absolute -right-16 -top-24 -z-10 h-64 w-64 rounded-full bg-blue-500/18 blur-2xl" />
+        <div className="absolute -bottom-32 right-24 -z-10 h-64 w-64 rounded-full bg-cyan-400/12 blur-3xl" />
         <div className="absolute right-6 top-6 hidden h-24 w-24 rotate-12 rounded-[28px] border border-white/15 bg-white/10 backdrop-blur-sm sm:block" />
         <div className="relative max-w-2xl">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[.18em] text-blue-100">
@@ -106,22 +106,22 @@ function DashboardInner() {
 
       {/* real progress over all courses */}
       <div className="anim-fade-up" style={{ animationDelay: "0.05s" }}>
-        <Card className="relative isolate overflow-hidden border-0 bg-gradient-to-br from-[#10265a] via-[#173b83] to-[#2563eb] p-5 text-white shadow-[0_24px_56px_-24px_rgba(15,45,120,.65)] sm:p-6">
-          <div className="absolute -right-20 -top-24 -z-10 h-64 w-64 rounded-full bg-cyan-300/15 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 -z-10 h-24 w-56 rounded-full bg-blue-400/20 blur-2xl" />
+        <Card className="relative isolate overflow-hidden border border-white/55 bg-gradient-to-br from-white/88 via-blue-50/72 to-white/58 p-5 text-slate-900 shadow-[0_24px_56px_-24px_rgba(37,99,235,.3)] backdrop-blur-xl sm:p-6">
+          <div className="absolute -right-20 -top-24 -z-10 h-64 w-64 rounded-full bg-cyan-300/12 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 -z-10 h-24 w-56 rounded-full bg-blue-400/12 blur-2xl" />
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-lg font-extrabold">Umumiy progress <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-blue-100">LIVE</span></div>
-              <div className="mt-1 text-xs text-blue-100">
+              <div className="flex items-center gap-2 text-lg font-extrabold text-slate-900">Umumiy progress <span className="rounded-full bg-blue-100/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700">LIVE</span></div>
+              <div className="mt-1 text-xs text-slate-500">
                 {loading ? "Yuklanmoqda…" : `${totalDone} / ${totalLessons} dars yakunlandi`}
               </div>
               <Progress
                 value={totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}
-                className="mt-4 h-3 w-[320px] max-w-full bg-white/15 [&>div]:bg-gradient-to-r [&>div]:from-cyan-300 [&>div]:to-white"
+                className="mt-4 h-3 w-[320px] max-w-full bg-blue-100/70 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-400"
               />
             </div>
             <div className="flex items-center gap-3">
-              <div className="grid h-[76px] w-[76px] place-items-center rounded-full border-[7px] border-white/15 border-t-cyan-300 border-r-white text-sm font-extrabold text-white shadow-[0_0_28px_rgba(103,232,249,.18)]">
+              <div className="grid h-[76px] w-[76px] place-items-center rounded-full border-[7px] border-blue-100/80 border-t-blue-500 border-r-cyan-400 text-sm font-extrabold text-blue-700 shadow-[0_0_28px_rgba(37,99,235,.12)]">
                 {totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}%
               </div>
               {courses[0] && (
@@ -132,16 +132,16 @@ function DashboardInner() {
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
-             <div className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
-               <div className="text-xs text-blue-100">Kurslar</div>
+             <div className="rounded-2xl border border-white/65 bg-white/45 p-3 backdrop-blur-sm">
+               <div className="text-xs text-slate-500">Kurslar</div>
               <div className="font-bold">{courses.length}</div>
             </div>
-             <div className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
-                <div className="text-xs text-blue-100">Yakunlangan darslar</div>
+             <div className="rounded-2xl border border-white/65 bg-white/45 p-3 backdrop-blur-sm">
+                <div className="text-xs text-slate-500">Yakunlangan darslar</div>
               <div className="font-bold">{totalDone}</div>
             </div>
-             <div className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
-                <div className="text-xs text-blue-100">TOPIK oxirgi ball</div>
+             <div className="rounded-2xl border border-white/65 bg-white/45 p-3 backdrop-blur-sm">
+                <div className="text-xs text-slate-500">TOPIK oxirgi ball</div>
               <div className="font-bold">{topikScore !== null ? topikScore : "—"}</div>
             </div>
           </div>
