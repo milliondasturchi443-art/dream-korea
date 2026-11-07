@@ -89,49 +89,59 @@ function DashboardInner() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-5 p-4 lg:p-6">
-      <div className="anim-fade-up rounded-[28px] border border-blue-300/40 bg-gradient-to-br from-[#132e68] via-[#1d4ed8] to-[#2563eb] p-5 text-white shadow-[0_18px_44px_-24px_rgba(37,99,235,.7)] sm:p-7">
-        <h1 className="text-[24px] font-extrabold tracking-tight sm:text-[30px]">
-          Assalomu alaykum, {userName}! 👋
-        </h1>
-        <p className="mt-1 text-sm text-blue-100 sm:text-base">Bugungi o‘qish rejangizni davom ettiring</p>
+      <div className="anim-fade-up relative isolate overflow-hidden rounded-[32px] border border-blue-300/40 bg-[#0d1f4d] p-6 text-white shadow-[0_24px_60px_-24px_rgba(37,99,235,.65)] sm:p-8">
+        <div className="absolute -right-16 -top-24 -z-10 h-64 w-64 rounded-full bg-blue-500/30 blur-2xl" />
+        <div className="absolute -bottom-32 right-24 -z-10 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
+        <div className="absolute right-6 top-6 hidden h-24 w-24 rotate-12 rounded-[28px] border border-white/15 bg-white/10 backdrop-blur-sm sm:block" />
+        <div className="relative max-w-2xl">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[.18em] text-blue-100">
+            <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,.9)]" /> Dream Korea
+          </div>
+          <h1 className="text-[26px] font-extrabold tracking-tight sm:text-[34px]">
+            Assalomu alaykum, {userName}! <span className="inline-block animate-bounce">👋</span>
+          </h1>
+          <p className="mt-2 max-w-lg text-sm leading-6 text-blue-100 sm:text-base">Bugungi o‘qish rejangizni davom ettiring va koreys tilidagi maqsadingizga yana bir qadam yaqinlashing.</p>
+        </div>
       </div>
 
       {/* real progress over all courses */}
       <div className="anim-fade-up" style={{ animationDelay: "0.05s" }}>
-        <Card className="border-blue-200 bg-gradient-to-br from-white to-blue-50 p-5 shadow-[0_18px_44px_-24px_rgba(37,99,235,.35)] sm:p-6">
+        <Card className="relative isolate overflow-hidden border-0 bg-gradient-to-br from-[#10265a] via-[#173b83] to-[#2563eb] p-5 text-white shadow-[0_24px_56px_-24px_rgba(15,45,120,.65)] sm:p-6">
+          <div className="absolute -right-20 -top-24 -z-10 h-64 w-64 rounded-full bg-cyan-300/15 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 -z-10 h-24 w-56 rounded-full bg-blue-400/20 blur-2xl" />
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="text-lg font-extrabold text-slate-900">Umumiy progress</div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="flex items-center gap-2 text-lg font-extrabold">Umumiy progress <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-blue-100">LIVE</span></div>
+              <div className="mt-1 text-xs text-blue-100">
                 {loading ? "Yuklanmoqda…" : `${totalDone} / ${totalLessons} dars yakunlandi`}
               </div>
               <Progress
                 value={totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}
-                className="mt-3 w-[280px] max-w-full bg-blue-100 [&>div]:bg-[#2563eb]"
+                className="mt-4 h-3 w-[320px] max-w-full bg-white/15 [&>div]:bg-gradient-to-r [&>div]:from-cyan-300 [&>div]:to-white"
               />
             </div>
             <div className="flex items-center gap-3">
-              <div className="grid h-16 w-16 place-items-center rounded-full border-[6px] border-blue-100 border-t-[#2563eb] text-sm font-extrabold text-[#2563eb]">
+              <div className="grid h-[76px] w-[76px] place-items-center rounded-full border-[7px] border-white/15 border-t-cyan-300 border-r-white text-sm font-extrabold text-white shadow-[0_0_28px_rgba(103,232,249,.18)]">
                 {totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}%
               </div>
               {courses[0] && (
                 <Link href={`/courses/${courses[0].id}`}>
-                  <Button size="sm">Davom etish</Button>
+                  <Button size="sm" className="rounded-xl border border-white/20 bg-white text-[#153574] shadow-lg hover:bg-blue-50">Davom etish <span className="ml-1">→</span></Button>
                 </Link>
               )}
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
-             <div className="rounded-2xl bg-blue-50 p-3">
-               <div className="text-xs text-slate-500">Kurslar</div>
+             <div className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
+               <div className="text-xs text-blue-100">Kurslar</div>
               <div className="font-bold">{courses.length}</div>
             </div>
-             <div className="rounded-2xl bg-emerald-50 p-3">
-               <div className="text-xs text-slate-500">Yakunlangan darslar</div>
+             <div className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
+                <div className="text-xs text-blue-100">Yakunlangan darslar</div>
               <div className="font-bold">{totalDone}</div>
             </div>
-             <div className="rounded-2xl bg-violet-50 p-3">
-               <div className="text-xs text-slate-500">TOPIK oxirgi ball</div>
+             <div className="rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
+                <div className="text-xs text-blue-100">TOPIK oxirgi ball</div>
               <div className="font-bold">{topikScore !== null ? topikScore : "—"}</div>
             </div>
           </div>
@@ -140,12 +150,19 @@ function DashboardInner() {
 
       {/* quick actions */}
       <div>
-         <h2 className="text-lg font-extrabold text-slate-900">⚡ Tezkor amallar</h2>
-        <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+         <div className="flex items-end justify-between gap-3">
+           <div>
+             <div className="mb-1 text-[11px] font-bold uppercase tracking-[.18em] text-blue-600">Bir tegishda</div>
+             <h2 className="text-xl font-extrabold text-slate-900">⚡ Tezkor amallar</h2>
+           </div>
+           <span className="hidden text-xs text-slate-400 sm:block">O‘qishni boshlash uchun tanlang</span>
+         </div>
+         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
           {quickActions.map(a => (
             <Link key={a.label} href={a.href} className="group">
-               <Card className="flex h-full flex-col items-center gap-2 rounded-2xl border-blue-100 bg-white p-4 text-center transition hover:border-blue-300 hover:shadow-md">
-                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2563eb] transition-colors group-hover:bg-[#2563eb] group-hover:text-white">
+               <Card className="relative flex h-full flex-col items-center gap-2 overflow-hidden rounded-[22px] border-blue-100 bg-white p-4 text-center shadow-[0_8px_24px_-18px_rgba(37,99,235,.7)] transition duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-[0_18px_30px_-18px_rgba(37,99,235,.75)]">
+                 <div className="absolute inset-x-5 top-0 h-1 rounded-b-full bg-gradient-to-r from-cyan-400 to-blue-600 opacity-0 transition group-hover:opacity-100" />
+                 <div className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-[#2563eb] transition-all duration-200 group-hover:scale-110 group-hover:bg-[#2563eb] group-hover:text-white">
                   <a.icon className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-medium text-slate-700 leading-tight">{a.label}</span>
