@@ -54,9 +54,11 @@ function DashboardInner() {
     }
     try {
       const u = JSON.parse(localStorage.getItem("dk_user") || "{}");
-      if (u.name) setUserName(u.name);
-      if (u.role) setRole(String(u.role));
-      else {
+       queueMicrotask(() => {
+         if (u.name) setUserName(u.name);
+         if (u.role) setRole(String(u.role));
+       });
+       if (!u.role) {
         fetch("/api/auth/me")
           .then(r => (r.ok ? r.json() : null))
           .then(d => {
@@ -70,8 +72,8 @@ function DashboardInner() {
           })
           .catch(() => {});
       }
-      const sc = localStorage.getItem("dk_topik_score");
-      if (sc !== null) setTopikScore(Number(sc));
+       const sc = localStorage.getItem("dk_topik_score");
+       if (sc !== null) queueMicrotask(() => setTopikScore(Number(sc)));
     } catch {}
     fetch("/api/courses")
       .then(r => r.json())
@@ -86,30 +88,30 @@ function DashboardInner() {
   const totalDone = courses.reduce((s, c) => s + getCompleted(c.id).length, 0);
 
   return (
-    <div className="mx-auto max-w-[1100px] p-4 lg:p-6 space-y-5">
-      <div className="anim-fade-up">
-        <h1 className="text-[22px] font-bold text-slate-900">
+    <div className="mx-auto max-w-[1100px] space-y-5 p-4 lg:p-6">
+      <div className="anim-fade-up rounded-[28px] border border-orange-200/70 bg-gradient-to-br from-[#fff1dc] via-[#ffe5c2] to-[#ffd39e] p-5 shadow-[0_18px_44px_-24px_rgba(234,88,12,.45)] sm:p-7">
+        <h1 className="text-[24px] font-extrabold tracking-tight text-[#29221d] sm:text-[30px]">
           Assalomu alaykum, {userName}! 👋
         </h1>
-        <p className="text-sm text-slate-500">Koreys tilida yangi yutuqlarga!</p>
+        <p className="mt-1 text-sm text-[#795548] sm:text-base">Bugungi o‘qish rejangizni davom ettiring</p>
       </div>
 
       {/* real progress over all courses */}
       <div className="anim-fade-up" style={{ animationDelay: "0.05s" }}>
-        <Card className="p-5">
+        <Card className="border-orange-200/70 bg-gradient-to-br from-[#fff8ed] to-[#ffe6c5] p-5 shadow-[0_18px_44px_-24px_rgba(234,88,12,.4)] sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-slate-900">Umumiy progress</div>
-              <div className="text-xs text-slate-500 mt-1">
+              <div className="text-lg font-extrabold text-[#29221d]">Umumiy progress</div>
+              <div className="mt-1 text-xs text-[#795548]">
                 {loading ? "Yuklanmoqda…" : `${totalDone} / ${totalLessons} dars yakunlandi`}
               </div>
               <Progress
                 value={totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}
-                className="mt-3 w-[280px] max-w-full"
+                className="mt-3 w-[280px] max-w-full bg-orange-100 [&>div]:bg-orange-500"
               />
             </div>
             <div className="flex items-center gap-3">
-              <div className="h-14 w-14 rounded-full border-[5px] border-slate-100 border-t-[#2563eb] grid place-items-center text-sm font-bold text-[#2563eb]">
+              <div className="grid h-16 w-16 place-items-center rounded-full border-[6px] border-orange-100 border-t-orange-500 text-sm font-extrabold text-orange-600">
                 {totalLessons ? Math.round(totalDone / totalLessons * 100) : 0}%
               </div>
               {courses[0] && (
@@ -120,16 +122,16 @@ function DashboardInner() {
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
-            <div className="rounded-xl bg-[#eff6ff] p-3">
-              <div className="text-xs text-slate-500">Kurslar</div>
+             <div className="rounded-2xl bg-white/45 p-3">
+               <div className="text-xs text-[#795548]">Kurslar</div>
               <div className="font-bold">{courses.length}</div>
             </div>
-            <div className="rounded-xl bg-emerald-50 p-3">
-              <div className="text-xs text-slate-500">Yakunlangan darslar</div>
+             <div className="rounded-2xl bg-white/45 p-3">
+               <div className="text-xs text-[#795548]">Yakunlangan darslar</div>
               <div className="font-bold">{totalDone}</div>
             </div>
-            <div className="rounded-xl bg-violet-50 p-3">
-              <div className="text-xs text-slate-500">TOPIK oxirgi ball</div>
+             <div className="rounded-2xl bg-white/45 p-3">
+               <div className="text-xs text-[#795548]">TOPIK oxirgi ball</div>
               <div className="font-bold">{topikScore !== null ? topikScore : "—"}</div>
             </div>
           </div>
@@ -138,12 +140,12 @@ function DashboardInner() {
 
       {/* quick actions */}
       <div>
-        <h2 className="font-semibold text-slate-900">Tezkor amallar</h2>
+         <h2 className="text-lg font-extrabold text-[#29221d]">⚡ Tezkor amallar</h2>
         <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
           {quickActions.map(a => (
             <Link key={a.label} href={a.href} className="group">
-              <Card className="p-4 flex flex-col items-center gap-2 text-center hover:shadow-md hover:border-[#bfdbfe] transition h-full">
-                <div className="h-10 w-10 rounded-xl bg-[#eff6ff] group-hover:bg-[#2563eb] text-[#2563eb] group-hover:text-white grid place-items-center transition-colors">
+               <Card className="flex h-full flex-col items-center gap-2 rounded-2xl border-orange-200/70 bg-orange-50/70 p-4 text-center transition hover:border-orange-300 hover:shadow-md">
+                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-orange-100 text-orange-600 transition-colors group-hover:bg-orange-500 group-hover:text-white">
                   <a.icon className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-medium text-slate-700 leading-tight">{a.label}</span>

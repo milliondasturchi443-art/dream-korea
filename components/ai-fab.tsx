@@ -47,6 +47,8 @@ export function AiFab() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
+  const [canDrag, setCanDrag] = useState(false);
+
   // /ai sahifasida FAB kerak emas (o'z chati bor) — ikkita tugma ustma-ust kelmasin
   const hide = pathname === "/ai" || pathname?.startsWith("/ai?");
 
@@ -56,6 +58,14 @@ export function AiFab() {
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setCanDrag(media.matches);
+    update();
+    media.addEventListener?.("change", update);
+    return () => media.removeEventListener?.("change", update);
+  }, []);
 
   // Dragging the floating button must not drag/scroll the page underneath it.
   useEffect(() => {
@@ -86,6 +96,7 @@ export function AiFab() {
   }, []);
 
   function onFabPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+    if (!canDrag) return;
     if (e.button !== 0 && e.pointerType === "mouse") return;
     e.preventDefault();
     e.stopPropagation();
@@ -102,6 +113,7 @@ export function AiFab() {
   }
 
   function onFabPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
+    if (!canDrag) return;
     const d = dragRef.current;
     if (!d || d.id !== e.pointerId) return;
     e.preventDefault();
@@ -117,6 +129,11 @@ export function AiFab() {
   }
 
   function onFabPointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+    if (!canDrag) {
+      e.preventDefault();
+      setOpen(v => !v);
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     const d = dragRef.current;
@@ -183,7 +200,7 @@ export function AiFab() {
   if (hide) return null;
 
   // FAB pozitsiyasi: saqlangan bo'lsa — undan, aks holda o'ng pastki burchak
-  const fabStyle: React.CSSProperties = pos
+  const fabStyle: React.CSSProperties = canDrag && pos
     ? { left: pos.left, top: pos.top, right: "auto", bottom: "auto" }
      : { right: "var(--dk-fab-right)", bottom: "var(--dk-fab-bottom)" };
 
@@ -198,7 +215,7 @@ export function AiFab() {
         onContextMenu={e => e.preventDefault()}
         onClick={e => { if (e.detail === 0) setOpen(v => !v); }}
         aria-label={open ? "AI yopish" : "Axrorbek AI ochish"}
-        className={`fixed z-40 h-14 w-14 rounded-full bg-[#2563eb] text-white shadow-[0_8px_24px_-6px_rgba(37,99,235,.55)] grid place-items-center select-none transition-[box-shadow,transform] duration-150 ${dragging ? "cursor-grabbing shadow-[0_12px_32px_-6px_rgba(37,99,235,.7)] scale-110" : "cursor-grab active:scale-95"}`}
+         className={`fixed z-40 h-14 w-14 rounded-full bg-[#2563eb] text-white shadow-[0_8px_24px_-6px_rgba(37,99,235,.55)] grid place-items-center select-none transition-[box-shadow,transform] duration-150 ${canDrag ? (dragging ? "cursor-grabbing shadow-[0_12px_32px_-6px_rgba(37,99,235,.7)] scale-110" : "cursor-grab active:scale-95") : "cursor-pointer"}`}
         style={{ ...fabStyle, touchAction: "none" }}
       >
         {open ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
