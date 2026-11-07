@@ -60,7 +60,7 @@ export async function GET(req: Request) {
   const userId = String((data as Record<string, unknown>).id ?? "");
   if (!userId) return Response.json({ attempts: [] });
   try {
-    const atts = await prisma.testAttempt.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20, include: { test: { select: { title: true, level: true } } } });
+    const atts = await prisma.testAttempt.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20, include: { test: { select: { title: true, level: true, type: true } } } });
     return Response.json({ attempts: atts });
   } catch (e) { console.error("GET attempts", e); return Response.json({ attempts: [] }); }
 }

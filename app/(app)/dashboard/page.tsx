@@ -9,15 +9,20 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Book, FileText, Library, Video, Film, Shuffle, Building2, BookMarked, Headphones, ClipboardList, BarChart3, CalendarCheck, CreditCard } from "lucide-react";
 import { getCompleted } from "@/lib/lesson-progress";
+import { darsRequest } from "@/lib/dars-client";
 
 type ApiCourse = { id: string; title: string; subtitle: string; level: string; lessons: number; color: string };
+type SkillProgress = { dars: number; reading: number; listening: number; writing: number };
+type TopikAttempt = { score: number; total: number; test?: { type?: string } };
+type WritingAttempt = { score?: number | null };
+type DarsProgress = { stars?: number };
 
 function DashboardInner() {
   const [role, setRole] = useState("");
   const [courses, setCourses] = useState<ApiCourse[]>([]);
   const [userName, setUserName] = useState("Talaba");
   const [loading, setLoading] = useState(true);
-  const [topikScore, setTopikScore] = useState<number | null>(null);
+  const [skillProgress, setSkillProgress] = useState<SkillProgress>({ dars: 0, reading: 0, listening: 0, writing: 0 });
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -72,8 +77,6 @@ function DashboardInner() {
           })
           .catch(() => {});
       }
-       const sc = localStorage.getItem("dk_topik_score");
-       if (sc !== null) queueMicrotask(() => setTopikScore(Number(sc)));
     } catch {}
     fetch("/api/courses")
       .then(r => r.json())
@@ -82,6 +85,30 @@ function DashboardInner() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    const token = sessionStorage.getItem("dk_token") || localStorage.getItem("dk_token");
+    if (token) {
+      const headers = { Authorization: `Bearer ${token}` };
+      Promise.all([
+        fetch("/api/topik/attempt", { headers }).then(r => r.ok ? r.json() : null),
+        fetch("/api/topik/writing", { headers }).then(r => r.ok ? r.json() : null),
+        darsRequest<{ units: unknown[] }>("/api/dars").catch(() => null),
+        darsRequest<{ progress: DarsProgress[] }>("/api/dars/progress").catch(() => null),
+      ]).then(([topik, writing, units, dars]) => {
+        const attempts = Array.isArray(topik?.attempts) ? topik.attempts as TopikAttempt[] : [];
+        const average = (items: TopikAttempt[]) => items.length ? Math.round(items.reduce((sum, a) => sum + (a.total ? a.score / a.total * 100 : 0), 0) / items.length) : 0;
+        const writingAttempts = Array.isArray(writing?.attempts) ? writing.attempts as WritingAttempt[] : [];
+        const writingScores = writingAttempts.filter(a => typeof a.score === "number").map(a => Number(a.score));
+        const darsRows = Array.isArray(dars?.progress) ? dars.progress : [];
+        const darsTotal = Array.isArray(units?.units) ? units.units.length : 0;
+        setSkillProgress({
+          dars: darsTotal ? Math.round(darsRows.filter(p => (p.stars ?? 0) > 0).length / darsTotal * 100) : 0,
+          reading: average(attempts.filter(a => a.test?.type?.toLowerCase() === "reading")),
+          listening: average(attempts.filter(a => a.test?.type?.toLowerCase() === "listening")),
+          writing: writingScores.length ? Math.round(writingScores.reduce((sum, score) => sum + score, 0) / writingScores.length) : 0,
+        });
+      }).catch(() => {});
+    }
   }, [searchParams, router]);
 
   const totalLessons = courses.reduce((s, c) => s + c.lessons, 0);
@@ -140,17 +167,21 @@ function DashboardInner() {
           </div>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
              <div className="rounded-2xl border border-white/65 bg-white/45 p-3 backdrop-blur-sm">
-               <div className="text-xs text-slate-500">Kurslar</div>
-              <div className="font-bold">{courses.length}</div>
-            </div>
+               <div className="text-xs text-slate-500">Darslar</div>
+               <div className="font-bold">{skillProgress.dars}%</div>
+             </div>
              <div className="rounded-2xl border border-white/65 bg-white/45 p-3 backdrop-blur-sm">
-                <div className="text-xs text-slate-500">Yakunlangan darslar</div>
-              <div className="font-bold">{totalDone}</div>
-            </div>
+                <div className="text-xs text-slate-500">O‘qish · Reading</div>
+               <div className="font-bold">{skillProgress.reading}%</div>
+             </div>
              <div className="rounded-2xl border border-white/65 bg-white/45 p-3 backdrop-blur-sm">
-                <div className="text-xs text-slate-500">TOPIK oxirgi ball</div>
-              <div className="font-bold">{topikScore !== null ? topikScore : "—"}</div>
-            </div>
+                <div className="text-xs text-slate-500">Tinglash · Listening</div>
+               <div className="font-bold">{skillProgress.listening}%</div>
+             </div>
+             <div className="col-span-2 rounded-2xl border border-white/65 bg-white/45 p-3 backdrop-blur-sm sm:col-span-1">
+                <div className="text-xs text-slate-500">Yozish · Writing</div>
+               <div className="font-bold">{skillProgress.writing}%</div>
+             </div>
           </div>
         </Card>
       </div>
